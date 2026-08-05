@@ -1,1 +1,170 @@
-{}
+[
+  {
+    "id": "parameters",
+    "term": "parameters",
+    "short": "The learned numbers inside a model.",
+    "detail": "A model's parameters are the values it learned during training. More parameters usually mean a larger model file and more memory use, but parameter count alone does not prove that a model is better."
+  },
+  {
+    "id": "model-weights",
+    "term": "model weights",
+    "short": "The files containing the learned parts of a model.",
+    "detail": "Model weights are the stored learned values that software loads when it runs a model. They are often the largest files in a repository."
+  },
+  {
+    "id": "quantisation",
+    "term": "quantisation",
+    "short": "A way to make model weights smaller by storing them with fewer bits.",
+    "detail": "Quantisation reduces memory and disk use, often making a model easier to run locally. It can also reduce quality, so smaller is not always better."
+  },
+  {
+    "id": "gguf",
+    "term": "GGUF",
+    "short": "A file format commonly used to run language models locally.",
+    "detail": "GGUF files are commonly used by llama.cpp and apps built around it, including many local model tools. A GGUF file often includes quantised model weights."
+  },
+  {
+    "id": "safetensors",
+    "term": "safetensors",
+    "short": "A common format for storing model weights safely.",
+    "detail": "safetensors is a model weight file format widely used with Python machine-learning tools. It avoids some risks of older pickle-based PyTorch files."
+  },
+  {
+    "id": "transformers",
+    "term": "Transformers",
+    "short": "Hugging Face's popular Python library for loading and running many models.",
+    "detail": "Transformers is commonly used by developers and researchers. It is powerful, but it usually requires a Python setup rather than a simple desktop app."
+  },
+  {
+    "id": "llama-cpp",
+    "term": "llama.cpp",
+    "short": "Local model software often used with GGUF files.",
+    "detail": "llama.cpp is a widely used runtime for running many language models on personal computers. Many desktop tools use it underneath."
+  },
+  {
+    "id": "ollama",
+    "term": "Ollama",
+    "short": "A local model runner controlled mainly from the command line.",
+    "detail": "Ollama can run supported local language models and exposes a local API. A Hugging Face model page does not always map directly to an Ollama model tag."
+  },
+  {
+    "id": "lm-studio",
+    "term": "LM Studio",
+    "short": "A desktop app for downloading and trying local language models.",
+    "detail": "LM Studio is often beginner-friendly for testing GGUF language models because it provides a graphical interface."
+  },
+  {
+    "id": "context-length",
+    "term": "context length",
+    "short": "How much text a model can consider at once.",
+    "detail": "Context length is usually measured in tokens, not words. Longer context can require more memory, especially while generating text."
+  },
+  {
+    "id": "tokenizer",
+    "term": "tokenizer",
+    "short": "The part that turns text into tokens the model can process.",
+    "detail": "A tokenizer splits text into pieces called tokens. The model sees tokens rather than raw words or characters."
+  },
+  {
+    "id": "instruct-model",
+    "term": "instruct model",
+    "short": "A model tuned to follow instructions.",
+    "detail": "An instruct model is usually better suited to tasks like answering questions, summarising, or following prompts than a raw base model."
+  },
+  {
+    "id": "chat-model",
+    "term": "chat model",
+    "short": "A model tuned for back-and-forth conversation.",
+    "detail": "A chat model is usually trained or tuned to respond in a conversational style. It may require a specific chat template to work properly."
+  },
+  {
+    "id": "base-model",
+    "term": "base model",
+    "short": "A general model before instruction or chat tuning.",
+    "detail": "A base model predicts text but may not behave like a helpful assistant. It is often used as a starting point for fine-tuning."
+  },
+  {
+    "id": "embedding-model",
+    "term": "embedding model",
+    "short": "A model that turns text or other input into vectors for matching.",
+    "detail": "Embedding models are often used for search, recommendations, clustering, and retrieval. They are not usually meant for normal chatbot conversation."
+  },
+  {
+    "id": "fine-tuning",
+    "term": "fine-tuning",
+    "short": "Extra training that adapts a model for a narrower purpose.",
+    "detail": "Fine-tuning changes a model using additional examples. It can make a model better at a task, style, or domain."
+  },
+  {
+    "id": "inference",
+    "term": "inference",
+    "short": "Running a trained model to get an output.",
+    "detail": "When you type a prompt and the model answers, that is inference. It is different from training the model."
+  },
+  {
+    "id": "vram",
+    "term": "VRAM",
+    "short": "Memory on a graphics card.",
+    "detail": "VRAM is fast memory used by a GPU. Many local model tools use VRAM when available, but some models can also run partly or fully in system RAM."
+  },
+  {
+    "id": "system-ram",
+    "term": "system RAM",
+    "short": "The main memory in your computer.",
+    "detail": "System RAM is used by the operating system and apps. Some local model setups can use system RAM when the model does not fit completely in GPU VRAM."
+  },
+  {
+    "id": "fp16",
+    "term": "FP16",
+    "short": "A 16-bit number format often used for model weights.",
+    "detail": "FP16 uses about half the storage of FP32. It is common for GPU-based model use, but it can still require more memory than heavily quantised files."
+  },
+  {
+    "id": "bf16",
+    "term": "BF16",
+    "short": "A 16-bit number format often used by newer machine-learning hardware.",
+    "detail": "BF16 has similar storage size to FP16 but different numeric behavior. Many model repositories report BF16 weights."
+  },
+  {
+    "id": "q4-k-m",
+    "term": "Q4_K_M",
+    "short": "A common 4-bit GGUF quantisation label.",
+    "detail": "Q4_K_M is often used as a practical balance between smaller file size and usable quality for local language models. It is still an approximation, not the original full-precision model."
+  },
+  {
+    "id": "gated-model",
+    "term": "gated model",
+    "short": "A model that requires access approval or accepted terms.",
+    "detail": "A gated Hugging Face model may require signing in, sharing contact information, or accepting licence terms before files can be downloaded."
+  },
+  {
+    "id": "model-card",
+    "term": "model card",
+    "short": "The README-style description for a model.",
+    "detail": "A model card often explains intended use, limitations, training notes, licence information, and examples. Quality and completeness vary by repository."
+  },
+  {
+    "id": "architecture",
+    "term": "architecture",
+    "short": "The model design or class used by loading software.",
+    "detail": "Architecture describes the model's internal design or software class. It should only be reported when metadata or the model card supports it."
+  },
+  {
+    "id": "pipeline-tag",
+    "term": "pipeline tag",
+    "short": "Hugging Face metadata describing the model's likely task.",
+    "detail": "Pipeline tags are structured Hugging Face labels such as text-generation, feature-extraction, or text-to-image. They are useful but not always complete."
+  },
+  {
+    "id": "licence",
+    "term": "licence",
+    "short": "The rules attached to using or sharing the model.",
+    "detail": "Licence metadata can be missing or incomplete. This extension explains detected licence fields but does not provide legal advice."
+  },
+  {
+    "id": "commercial-use",
+    "term": "commercial use",
+    "short": "Using a model for business or paid work.",
+    "detail": "Commercial use depends on the actual licence terms. Do not assume it is allowed unless the licence clearly permits it."
+  }
+]

@@ -1,5 +1,6 @@
 import { parseHuggingFaceModelUrl } from "../services/huggingface-url-parser.js";
 import { fetchHuggingFaceModel } from "../services/huggingface-api.js";
+import { parseModelFacts } from "../services/model-parser.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const statusCard = document.querySelector("#status-card");
@@ -8,6 +9,13 @@ const overviewTextElement = document.querySelector("#overview-text");
 const refreshButton = document.querySelector("#refresh-button");
 const factsSection = document.querySelector("#facts-section");
 const factsList = document.querySelector("#facts-list");
+const interpretationSection = document.querySelector("#interpretation-section");
+const interpretationList = document.querySelector("#interpretation-list");
+const warningList = document.querySelector("#warning-list");
+const filesSection = document.querySelector("#files-section");
+const filesList = document.querySelector("#files-list");
+const termsSection = document.querySelector("#terms-section");
+const termsList = document.querySelector("#terms-list");
 const sourceSection = document.querySelector("#source-section");
 const sourceTextElement = document.querySelector("#source-text");
 
@@ -88,6 +96,12 @@ async function loadModelFacts(modelId, refreshId) {
   }
 
   const data = result.data;
+  const interpreted = parseModelFacts(data);
+  const glossary = await loadGlossary();
+
+  if (refreshId !== activeRefreshId) {
+    return;
+  }
 
   renderFacts([
     ["Author", data.author],
@@ -101,6 +115,9 @@ async function loadModelFacts(modelId, refreshId) {
     ["Model card", data.modelCardMarkdown ? "Found" : "Missing"],
     ["Last modified", data.lastModified]
   ]);
+  renderInterpretation(interpreted);
+  renderRelevantFiles(interpreted.relevantFiles);
+  renderTechnicalTerms(glossary, interpreted.glossaryTermIds);
 
   const warningText = result.warnings.length > 0
     ? ` Partial information: ${result.warnings.map((warning) => warning.message).join(" ")}`
@@ -115,8 +132,7 @@ async function loadModelFacts(modelId, refreshId) {
   }
 
   overviewTextElement.textContent =
-    `Known facts only: ${data.modelId} reports task "${data.pipelineTag || "unknown"}"` +
-    ` and library "${data.libraryName || "unknown"}". Interpretation will be added in the next stage.`;
+    buildOverviewText(data, interpreted);
 }
 
 function showFetchError(result) {
@@ -161,9 +177,117 @@ function renderFacts(rows) {
   factsSection.hidden = false;
 }
 
+function renderInterpretation(interpreted) {
+  renderDefinitionList(interpretationList, [
+    ["Likely model type", describeFact(interpreted.modelKind)],
+    ["Primary task", describeFact(interpreted.primaryTask)],
+    ["Parameter count", formatParameterFact(interpreted.parameterCount)],
+    ["Size category", describeFact(interpreted.sizeCategory)],
+    ["Architecture", describeFact(interpreted.architecture)],
+    ["Context length", formatContextFact(interpreted.contextLength)],
+    ["Detected formats", interpreted.formats.length ? interpreted.formats.map((format) => format.label).join(", ") : "Unknown"],
+    ["Detected quantisation", interpreted.quantisations.length ? interpreted.quantisations.map((item) => item.value).join(", ") : "None detected"]
+  ]);
+
+  warningList.replaceChildren();
+
+  for (const warning of interpreted.warnings) {
+    const item = document.createElement("p");
+    item.className = "warning-item";
+    item.textContent = warning;
+    warningList.append(item);
+  }
+
+  interpretationSection.hidden = false;
+}
+
+function renderRelevantFiles(files) {
+  filesList.replaceChildren();
+
+  const visibleFiles = files.filter((file) => !file.formats.includes("configuration files")).slice(0, 12);
+
+  if (visibleFiles.length === 0) {
+    filesSection.hidden = true;
+    return;
+  }
+
+  for (const file of visibleFiles) {
+    const item = document.createElement("article");
+    const name = document.createElement("div");
+    const meta = document.createElement("div");
+    const explanation = document.createElement("p");
+
+    item.className = "file-item";
+    name.className = "file-name";
+    meta.className = "file-meta";
+    name.textContent = file.path;
+    meta.textContent = [
+      file.formats.join(", "),
+      file.quantisations.length ? `Quantisation: ${file.quantisations.join(", ")}` : ""
+    ].filter(Boolean).join(" | ");
+    explanation.textContent = file.explanation;
+
+    item.append(name, meta, explanation);
+    filesList.append(item);
+  }
+
+  filesSection.hidden = false;
+}
+
+function renderTechnicalTerms(glossary, termIds) {
+  termsList.replaceChildren();
+
+  const glossaryById = new Map(glossary.map((entry) => [entry.id, entry]));
+  const entries = termIds
+    .map((termId) => glossaryById.get(termId))
+    .filter(Boolean);
+
+  if (entries.length === 0) {
+    termsSection.hidden = true;
+    return;
+  }
+
+  for (const entry of entries) {
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    const short = document.createElement("p");
+    const detail = document.createElement("p");
+
+    details.className = "term-details";
+    summary.textContent = entry.term;
+    short.className = "term-short";
+    short.textContent = entry.short;
+    detail.textContent = entry.detail;
+
+    details.append(summary, short, detail);
+    termsList.append(details);
+  }
+
+  termsSection.hidden = false;
+}
+
+function renderDefinitionList(listElement, rows) {
+  listElement.replaceChildren();
+
+  for (const [label, value] of rows) {
+    const term = document.createElement("dt");
+    const description = document.createElement("dd");
+    term.textContent = label;
+    description.textContent = formatFactValue(value);
+    listElement.append(term, description);
+  }
+}
+
 function resetFetchedDetails() {
   factsList.replaceChildren();
   factsSection.hidden = true;
+  interpretationList.replaceChildren();
+  warningList.replaceChildren();
+  interpretationSection.hidden = true;
+  filesList.replaceChildren();
+  filesSection.hidden = true;
+  termsList.replaceChildren();
+  termsSection.hidden = true;
   sourceTextElement.textContent = "";
   sourceSection.hidden = true;
 }
@@ -174,6 +298,90 @@ function formatFactValue(value) {
   }
 
   return value;
+}
+
+async function loadGlossary() {
+  try {
+    const response = await fetch(chrome.runtime.getURL("data/glossary.json"), {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const glossary = await response.json();
+    return Array.isArray(glossary) ? glossary : [];
+  } catch (error) {
+    console.warn("HF Plain English could not load the local glossary.", error);
+    return [];
+  }
+}
+
+function buildOverviewText(data, interpreted) {
+  const task = interpreted.primaryTask.value || data.pipelineTag || "an unknown task";
+  const modelKind = interpreted.modelKind.value;
+  const formatText = interpreted.formats.length
+    ? ` Detected file formats include ${interpreted.formats.map((format) => format.label).join(", ")}.`
+    : " No common runnable model format was detected from the file list yet.";
+
+  if (modelKind === "embedding") {
+    return `Plain-English read: this appears to be an embedding model for ${task}. It is more likely for search, matching, or retrieval than normal chatbot conversation.${formatText}`;
+  }
+
+  if (modelKind === "image") {
+    return `Plain-English read: this appears to be an image-related model for ${task}. Local desktop chatbot tools may not be the right fit.${formatText}`;
+  }
+
+  if (modelKind === "base") {
+    return `Plain-English read: this appears to be a base model for ${task}. It may not behave like a polished assistant unless it has the right prompt format or extra tuning.${formatText}`;
+  }
+
+  if (modelKind === "chat" || modelKind === "instruct") {
+    return `Plain-English read: this appears to be a ${modelKind} model for ${task}, so it is more likely to be usable for prompts or conversation.${formatText}`;
+  }
+
+  return `Plain-English read: Hugging Face reports this model's task as ${task}. The exact user-facing model type is not clear from the available metadata.${formatText}`;
+}
+
+function describeFact(fact) {
+  if (!fact?.value) {
+    return "Unknown";
+  }
+
+  return `${fact.value} (${fact.source}, ${fact.confidence} confidence)`;
+}
+
+function formatParameterFact(fact) {
+  if (!Number.isFinite(fact?.value)) {
+    return "Unknown";
+  }
+
+  return `${formatParameterCount(fact.value)} (${fact.source}, ${fact.confidence} confidence)`;
+}
+
+function formatContextFact(fact) {
+  if (!Number.isFinite(fact?.value)) {
+    return "Unknown";
+  }
+
+  return `${fact.value.toLocaleString()} tokens (${fact.source}, ${fact.confidence} confidence)`;
+}
+
+function formatParameterCount(value) {
+  if (value >= 1_000_000_000) {
+    return `${trimDecimal(value / 1_000_000_000)}B`;
+  }
+
+  if (value >= 1_000_000) {
+    return `${trimDecimal(value / 1_000_000)}M`;
+  }
+
+  return value.toLocaleString();
+}
+
+function trimDecimal(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 function getUnsupportedMessage(reason) {

@@ -160,3 +160,69 @@ main {
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+
+.warning-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.warning-item {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.file-list,
+.terms-list {
+  display: grid;
+  gap: 10px;
+}
+
+.file-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.file-name {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.file-meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.term-details {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.term-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 9px 10px;
+}
+
+.term-details summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.term-details p {
+  padding: 0 10px 10px;
+}
+
+.term-short {
+  color: var(--muted);
+}
