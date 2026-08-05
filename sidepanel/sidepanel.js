@@ -1,6 +1,7 @@
 import { parseHuggingFaceModelUrl } from "../services/huggingface-url-parser.js";
 import { fetchHuggingFaceModel } from "../services/huggingface-api.js";
 import { parseModelFacts } from "../services/model-parser.js";
+import { estimateHardwareFit } from "../services/hardware-estimator.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const statusCard = document.querySelector("#status-card");
@@ -12,6 +13,10 @@ const factsList = document.querySelector("#facts-list");
 const interpretationSection = document.querySelector("#interpretation-section");
 const interpretationList = document.querySelector("#interpretation-list");
 const warningList = document.querySelector("#warning-list");
+const hardwareSection = document.querySelector("#hardware-section");
+const hardwareSummaryElement = document.querySelector("#hardware-summary");
+const hardwareList = document.querySelector("#hardware-list");
+const assumptionsList = document.querySelector("#assumptions-list");
 const filesSection = document.querySelector("#files-section");
 const filesList = document.querySelector("#files-list");
 const termsSection = document.querySelector("#terms-section");
@@ -97,7 +102,11 @@ async function loadModelFacts(modelId, refreshId) {
 
   const data = result.data;
   const interpreted = parseModelFacts(data);
-  const glossary = await loadGlossary();
+  const [glossary, hardwareProfile] = await Promise.all([
+    loadGlossary(),
+    loadHardwareProfile()
+  ]);
+  const hardwareEstimate = estimateHardwareFit(interpreted, hardwareProfile);
 
   if (refreshId !== activeRefreshId) {
     return;
@@ -116,6 +125,7 @@ async function loadModelFacts(modelId, refreshId) {
     ["Last modified", data.lastModified]
   ]);
   renderInterpretation(interpreted);
+  renderHardwareEstimate(hardwareEstimate, hardwareProfile);
   renderRelevantFiles(interpreted.relevantFiles);
   renderTechnicalTerms(glossary, interpreted.glossaryTermIds);
 
@@ -128,7 +138,7 @@ async function loadModelFacts(modelId, refreshId) {
   } else if (result.status === "partial") {
     setStatus("Partial information", warningText.trim() || "Some Hugging Face information could not be fetched.");
   } else {
-    setStatus("Model facts fetched", "Public Hugging Face metadata and the README model card were retrieved.");
+    setStatus(getFitStatusLabel(hardwareEstimate.fit.overall), "Model facts and a cautious hardware estimate are available.");
   }
 
   overviewTextElement.textContent =
@@ -199,6 +209,32 @@ function renderInterpretation(interpreted) {
   }
 
   interpretationSection.hidden = false;
+}
+
+function renderHardwareEstimate(estimate, hardwareProfile) {
+  hardwareSummaryElement.textContent = estimate.explanation;
+  renderDefinitionList(hardwareList, [
+    ["Fit", getFitStatusLabel(estimate.fit.overall)],
+    ["GPU fit", formatFitCategory(estimate.fit.gpu)],
+    ["System RAM fit", formatFitCategory(estimate.fit.systemRam)],
+    ["Hardware profile", formatHardwareProfile(hardwareProfile)],
+    ["Parameter count", estimate.knownParameterCount ? formatParameterCount(estimate.parameterCount) : "Unknown"],
+    ["Precision", estimate.precision || "Unknown"],
+    ["Bits per parameter", Number.isFinite(estimate.bitsPerParameter) ? String(estimate.bitsPerParameter) : "Unknown"],
+    ["Weight memory", Number.isFinite(estimate.estimatedWeightMemoryGb) ? `${estimate.estimatedWeightMemoryGb} GB` : "Unknown"],
+    ["Runtime range", formatRuntimeRange(estimate.estimatedRuntimeMemoryGb)]
+  ]);
+
+  assumptionsList.replaceChildren();
+
+  for (const assumption of estimate.assumptions) {
+    const item = document.createElement("p");
+    item.className = "warning-item";
+    item.textContent = assumption;
+    assumptionsList.append(item);
+  }
+
+  hardwareSection.hidden = false;
 }
 
 function renderRelevantFiles(files) {
@@ -284,6 +320,10 @@ function resetFetchedDetails() {
   interpretationList.replaceChildren();
   warningList.replaceChildren();
   interpretationSection.hidden = true;
+  hardwareSummaryElement.textContent = "";
+  hardwareList.replaceChildren();
+  assumptionsList.replaceChildren();
+  hardwareSection.hidden = true;
   filesList.replaceChildren();
   filesSection.hidden = true;
   termsList.replaceChildren();
@@ -315,6 +355,24 @@ async function loadGlossary() {
   } catch (error) {
     console.warn("HF Plain English could not load the local glossary.", error);
     return [];
+  }
+}
+
+async function loadHardwareProfile() {
+  try {
+    const response = await fetch(chrome.runtime.getURL("data/hardware-profile.json"), {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      return {};
+    }
+
+    const profile = await response.json();
+    return profile && typeof profile === "object" ? profile : {};
+  } catch (error) {
+    console.warn("HF Plain English could not load the local hardware profile.", error);
+    return {};
   }
 }
 
@@ -378,6 +436,53 @@ function formatParameterCount(value) {
   }
 
   return value.toLocaleString();
+}
+
+function formatRuntimeRange(range) {
+  if (!Number.isFinite(range?.minimum) || !Number.isFinite(range?.likely)) {
+    return "Unknown";
+  }
+
+  return `${range.minimum}-${range.likely} GB`;
+}
+
+function formatFitCategory(category) {
+  return getFitStatusLabel(category);
+}
+
+function getFitStatusLabel(category) {
+  switch (category) {
+    case "comfortable":
+      return "Runs comfortably";
+    case "likely":
+      return "Likely to run";
+    case "possible-with-offloading":
+      return "May run with RAM offloading";
+    case "slow-or-tight":
+      return "May be slow or tight";
+    case "unlikely":
+      return "Unlikely to fit";
+    default:
+      return "Cannot estimate";
+  }
+}
+
+function formatHardwareProfile(profile) {
+  const parts = [];
+
+  if (profile?.operatingSystem) {
+    parts.push(profile.operatingSystem);
+  }
+
+  if (Number.isFinite(Number(profile?.gpuVramGb))) {
+    parts.push(`${profile.gpuVramGb} GB VRAM`);
+  }
+
+  if (Number.isFinite(Number(profile?.systemRamGb))) {
+    parts.push(`${profile.systemRamGb} GB RAM`);
+  }
+
+  return parts.length ? parts.join(", ") : "Unknown";
 }
 
 function trimDecimal(value) {

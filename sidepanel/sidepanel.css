@@ -176,6 +176,10 @@ main {
   color: var(--text);
 }
 
+.hardware-summary {
+  margin-bottom: 12px;
+}
+
 .file-list,
 .terms-list {
   display: grid;
