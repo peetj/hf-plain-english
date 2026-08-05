@@ -2,6 +2,8 @@ import { parseHuggingFaceModelUrl } from "../services/huggingface-url-parser.js"
 import { fetchHuggingFaceModel } from "../services/huggingface-api.js";
 import { parseModelFacts } from "../services/model-parser.js";
 import { estimateHardwareFit } from "../services/hardware-estimator.js";
+import { recommendModelTool } from "../services/recommendation-engine.js";
+import { generateDeterministicExplanation } from "../services/explanation-service.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const statusCard = document.querySelector("#status-card");
@@ -17,6 +19,10 @@ const hardwareSection = document.querySelector("#hardware-section");
 const hardwareSummaryElement = document.querySelector("#hardware-summary");
 const hardwareList = document.querySelector("#hardware-list");
 const assumptionsList = document.querySelector("#assumptions-list");
+const runSection = document.querySelector("#run-section");
+const runSummaryElement = document.querySelector("#run-summary");
+const runList = document.querySelector("#run-list");
+const runWarningList = document.querySelector("#run-warning-list");
 const filesSection = document.querySelector("#files-section");
 const filesList = document.querySelector("#files-list");
 const termsSection = document.querySelector("#terms-section");
@@ -107,6 +113,8 @@ async function loadModelFacts(modelId, refreshId) {
     loadHardwareProfile()
   ]);
   const hardwareEstimate = estimateHardwareFit(interpreted, hardwareProfile);
+  const recommendation = recommendModelTool(data, interpreted, hardwareEstimate, hardwareProfile);
+  const explanation = generateDeterministicExplanation(data, interpreted, hardwareEstimate, recommendation);
 
   if (refreshId !== activeRefreshId) {
     return;
@@ -126,6 +134,7 @@ async function loadModelFacts(modelId, refreshId) {
   ]);
   renderInterpretation(interpreted);
   renderHardwareEstimate(hardwareEstimate, hardwareProfile);
+  renderRunRecommendation(recommendation, explanation);
   renderRelevantFiles(interpreted.relevantFiles);
   renderTechnicalTerms(glossary, interpreted.glossaryTermIds);
 
@@ -141,8 +150,7 @@ async function loadModelFacts(modelId, refreshId) {
     setStatus(getFitStatusLabel(hardwareEstimate.fit.overall), "Model facts and a cautious hardware estimate are available.");
   }
 
-  overviewTextElement.textContent =
-    buildOverviewText(data, interpreted);
+  overviewTextElement.textContent = explanation.overview;
 }
 
 function showFetchError(result) {
@@ -237,6 +245,29 @@ function renderHardwareEstimate(estimate, hardwareProfile) {
   hardwareSection.hidden = false;
 }
 
+function renderRunRecommendation(recommendation, explanation) {
+  runSummaryElement.textContent = explanation.run;
+  renderDefinitionList(runList, [
+    ["Recommended tool", recommendation.primaryTool],
+    ["Confidence", recommendation.confidence],
+    ["Why", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
+    ["Other options", recommendation.alternatives.length ? recommendation.alternatives.join(" ") : "No safer alternative detected from this page."],
+    ["Commands", recommendation.commands.length ? recommendation.commands.join(" ") : "No command shown because no verified command is known."]
+  ]);
+
+  runWarningList.replaceChildren();
+
+  for (const warning of Array.from(new Set([...recommendation.warnings, ...explanation.limitations]))) {
+    const item = document.createElement("p");
+    item.className = "warning-item";
+    item.textContent = warning;
+    runWarningList.append(item);
+  }
+
+  runSection.hidden = false;
+}
+
+
 function renderRelevantFiles(files) {
   filesList.replaceChildren();
 
@@ -324,6 +355,10 @@ function resetFetchedDetails() {
   hardwareList.replaceChildren();
   assumptionsList.replaceChildren();
   hardwareSection.hidden = true;
+  runSummaryElement.textContent = "";
+  runList.replaceChildren();
+  runWarningList.replaceChildren();
+  runSection.hidden = true;
   filesList.replaceChildren();
   filesSection.hidden = true;
   termsList.replaceChildren();
@@ -374,32 +409,6 @@ async function loadHardwareProfile() {
     console.warn("HF Plain English could not load the local hardware profile.", error);
     return {};
   }
-}
-
-function buildOverviewText(data, interpreted) {
-  const task = interpreted.primaryTask.value || data.pipelineTag || "an unknown task";
-  const modelKind = interpreted.modelKind.value;
-  const formatText = interpreted.formats.length
-    ? ` Detected file formats include ${interpreted.formats.map((format) => format.label).join(", ")}.`
-    : " No common runnable model format was detected from the file list yet.";
-
-  if (modelKind === "embedding") {
-    return `Plain-English read: this appears to be an embedding model for ${task}. It is more likely for search, matching, or retrieval than normal chatbot conversation.${formatText}`;
-  }
-
-  if (modelKind === "image") {
-    return `Plain-English read: this appears to be an image-related model for ${task}. Local desktop chatbot tools may not be the right fit.${formatText}`;
-  }
-
-  if (modelKind === "base") {
-    return `Plain-English read: this appears to be a base model for ${task}. It may not behave like a polished assistant unless it has the right prompt format or extra tuning.${formatText}`;
-  }
-
-  if (modelKind === "chat" || modelKind === "instruct") {
-    return `Plain-English read: this appears to be a ${modelKind} model for ${task}, so it is more likely to be usable for prompts or conversation.${formatText}`;
-  }
-
-  return `Plain-English read: Hugging Face reports this model's task as ${task}. The exact user-facing model type is not clear from the available metadata.${formatText}`;
 }
 
 function describeFact(fact) {
