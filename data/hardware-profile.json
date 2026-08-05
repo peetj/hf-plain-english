@@ -1,0 +1,10 @@
+{
+  "operatingSystem": "Windows 11",
+  "gpuVramGb": 6,
+  "systemRamGb": 32,
+  "preferredTools": [
+    "LM Studio",
+    "Ollama"
+  ],
+  "experienceLevel": "Beginner"
+}
