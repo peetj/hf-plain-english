@@ -1,0 +1,162 @@
+:root {
+  color-scheme: light dark;
+  --background: #f7f8fa;
+  --surface: #ffffff;
+  --surface-muted: #eef1f4;
+  --text: #171a1f;
+  --muted: #5d6673;
+  --border: #d8dde4;
+  --accent: #0f6b5f;
+  --accent-strong: #0a4f46;
+  --focus: #1f75cb;
+  --shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111418;
+    --surface: #191e24;
+    --surface-muted: #222933;
+    --text: #f2f5f8;
+    --muted: #aab4c0;
+    --border: #333c48;
+    --accent: #62c7b8;
+    --accent-strong: #8de2d5;
+    --focus: #84bfff;
+    --shadow: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 280px;
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.eyebrow {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 4px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+h2 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.model-id {
+  margin-bottom: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.icon-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  border-color: var(--accent);
+}
+
+main {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.status-card,
+.panel-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.status-card {
+  padding: 14px;
+}
+
+.status-label {
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.status-card p:last-child,
+.panel-section p:last-child {
+  margin-bottom: 0;
+}
+
+.panel-section {
+  padding: 14px;
+}
+
+.facts-list {
+  display: grid;
+  grid-template-columns: minmax(88px, 0.45fr) minmax(0, 1fr);
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.facts-list dt {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.facts-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-text {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}

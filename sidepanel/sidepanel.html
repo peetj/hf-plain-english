@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HF Plain English</title>
+    <link rel="stylesheet" href="sidepanel.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Chrome side panel</p>
+        <h1>HF Plain English</h1>
+        <p id="active-url" class="model-id">Checking active tab...</p>
+      </div>
+      <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh active tab status" title="Refresh">
+        Refresh
+      </button>
+    </header>
+
+    <main>
+      <section id="status-card" class="status-card" aria-live="polite">
+        <p class="status-label">Loading</p>
+        <p id="status-message">Preparing the extension shell.</p>
+      </section>
+
+      <section class="panel-section">
+        <h2>Overview</h2>
+        <p id="overview-text">
+          The side panel is installed and ready. Model detection and Hugging Face API analysis will be added in the next stages.
+        </p>
+      </section>
+
+      <section id="facts-section" class="panel-section" hidden>
+        <h2>Fetched facts</h2>
+        <dl id="facts-list" class="facts-list"></dl>
+      </section>
+
+      <section id="source-section" class="panel-section" hidden>
+        <h2>Source details</h2>
+        <p id="source-text" class="source-text"></p>
+      </section>
+
+      <section class="panel-section">
+        <h2>Privacy</h2>
+        <p>
+          V1 will use the active Hugging Face model ID to request public model information from Hugging Face. No analytics are included.
+        </p>
+      </section>
+    </main>
+
+    <script src="sidepanel.js" type="module"></script>
+  </body>
+</html>

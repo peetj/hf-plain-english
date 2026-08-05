@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "HF Plain English",
+  "description": "Explains public Hugging Face model pages in plain English.",
+  "version": "0.1.0",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://huggingface.co/*",
+    "http://localhost:11434/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://huggingface.co/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "services/huggingface-url-parser.js"
+      ],
+      "matches": [
+        "https://huggingface.co/*"
+      ]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "HF Plain English",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    }
+  }
+}
