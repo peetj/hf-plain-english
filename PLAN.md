@@ -73,21 +73,21 @@ The development plan below focuses on turning that foundation into a trustworthy
 
 ## Phase 1: Learner Experience
 
-### ⚠️ 1.1 Rewrite Side Panel Around Learner Questions
+### ✅ 1.1 Rewrite Side Panel Around Learner Questions
 
 - [✅] Remove developer-oriented header text.
 - [✅] Rename the extension to clearer learner-facing language.
 - [✅] Show the model name as the primary identity and the owner separately.
 - [✅] Add a custom tooltip explaining Hugging Face `owner/model` naming.
-- [❌] Replace remaining developer-oriented labels like "Fetched facts" with learner-facing sections.
-- [❌] Add a top-level answer card with what it is, best next action, local run likelihood, and confidence.
-- [❌] Make the side panel easy to scan in under 30 seconds.
-- [❌] Keep detailed facts available below the plain-English answer.
+- [✅] Replace remaining developer-oriented labels like "Fetched facts" with learner-facing sections.
+- [✅] Add a top-level answer card with what it is, best next action, local run likelihood, and confidence.
+- [✅] Make the side panel easy to scan in under 30 seconds.
+- [✅] Keep detailed facts available below the plain-English answer.
 
 Acceptance criteria:
 
-- [❌] A non-technical learner can identify the model type, likely use, and next step without reading raw metadata.
-- [⚠️] Technical facts remain visible for verification.
+- [✅] A non-technical learner can identify the model type, likely use, and next step without reading raw metadata.
+- [✅] Technical facts remain visible for verification.
 
 ### ⚠️ 1.2 Add Confidence and Source Badges
 

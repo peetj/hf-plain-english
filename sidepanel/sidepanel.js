@@ -9,6 +9,9 @@ const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
+const learnerAnswerSection = document.querySelector("#learner-answer-section");
+const answerSummaryElement = document.querySelector("#answer-summary");
+const answerList = document.querySelector("#answer-list");
 const overviewTextElement = document.querySelector("#overview-text");
 const refreshButton = document.querySelector("#refresh-button");
 const factsSection = document.querySelector("#facts-section");
@@ -138,6 +141,7 @@ async function loadModelFacts(modelId, refreshId) {
     return;
   }
 
+  renderLearnerAnswer(data, interpreted, hardwareEstimate, recommendation, explanation);
   renderFacts([
     ["Author", data.author],
     ["Model name", data.modelName],
@@ -172,6 +176,97 @@ async function loadModelFacts(modelId, refreshId) {
   }
 
   renderTooltipText(overviewTextElement, explanation.overview);
+}
+
+function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation) {
+  renderTooltipText(answerSummaryElement, explanation.summary);
+  renderDefinitionList(answerList, [
+    ["What it is", buildWhatItIsAnswer(model, interpreted)],
+    ["Best next step", buildNextStepAnswer(recommendation)],
+    ["Local fit", buildLocalFitAnswer(hardwareEstimate)],
+    ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
+  ]);
+  learnerAnswerSection.hidden = false;
+}
+
+function buildWhatItIsAnswer(model, interpreted) {
+  const modelKind = interpreted?.modelKind?.value;
+  const task = interpreted?.primaryTask?.value || model?.pipelineTag;
+
+  if (modelKind && task) {
+    return `${modelKind} model for ${task}`;
+  }
+
+  if (modelKind) {
+    return `${modelKind} model`;
+  }
+
+  if (task) {
+    return `model for ${task}`;
+  }
+
+  return "Model type is not clear yet";
+}
+
+function buildNextStepAnswer(recommendation) {
+  const tool = recommendation?.primaryTool || "insufficient information";
+
+  if (tool === "insufficient information") {
+    return "Do not download yet; inspect the files, licence, and model card first.";
+  }
+
+  if (tool === "not suitable for ordinary chatbot use") {
+    return "Do not treat this as a normal chatbot model; check the specialist task first.";
+  }
+
+  return `Start with ${tool}`;
+}
+
+function buildLocalFitAnswer(hardwareEstimate) {
+  const fitLabel = getFitStatusLabel(hardwareEstimate?.fit?.overall, { includeHardware: true });
+  const runtimeRange = formatRuntimeRange(hardwareEstimate?.estimatedRuntimeMemoryGb);
+
+  if (runtimeRange === "Unknown") {
+    return fitLabel;
+  }
+
+  return `${fitLabel}; estimated runtime memory ${runtimeRange}`;
+}
+
+function buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate) {
+  const confidenceValues = [
+    interpreted?.modelKind?.confidence,
+    interpreted?.primaryTask?.confidence,
+    interpreted?.parameterCount?.confidence,
+    interpreted?.contextLength?.confidence,
+    recommendation?.confidence,
+    hardwareEstimate?.fit?.overall === "unknown" ? "low" : "medium"
+  ].filter(Boolean);
+  const score = confidenceValues.reduce((total, confidence) => total + confidenceScore(confidence), 0);
+  const average = confidenceValues.length ? score / confidenceValues.length : 0;
+
+  if (average >= 2.45) {
+    return "High confidence for the headline read";
+  }
+
+  if (average >= 1.65) {
+    return "Medium confidence; check the details below";
+  }
+
+  return "Low confidence; important information is missing";
+}
+
+function confidenceScore(confidence) {
+  switch (confidence) {
+    case "high":
+      return 3;
+    case "medium":
+      return 2;
+    case "low":
+      return 1;
+    default:
+      return 0;
+  }
 }
 
 function showFetchError(result) {
@@ -407,6 +502,9 @@ function renderDefinitionList(listElement, rows) {
 
 function resetFetchedDetails() {
   hideTooltip();
+  answerSummaryElement.replaceChildren();
+  answerList.replaceChildren();
+  learnerAnswerSection.hidden = true;
   factsList.replaceChildren();
   factsSection.hidden = true;
   interpretationList.replaceChildren();

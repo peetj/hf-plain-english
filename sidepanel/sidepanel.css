@@ -249,6 +249,32 @@ main {
   margin-top: 8px;
 }
 
+.learner-answer-section {
+  border-left: 5px solid var(--accent);
+}
+
+.answer-summary {
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.answer-list {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.38fr) minmax(0, 1fr);
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.answer-list dt {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.answer-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .facts-list {
   display: grid;
   grid-template-columns: minmax(88px, 0.45fr) minmax(0, 1fr);
