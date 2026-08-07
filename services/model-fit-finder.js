@@ -4,7 +4,13 @@ const GOAL_CONFIG = {
     taskPhrase: "chat or instruction model",
     format: "GGUF",
     quantisation: "Q4_K_M first; Q5_K_M if the model is already small",
-    searchTerms: ["gguf", "q4_k_m", "instruct", "chat"],
+    searchFilter: "Text Generation + GGUF",
+    filters: {
+      library: "gguf",
+      pipelineTag: "text-generation"
+    },
+    secondaryLabel: "Q4_K_M variants",
+    secondarySearch: "Q4_K_M",
     avoid: "Avoid base-only models, FP16/BF16 weights, and 13B+ models unless you expect slow RAM offloading."
   },
   code: {
@@ -12,15 +18,28 @@ const GOAL_CONFIG = {
     taskPhrase: "coding assistant model",
     format: "GGUF",
     quantisation: "Q4_K_M first; Q5_K_M only for smaller coding models",
-    searchTerms: ["gguf", "q4_k_m", "code", "instruct"],
+    searchFilter: "Text Generation + GGUF, narrowed by code",
+    filters: {
+      library: "gguf",
+      pipelineTag: "text-generation",
+      search: "code"
+    },
+    secondaryLabel: "Coder variants",
+    secondarySearch: "coder",
     avoid: "Avoid large FP16 coding models and repositories without a chat or instruct variant."
   },
   embedding: {
-    label: "Search",
+    label: "Embeddings",
     taskPhrase: "embedding model",
     format: "safetensors or sentence-transformers",
     quantisation: "Quantisation is less important than choosing a small embedding model",
-    searchTerms: ["sentence-transformers", "embedding", "small"],
+    searchFilter: "Feature Extraction + Sentence Transformers",
+    filters: {
+      library: "sentence-transformers",
+      pipelineTag: "feature-extraction"
+    },
+    secondaryLabel: "Embedding name search",
+    secondarySearch: "embedding",
     avoid: "Avoid chat models; embeddings are for search, matching, retrieval, or clustering."
   },
   image: {
@@ -28,7 +47,13 @@ const GOAL_CONFIG = {
     taskPhrase: "image generation model",
     format: "Diffusers-compatible repository",
     quantisation: "FP16 can still be heavy; prefer small or turbo/lightning variants on modest GPUs",
-    searchTerms: ["diffusers", "text-to-image", "small"],
+    searchFilter: "Text-to-Image + Diffusers",
+    filters: {
+      library: "diffusers",
+      pipelineTag: "text-to-image"
+    },
+    secondaryLabel: "Fast image variants",
+    secondarySearch: "turbo",
     avoid: "Avoid large diffusion checkpoints until the extension can estimate image-model memory more precisely."
   }
 };
@@ -36,22 +61,18 @@ const GOAL_CONFIG = {
 const ROUTE_CONFIG = {
   beginner: {
     label: "Beginner app",
-    searchBoosts: ["lm studio"],
     routeText: "Prefer a beginner desktop route when possible."
   },
   ollama: {
     label: "Ollama",
-    searchBoosts: ["ollama"],
     routeText: "Prefer models with an Ollama-ready path or enough information to create one."
   },
   python: {
     label: "Python",
-    searchBoosts: ["transformers"],
     routeText: "Python gives more control, but the setup is more technical."
   },
   unsure: {
     label: "Not sure",
-    searchBoosts: [],
     routeText: "Start with the simplest route that matches the detected model files."
   }
 };
@@ -79,7 +100,6 @@ export function buildModelFitFinder(hardwareProfile = {}, choices = {}) {
   const route = getConfig(ROUTE_CONFIG, choices.route, "beginner");
   const priority = getConfig(PRIORITY_CONFIG, choices.priority, "balanced");
   const sizing = estimateLocalSizeGuidance(hardwareProfile, goal.key, priority.rangeBias);
-  const queryTerms = buildSearchTerms(goal, route, sizing);
 
   return {
     summary: buildSummary(hardwareProfile, goal, sizing),
@@ -89,10 +109,11 @@ export function buildModelFitFinder(hardwareProfile = {}, choices = {}) {
       ["File format", goal.format],
       ["Quantisation", goal.quantisation],
       ["Route", `${route.routeText} ${priority.text}`],
-      ["Search terms", queryTerms.join(" ")],
+      ["Search filter", goal.searchFilter],
+      ["Scan results for", sizing.scanAdvice],
       ["Avoid", goal.avoid]
     ],
-    searchLinks: buildSearchLinks(goal, route, queryTerms)
+    searchLinks: buildSearchLinks(goal)
   };
 }
 
@@ -112,7 +133,7 @@ function estimateLocalSizeGuidance(hardwareProfile, goal, rangeBias) {
     return {
       primaryRange: "small embedding models",
       stretchRange: "Larger embedding models are fine if Python setup and disk space are acceptable",
-      searchSizeTerms: ["small"]
+      scanAdvice: "small, well-documented embedding models with clear sentence-transformers or Transformers usage."
     };
   }
 
@@ -121,7 +142,9 @@ function estimateLocalSizeGuidance(hardwareProfile, goal, rangeBias) {
     return {
       primaryRange: hasModestGpu ? "small or optimised image models" : "hosted image inference before local downloads",
       stretchRange: hasModestGpu ? "SDXL-class models may still be tight; start with smaller variants" : "Use hosted inference before downloading large image models",
-      searchSizeTerms: hasModestGpu ? ["small", "turbo"] : ["small"]
+      scanAdvice: hasModestGpu
+        ? "small, turbo, lightning, or low-VRAM notes before downloading."
+        : "hosted demos or inference-provider support before local files."
     };
   }
 
@@ -131,39 +154,39 @@ function estimateLocalSizeGuidance(hardwareProfile, goal, rangeBias) {
   return {
     primaryRange: adjustedBand.primary,
     stretchRange: adjustedBand.stretch,
-    searchSizeTerms: adjustedBand.searchTerms
+    scanAdvice: adjustedBand.scanAdvice
   };
 }
 
 function chooseLanguageModelBand(gpuVramGb, systemRamGb) {
   if (Number.isFinite(gpuVramGb) && gpuVramGb >= 24) {
-    return createBand("13B-30B Q4 models", "30B+ Q4 models may work, but check VRAM and context length carefully", ["13b", "30b"]);
+    return createBand("13B-30B Q4 models", "30B+ Q4 models may work, but check VRAM and context length carefully", "model cards or filenames around 13B-30B with Q4_K_M files.");
   }
 
   if (Number.isFinite(gpuVramGb) && gpuVramGb >= 12) {
-    return createBand("7B-13B Q4 models", "14B models may work if quantised and context length is not extreme", ["7b", "13b"]);
+    return createBand("7B-13B Q4 models", "14B models may work if quantised and context length is not extreme", "model cards or filenames around 7B-13B with Q4_K_M files.");
   }
 
   if (Number.isFinite(gpuVramGb) && gpuVramGb >= 8) {
-    return createBand("3B-7B Q4 models", "8B models are worth trying when they are well quantised", ["3b", "7b"]);
+    return createBand("3B-7B Q4 models", "8B models are worth trying when they are well quantised", "model cards or filenames around 3B-7B with Q4_K_M files.");
   }
 
   if (Number.isFinite(gpuVramGb) && gpuVramGb >= 6) {
-    return createBand("3B-4B Q4 models for comfort", "7B Q4 can be possible, but expect partial offloading or slower runs", ["3b", "4b", "7b"]);
+    return createBand("3B-4B Q4 models for comfort", "7B Q4 can be possible, but expect partial offloading or slower runs", "model cards or filenames around 3B-4B with Q4_K_M files; treat 7B as a stretch.");
   }
 
   if (Number.isFinite(systemRamGb) && systemRamGb >= 16) {
-    return createBand("1B-3B Q4 models", "7B Q4 may run from system RAM, but it is a patience test", ["1b", "3b"]);
+    return createBand("1B-3B Q4 models", "7B Q4 may run from system RAM, but it is a patience test", "model cards or filenames around 1B-3B with Q4_K_M files.");
   }
 
-  return createBand("1B-2B Q4 models", "Use hosted inference for anything larger until the hardware profile improves", ["1b", "2b"]);
+  return createBand("1B-2B Q4 models", "Use hosted inference for anything larger until the hardware profile improves", "model cards or filenames around 1B-2B with Q4_K_M files.");
 }
 
-function createBand(primary, stretch, searchTerms) {
+function createBand(primary, stretch, scanAdvice) {
   return {
     primary,
     stretch,
-    searchTerms
+    scanAdvice
   };
 }
 
@@ -172,7 +195,7 @@ function applyPriorityBias(band, rangeBias) {
     return {
       primary: band.primary.replace(/(?: for comfort)?$/, " with the smallest practical size"),
       stretch: "Only stretch upward after a smaller model runs comfortably.",
-      searchTerms: band.searchTerms.slice(0, 2)
+      scanAdvice: `${band.scanAdvice} Prefer the lower end of that range.`
     };
   }
 
@@ -180,43 +203,47 @@ function applyPriorityBias(band, rangeBias) {
     return {
       primary: band.primary,
       stretch: `${band.stretch}. Prefer Q5_K_M only when the target range is already comfortable.`,
-      searchTerms: band.searchTerms
+      scanAdvice: `${band.scanAdvice} You can compare Q5_K_M only after a Q4_K_M file looks practical.`
     };
   }
 
   return band;
 }
 
-function buildSearchTerms(goal, route, sizing) {
-  const routeBoosts = goal.key === "chat" || goal.key === "code" ? route.searchBoosts : [];
-
-  return Array.from(new Set([
-    ...goal.searchTerms,
-    ...sizing.searchSizeTerms,
-    ...routeBoosts
-  ]));
-}
-
-function buildSearchLinks(goal, route, queryTerms) {
-  const primaryQuery = queryTerms.join(" ");
-  const fallbackQuery = [goal.searchTerms[0], goal.searchTerms[1], route.searchBoosts[0]]
-    .filter(Boolean)
-    .join(" ");
-
+function buildSearchLinks(goal) {
   return [
     {
-      label: `${goal.label} models`,
-      url: buildHuggingFaceSearchUrl(primaryQuery)
+      label: `${goal.label} filtered search`,
+      url: buildHuggingFaceModelsUrl(goal.filters)
     },
     {
-      label: "Broader search",
-      url: buildHuggingFaceSearchUrl(fallbackQuery || primaryQuery)
+      label: goal.secondaryLabel,
+      url: buildHuggingFaceModelsUrl({
+        ...goal.filters,
+        search: goal.secondarySearch
+      })
     }
   ];
 }
 
-function buildHuggingFaceSearchUrl(query) {
-  return `https://huggingface.co/models?sort=trending&search=${encodeURIComponent(query)}`;
+function buildHuggingFaceModelsUrl(filters) {
+  const params = new URLSearchParams({
+    sort: "trending"
+  });
+
+  if (filters?.library) {
+    params.set("library", filters.library);
+  }
+
+  if (filters?.pipelineTag) {
+    params.set("pipeline_tag", filters.pipelineTag);
+  }
+
+  if (filters?.search) {
+    params.set("search", filters.search);
+  }
+
+  return `https://huggingface.co/models?${params.toString()}`;
 }
 
 function buildSummary(hardwareProfile, goal, sizing) {
