@@ -103,21 +103,21 @@ Acceptance criteria:
 - [✅] Every major recommendation has visible reasoning.
 - [✅] Inferred claims are clearly marked as inferred.
 
-### ⚠️ 1.3 Improve Empty, Unsupported, and Error States
+### ✅ 1.3 Improve Empty, Unsupported, and Error States
 
-- [⚠️] Add specific messages for non-Hugging Face pages.
-- [⚠️] Add specific messages for Hugging Face pages that are not model pages.
-- [⚠️] Add specific messages for gated or private models.
-- [⚠️] Add specific messages for missing model cards.
-- [⚠️] Add specific messages for missing files.
-- [⚠️] Add specific messages for rate limits.
-- [⚠️] Add specific messages for network failure.
-- [❌] Provide learner-friendly next steps for each state.
+- [✅] Add specific messages for non-Hugging Face pages.
+- [✅] Add specific messages for Hugging Face pages that are not model pages.
+- [✅] Add specific messages for gated or private models.
+- [✅] Add specific messages for missing model cards.
+- [✅] Add specific messages for missing files.
+- [✅] Add specific messages for rate limits.
+- [✅] Add specific messages for network failure.
+- [✅] Provide learner-friendly next steps for each state.
 
 Acceptance criteria:
 
-- [⚠️] The user is never left with a generic failure message.
-- [⚠️] Each error state explains whether the problem is page type, access, metadata, or connectivity.
+- [✅] The user is never left with a generic failure message.
+- [✅] Each error state explains whether the problem is page type, access, metadata, or connectivity.
 
 ## Phase 2: Model Understanding
 

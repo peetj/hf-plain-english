@@ -70,6 +70,10 @@ async function refreshActiveTabStatus() {
     if (!tab?.url) {
       resetModelIdentity("No active tab");
       setStatus("No active tab", "Open a public Hugging Face model page and try again.");
+      renderLearnerState("Nothing to explain yet.", [
+        ["What happened", "Chrome did not report an active page to inspect."],
+        ["Next step", "Open a public Hugging Face model page, then refresh this panel."]
+      ]);
       return;
     }
 
@@ -88,6 +92,10 @@ async function refreshActiveTabStatus() {
     if (parsedUrl.isHuggingFace) {
       resetModelIdentity("Unsupported Hugging Face page");
       setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
+      renderLearnerState("This Hugging Face page is outside the current model-page guide.", [
+        ["What happened", getUnsupportedMessage(parsedUrl.reason)],
+        ["Next step", "Open a public model page with an owner/model address, such as huggingface.co/Qwen/Qwen3-0.6B."]
+      ]);
       renderTooltipText(
         overviewTextElement,
         "V1 supports public model pages in the owner/model URL format, including model tree and blob subpages."
@@ -97,6 +105,10 @@ async function refreshActiveTabStatus() {
 
     resetModelIdentity("Unsupported page");
     setStatus("Unsupported page", "This is not a Hugging Face model page.");
+    renderLearnerState("This page is not a Hugging Face model page.", [
+      ["What happened", "The extension only explains public Hugging Face model pages."],
+      ["Next step", "Open a model page on huggingface.co, then refresh this panel."]
+    ]);
     renderTooltipText(
       overviewTextElement,
       "Open a public Hugging Face model page, then click the Hugging Face for Newbies extension icon again."
@@ -104,6 +116,10 @@ async function refreshActiveTabStatus() {
   } catch (error) {
     resetModelIdentity("Unable to inspect active tab");
     setStatus("Error", "Chrome did not return active tab information.");
+    renderLearnerState("The extension could not inspect the current tab.", [
+      ["What happened", "Chrome did not provide the active tab URL."],
+      ["Next step", "Refresh the panel. If it still fails, reload the browser tab and try again."]
+    ]);
     console.warn("Hugging Face for Newbies side panel failed to inspect the active tab.", error);
   }
 }
@@ -154,7 +170,7 @@ async function loadModelFacts(modelId, refreshId) {
     ["Model card", data.modelCardMarkdown ? "Found" : "Missing"],
     ["Last modified", data.lastModified]
   ]);
-  renderInterpretation(interpreted);
+  renderInterpretation(interpreted, result.warnings);
   renderHardwareEstimate(hardwareEstimate, hardwareProfile);
   renderRunRecommendation(recommendation, explanation);
   renderRelevantFiles(interpreted.relevantFiles);
@@ -186,6 +202,12 @@ function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendatio
     ["Local fit", buildLocalFitAnswer(hardwareEstimate)],
     ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
   ]);
+  learnerAnswerSection.hidden = false;
+}
+
+function renderLearnerState(summary, rows) {
+  renderTooltipText(answerSummaryElement, summary);
+  renderDefinitionList(answerList, rows);
   learnerAnswerSection.hidden = false;
 }
 
@@ -275,10 +297,18 @@ function showFetchError(result) {
   switch (result.status) {
     case "not-found":
       setStatus("Model not found", result.error.message);
+      renderLearnerState("Hugging Face could not find public data for this model.", [
+        ["What happened", "The model ID may be wrong, deleted, renamed, or not public."],
+        ["Next step", "Check the page address and try opening the main model page again."]
+      ]);
       renderTooltipText(overviewTextElement, "Hugging Face did not return public metadata for this model ID.");
       break;
     case "rate-limited":
       setStatus("Rate limited", result.error.message);
+      renderLearnerState("Hugging Face is temporarily limiting requests.", [
+        ["What happened", "The public API returned a rate-limit response."],
+        ["Next step", result.error.retryAfter ? `Wait until ${result.error.retryAfter}, then refresh this panel.` : "Wait a few minutes, then refresh this panel."]
+      ]);
       renderTooltipText(
         overviewTextElement,
         result.error.retryAfter
@@ -288,14 +318,26 @@ function showFetchError(result) {
       break;
     case "gated-or-private":
       setStatus("Gated or private model", result.error.message);
+      renderLearnerState("This model may require access before it can be explained fully.", [
+        ["What happened", "The model appears gated, private, or unavailable through public access."],
+        ["Next step", "Open the original model page, sign in if needed, and check whether you must accept access terms."]
+      ]);
       renderTooltipText(overviewTextElement, "The model may require a Hugging Face account or accepted access terms.");
       break;
     case "invalid-response":
       setStatus("Unexpected API response", result.error.message);
+      renderLearnerState("Hugging Face returned data the extension could not safely read.", [
+        ["What happened", "The API response was missing or not in the expected format."],
+        ["Next step", "Refresh this panel. If it keeps happening, use the original model page directly."]
+      ]);
       renderTooltipText(overviewTextElement, "The extension could not safely read the Hugging Face API response.");
       break;
     default:
       setStatus("Network error", result.error.message);
+      renderLearnerState("The extension could not reach Hugging Face.", [
+        ["What happened", "The network request failed before public model data could be loaded."],
+        ["Next step", "Check your connection, then refresh this panel."]
+      ]);
       renderTooltipText(overviewTextElement, "Check the network connection and refresh the side panel.");
   }
 }
@@ -331,7 +373,7 @@ function renderFacts(rows) {
   factsSection.hidden = false;
 }
 
-function renderInterpretation(interpreted) {
+function renderInterpretation(interpreted, apiWarnings = []) {
   renderDefinitionList(interpretationList, [
     ["Likely model type", createFactDisplay(interpreted.modelKind)],
     ["Primary task", createFactDisplay(interpreted.primaryTask)],
@@ -345,14 +387,42 @@ function renderInterpretation(interpreted) {
 
   warningList.replaceChildren();
 
-  for (const warning of interpreted.warnings) {
+  for (const warning of [
+    ...apiWarnings.map(formatApiWarning),
+    ...interpreted.warnings.map((warning) => ({ message: warning }))
+  ]) {
     const item = document.createElement("p");
     item.className = "warning-item";
-    renderTooltipText(item, warning);
+    renderTooltipText(item, warning.message);
     warningList.append(item);
   }
 
   interpretationSection.hidden = false;
+}
+
+function formatApiWarning(warning) {
+  switch (warning?.type) {
+    case "missing-model-card":
+      return {
+        message: "The model card was not found. Next step: use the original Hugging Face page to check whether the author documented intended use, limits, or licence details somewhere else."
+      };
+    case "restricted-model-card":
+      return {
+        message: "The model card could not be fetched without access. Next step: open the original page and check whether you need to sign in or accept terms."
+      };
+    case "model-card-rate-limited":
+      return {
+        message: "The model card request was rate-limited. Next step: wait a few minutes and refresh this panel."
+      };
+    case "model-card-network-error":
+      return {
+        message: "The model card could not be fetched because of a network problem. Next step: check your connection and refresh this panel."
+      };
+    default:
+      return {
+        message: warning?.message || "Some Hugging Face information could not be loaded. Next step: check the original model page before relying on this summary."
+      };
+  }
 }
 
 function renderHardwareEstimate(estimate, hardwareProfile) {
