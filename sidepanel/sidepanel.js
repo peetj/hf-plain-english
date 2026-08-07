@@ -333,12 +333,12 @@ function renderFacts(rows) {
 
 function renderInterpretation(interpreted) {
   renderDefinitionList(interpretationList, [
-    ["Likely model type", describeFact(interpreted.modelKind)],
-    ["Primary task", describeFact(interpreted.primaryTask)],
-    ["Parameter count", formatParameterFact(interpreted.parameterCount)],
-    ["Size category", describeFact(interpreted.sizeCategory)],
-    ["Architecture", describeFact(interpreted.architecture)],
-    ["Context length", formatContextFact(interpreted.contextLength)],
+    ["Likely model type", createFactDisplay(interpreted.modelKind)],
+    ["Primary task", createFactDisplay(interpreted.primaryTask)],
+    ["Parameter count", createFactDisplay(interpreted.parameterCount, formatParameterCount)],
+    ["Size category", createFactDisplay(interpreted.sizeCategory)],
+    ["Architecture", createFactDisplay(interpreted.architecture)],
+    ["Context length", createFactDisplay(interpreted.contextLength, (value) => `${value.toLocaleString()} tokens`)],
     ["Detected formats", interpreted.formats.length ? interpreted.formats.map((format) => format.label).join(", ") : "Unknown"],
     ["Detected quantisation", interpreted.quantisations.length ? interpreted.quantisations.map((item) => item.value).join(", ") : "None detected"]
   ]);
@@ -385,8 +385,8 @@ function renderRunRecommendation(recommendation, explanation) {
   renderTooltipText(runSummaryElement, explanation.run);
   renderDefinitionList(runList, [
     ["Recommended tool", recommendation.primaryTool],
-    ["Confidence", recommendation.confidence],
-    ["Why", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
+    ["Confidence", createRecommendationConfidenceDisplay(recommendation)],
+    ["Why this route", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
     ["Other options", recommendation.alternatives.length ? recommendation.alternatives.join(" ") : "No safer alternative detected from this page."],
     ["Commands", recommendation.commands.length ? recommendation.commands.join(" ") : "No command shown because no verified command is known."]
   ]);
@@ -495,7 +495,13 @@ function renderDefinitionList(listElement, rows) {
     const term = document.createElement("dt");
     const description = document.createElement("dd");
     renderTooltipText(term, label);
-    renderTooltipText(description, formatFactValue(value));
+
+    if (value instanceof Node) {
+      description.append(value);
+    } else {
+      renderTooltipText(description, formatFactValue(value));
+    }
+
     listElement.append(term, description);
   }
 }
@@ -890,30 +896,6 @@ async function loadHardwareProfile() {
   }
 }
 
-function describeFact(fact) {
-  if (!fact?.value) {
-    return "Unknown";
-  }
-
-  return `${fact.value} - ${fact.confidence} confidence`;
-}
-
-function formatParameterFact(fact) {
-  if (!Number.isFinite(fact?.value)) {
-    return "Unknown";
-  }
-
-  return `${formatParameterCount(fact.value)} - ${fact.confidence} confidence`;
-}
-
-function formatContextFact(fact) {
-  if (!Number.isFinite(fact?.value)) {
-    return "Unknown";
-  }
-
-  return `${fact.value.toLocaleString()} tokens - ${fact.confidence} confidence`;
-}
-
 function formatParameterCount(value) {
   if (value >= 1_000_000_000) {
     return `${trimDecimal(value / 1_000_000_000)}B`;
@@ -924,6 +906,109 @@ function formatParameterCount(value) {
   }
 
   return value.toLocaleString();
+}
+
+function createFactDisplay(fact, formatValue = (value) => value) {
+  const container = document.createElement("div");
+  const valueElement = document.createElement("div");
+  const badgeRow = document.createElement("div");
+  const hasKnownValue = fact?.value !== null && fact?.value !== undefined && fact?.value !== "";
+
+  container.className = "fact-display";
+  valueElement.className = "fact-display-value";
+  badgeRow.className = "badge-row";
+
+  renderTooltipText(valueElement, hasKnownValue ? formatValue(fact.value) : "Unknown");
+  badgeRow.append(createFactBadge(getKnowledgeBadgeLabel(fact), getKnowledgeBadgeKind(fact)));
+
+  if (hasKnownValue && fact?.confidence) {
+    badgeRow.append(createFactBadge(`${fact.confidence} confidence`, "confidence"));
+  }
+
+  if (hasKnownValue && fact?.source) {
+    badgeRow.append(createFactBadge(formatSourceLabel(fact.source), "source"));
+  }
+
+  container.append(valueElement, badgeRow);
+  return container;
+}
+
+function createRecommendationConfidenceDisplay(recommendation) {
+  const container = document.createElement("div");
+  const valueElement = document.createElement("div");
+  const badgeRow = document.createElement("div");
+  const confidence = recommendation?.confidence || "low";
+
+  container.className = "fact-display";
+  valueElement.className = "fact-display-value";
+  badgeRow.className = "badge-row";
+  renderTooltipText(valueElement, `${confidence} confidence`);
+  badgeRow.append(createFactBadge(getConfidenceKnowledgeLabel(confidence), getConfidenceKnowledgeKind(confidence)));
+  badgeRow.append(createFactBadge("Extension recommendation", "source"));
+  container.append(valueElement, badgeRow);
+  return container;
+}
+
+function createFactBadge(label, kind) {
+  const badge = document.createElement("span");
+  badge.className = `fact-badge fact-badge-${kind}`;
+  badge.textContent = label;
+  return badge;
+}
+
+function getKnowledgeBadgeLabel(fact) {
+  if (!fact?.value) {
+    return "Unknown";
+  }
+
+  return getConfidenceKnowledgeLabel(fact.confidence);
+}
+
+function getKnowledgeBadgeKind(fact) {
+  if (!fact?.value) {
+    return "unknown";
+  }
+
+  return getConfidenceKnowledgeKind(fact.confidence);
+}
+
+function getConfidenceKnowledgeLabel(confidence) {
+  if (confidence === "high") {
+    return "Known";
+  }
+
+  if (confidence === "medium") {
+    return "Likely";
+  }
+
+  return "Unclear";
+}
+
+function getConfidenceKnowledgeKind(confidence) {
+  if (confidence === "high") {
+    return "known";
+  }
+
+  if (confidence === "medium") {
+    return "likely";
+  }
+
+  return "unknown";
+}
+
+function formatSourceLabel(source) {
+  switch (source) {
+    case "metadata":
+      return "Hugging Face data";
+    case "filename":
+      return "File names";
+    case "model-card":
+      return "Model card";
+    case "inference":
+      return "Extension estimate";
+    default:
+      return "Available page data";
+  }
 }
 
 function formatRuntimeRange(range) {

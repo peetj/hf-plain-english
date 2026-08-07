@@ -89,19 +89,19 @@ Acceptance criteria:
 - [✅] A non-technical learner can identify the model type, likely use, and next step without reading raw metadata.
 - [✅] Technical facts remain visible for verification.
 
-### ⚠️ 1.2 Add Confidence and Source Badges
+### ✅ 1.2 Add Confidence and Source Badges
 
-- [⚠️] Show whether claims came from Hugging Face metadata.
-- [⚠️] Show whether claims came from repository file names.
-- [⚠️] Show whether claims came from model card text.
-- [⚠️] Show whether claims came from local inference by the extension.
-- [❌] Use clear visible badges such as "Known", "Likely", and "Unknown".
-- [⚠️] Avoid making low-confidence estimates look definitive.
+- [✅] Show whether claims came from Hugging Face metadata.
+- [✅] Show whether claims came from repository file names.
+- [✅] Show whether claims came from model card text.
+- [✅] Show whether claims came from local inference by the extension.
+- [✅] Use clear visible badges such as "Known", "Likely", and "Unknown".
+- [✅] Avoid making low-confidence estimates look definitive.
 
 Acceptance criteria:
 
-- [❌] Every major recommendation has visible reasoning.
-- [⚠️] Inferred claims are clearly marked as inferred.
+- [✅] Every major recommendation has visible reasoning.
+- [✅] Inferred claims are clearly marked as inferred.
 
 ### ⚠️ 1.3 Improve Empty, Unsupported, and Error States
 
