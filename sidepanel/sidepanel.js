@@ -687,7 +687,7 @@ function isSectionInitiallyExpanded(section) {
 
 function initThemeControls() {
   const storedTheme = localStorage.getItem("hfNewbies.theme");
-  const initialTheme = isKnownTheme(storedTheme) ? storedTheme : "teal";
+  const initialTheme = isKnownTheme(storedTheme) ? storedTheme : "nord";
   applyTheme(initialTheme);
 
   for (const button of themeButtons) {
@@ -713,7 +713,7 @@ function applyTheme(theme) {
 }
 
 function isKnownTheme(theme) {
-  return ["sunrise", "teal", "contrast"].includes(theme);
+  return ["nord", "solarized", "gruvbox"].includes(theme);
 }
 
 function formatFactValue(value) {

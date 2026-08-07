@@ -43,6 +43,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Make all the major sections collapsible with a dropdown arrow
 - [✅] Invert the theme colors. I think that will look better
 - [✅] Add multiple switchable color themes
+- [✅] Replace the first theme colors with well-known palettes and make the header the darkest part of the extension.
 - [👍] The table of tech terms is very good
 - [✅] Start the extension with all sections closed except for Quick Answer/First Read
 - [✅] Icon still not great at small dimension. Make it look more like hugging face with glasses but have eyes as well. Change color to slightly darker
