@@ -249,6 +249,32 @@ main {
   margin-top: 8px;
 }
 
+.learner-answer-section {
+  border-left: 5px solid var(--accent);
+}
+
+.answer-summary {
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.answer-list {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.38fr) minmax(0, 1fr);
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.answer-list dt {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.answer-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .facts-list {
   display: grid;
   grid-template-columns: minmax(88px, 0.45fr) minmax(0, 1fr);
@@ -264,6 +290,59 @@ main {
 .facts-list dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.fact-display {
+  display: grid;
+  gap: 5px;
+}
+
+.fact-display-value {
+  overflow-wrap: anywhere;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.fact-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 19px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.fact-badge-known {
+  border-color: var(--accent);
+  background: rgb(8 118 110 / 14%);
+  color: var(--accent-strong);
+}
+
+.fact-badge-likely {
+  border-color: var(--accent-warm);
+  background: rgb(245 158 47 / 18%);
+}
+
+.fact-badge-unknown {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.fact-badge-source {
+  border-style: dashed;
+}
+
+.fact-badge-confidence {
+  background: transparent;
 }
 
 .source-text {

@@ -44,8 +44,14 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Invert the theme colors. I think that will look better
 - [❌] Add multiple switchable color themes
 - [👍] The table of tech terms is very good
-- [❌] Start the extension with all sections closed except for Overview and above.
+- [❌] Start the extension with all sections closed except for Quick Answer/First Read
 - [❌] Icon still not great at small dimension. Make it look more like hugging face with glasses but have eyes as well. Change color to slightly darker
+- [❌] "Best next step" should be intelligent, ie. it won't necessarily be the same for me as for somebody else. Can we do this?
+- [❌] "How to Read this Model" section: 
+          - Put badges inline with same row but right aligned
+          - What is the point of the "Hugging Face Data" badge? I don't see any value in it??
+          - Pointless having a badge of "Unknown" for a value of "Unknown"
+          - Saying "No GGUF file was detected in this repository." in this section seems misplaced
 - [❌] Ignore.
 
 ## Current Foundation
@@ -73,51 +79,51 @@ The development plan below focuses on turning that foundation into a trustworthy
 
 ## Phase 1: Learner Experience
 
-### ⚠️ 1.1 Rewrite Side Panel Around Learner Questions
+### ✅ 1.1 Rewrite Side Panel Around Learner Questions
 
 - [✅] Remove developer-oriented header text.
 - [✅] Rename the extension to clearer learner-facing language.
 - [✅] Show the model name as the primary identity and the owner separately.
 - [✅] Add a custom tooltip explaining Hugging Face `owner/model` naming.
-- [❌] Replace remaining developer-oriented labels like "Fetched facts" with learner-facing sections.
-- [❌] Add a top-level answer card with what it is, best next action, local run likelihood, and confidence.
-- [❌] Make the side panel easy to scan in under 30 seconds.
-- [❌] Keep detailed facts available below the plain-English answer.
+- [✅] Replace remaining developer-oriented labels like "Fetched facts" with learner-facing sections.
+- [✅] Add a top-level answer card with what it is, best next action, local run likelihood, and confidence.
+- [✅] Make the side panel easy to scan in under 30 seconds.
+- [✅] Keep detailed facts available below the plain-English answer.
 
 Acceptance criteria:
 
-- [❌] A non-technical learner can identify the model type, likely use, and next step without reading raw metadata.
-- [⚠️] Technical facts remain visible for verification.
+- [✅] A non-technical learner can identify the model type, likely use, and next step without reading raw metadata.
+- [✅] Technical facts remain visible for verification.
 
-### ⚠️ 1.2 Add Confidence and Source Badges
+### ✅ 1.2 Add Confidence and Source Badges
 
-- [⚠️] Show whether claims came from Hugging Face metadata.
-- [⚠️] Show whether claims came from repository file names.
-- [⚠️] Show whether claims came from model card text.
-- [⚠️] Show whether claims came from local inference by the extension.
-- [❌] Use clear visible badges such as "Known", "Likely", and "Unknown".
-- [⚠️] Avoid making low-confidence estimates look definitive.
-
-Acceptance criteria:
-
-- [❌] Every major recommendation has visible reasoning.
-- [⚠️] Inferred claims are clearly marked as inferred.
-
-### ⚠️ 1.3 Improve Empty, Unsupported, and Error States
-
-- [⚠️] Add specific messages for non-Hugging Face pages.
-- [⚠️] Add specific messages for Hugging Face pages that are not model pages.
-- [⚠️] Add specific messages for gated or private models.
-- [⚠️] Add specific messages for missing model cards.
-- [⚠️] Add specific messages for missing files.
-- [⚠️] Add specific messages for rate limits.
-- [⚠️] Add specific messages for network failure.
-- [❌] Provide learner-friendly next steps for each state.
+- [✅] Show whether claims came from Hugging Face metadata.
+- [✅] Show whether claims came from repository file names.
+- [✅] Show whether claims came from model card text.
+- [✅] Show whether claims came from local inference by the extension.
+- [✅] Use clear visible badges such as "Known", "Likely", and "Unknown".
+- [✅] Avoid making low-confidence estimates look definitive.
 
 Acceptance criteria:
 
-- [⚠️] The user is never left with a generic failure message.
-- [⚠️] Each error state explains whether the problem is page type, access, metadata, or connectivity.
+- [✅] Every major recommendation has visible reasoning.
+- [✅] Inferred claims are clearly marked as inferred.
+
+### ✅ 1.3 Improve Empty, Unsupported, and Error States
+
+- [✅] Add specific messages for non-Hugging Face pages.
+- [✅] Add specific messages for Hugging Face pages that are not model pages.
+- [✅] Add specific messages for gated or private models.
+- [✅] Add specific messages for missing model cards.
+- [✅] Add specific messages for missing files.
+- [✅] Add specific messages for rate limits.
+- [✅] Add specific messages for network failure.
+- [✅] Provide learner-friendly next steps for each state.
+
+Acceptance criteria:
+
+- [✅] The user is never left with a generic failure message.
+- [✅] Each error state explains whether the problem is page type, access, metadata, or connectivity.
 
 ## Phase 2: Model Understanding
 

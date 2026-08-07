@@ -9,6 +9,9 @@ const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
+const learnerAnswerSection = document.querySelector("#learner-answer-section");
+const answerSummaryElement = document.querySelector("#answer-summary");
+const answerList = document.querySelector("#answer-list");
 const overviewTextElement = document.querySelector("#overview-text");
 const refreshButton = document.querySelector("#refresh-button");
 const factsSection = document.querySelector("#facts-section");
@@ -67,6 +70,10 @@ async function refreshActiveTabStatus() {
     if (!tab?.url) {
       resetModelIdentity("No active tab");
       setStatus("No active tab", "Open a public Hugging Face model page and try again.");
+      renderLearnerState("Nothing to explain yet.", [
+        ["What happened", "Chrome did not report an active page to inspect."],
+        ["Next step", "Open a public Hugging Face model page, then refresh this panel."]
+      ]);
       return;
     }
 
@@ -85,6 +92,10 @@ async function refreshActiveTabStatus() {
     if (parsedUrl.isHuggingFace) {
       resetModelIdentity("Unsupported Hugging Face page");
       setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
+      renderLearnerState("This Hugging Face page is outside the current model-page guide.", [
+        ["What happened", getUnsupportedMessage(parsedUrl.reason)],
+        ["Next step", "Open a public model page with an owner/model address, such as huggingface.co/Qwen/Qwen3-0.6B."]
+      ]);
       renderTooltipText(
         overviewTextElement,
         "V1 supports public model pages in the owner/model URL format, including model tree and blob subpages."
@@ -94,6 +105,10 @@ async function refreshActiveTabStatus() {
 
     resetModelIdentity("Unsupported page");
     setStatus("Unsupported page", "This is not a Hugging Face model page.");
+    renderLearnerState("This page is not a Hugging Face model page.", [
+      ["What happened", "The extension only explains public Hugging Face model pages."],
+      ["Next step", "Open a model page on huggingface.co, then refresh this panel."]
+    ]);
     renderTooltipText(
       overviewTextElement,
       "Open a public Hugging Face model page, then click the Hugging Face for Newbies extension icon again."
@@ -101,6 +116,10 @@ async function refreshActiveTabStatus() {
   } catch (error) {
     resetModelIdentity("Unable to inspect active tab");
     setStatus("Error", "Chrome did not return active tab information.");
+    renderLearnerState("The extension could not inspect the current tab.", [
+      ["What happened", "Chrome did not provide the active tab URL."],
+      ["Next step", "Refresh the panel. If it still fails, reload the browser tab and try again."]
+    ]);
     console.warn("Hugging Face for Newbies side panel failed to inspect the active tab.", error);
   }
 }
@@ -138,6 +157,7 @@ async function loadModelFacts(modelId, refreshId) {
     return;
   }
 
+  renderLearnerAnswer(data, interpreted, hardwareEstimate, recommendation, explanation);
   renderFacts([
     ["Author", data.author],
     ["Model name", data.modelName],
@@ -150,7 +170,7 @@ async function loadModelFacts(modelId, refreshId) {
     ["Model card", data.modelCardMarkdown ? "Found" : "Missing"],
     ["Last modified", data.lastModified]
   ]);
-  renderInterpretation(interpreted);
+  renderInterpretation(interpreted, result.warnings);
   renderHardwareEstimate(hardwareEstimate, hardwareProfile);
   renderRunRecommendation(recommendation, explanation);
   renderRelevantFiles(interpreted.relevantFiles);
@@ -174,16 +194,121 @@ async function loadModelFacts(modelId, refreshId) {
   renderTooltipText(overviewTextElement, explanation.overview);
 }
 
+function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation) {
+  renderTooltipText(answerSummaryElement, explanation.summary);
+  renderDefinitionList(answerList, [
+    ["What it is", buildWhatItIsAnswer(model, interpreted)],
+    ["Best next step", buildNextStepAnswer(recommendation)],
+    ["Local fit", buildLocalFitAnswer(hardwareEstimate)],
+    ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
+  ]);
+  learnerAnswerSection.hidden = false;
+}
+
+function renderLearnerState(summary, rows) {
+  renderTooltipText(answerSummaryElement, summary);
+  renderDefinitionList(answerList, rows);
+  learnerAnswerSection.hidden = false;
+}
+
+function buildWhatItIsAnswer(model, interpreted) {
+  const modelKind = interpreted?.modelKind?.value;
+  const task = interpreted?.primaryTask?.value || model?.pipelineTag;
+
+  if (modelKind && task) {
+    return `${modelKind} model for ${task}`;
+  }
+
+  if (modelKind) {
+    return `${modelKind} model`;
+  }
+
+  if (task) {
+    return `model for ${task}`;
+  }
+
+  return "Model type is not clear yet";
+}
+
+function buildNextStepAnswer(recommendation) {
+  const tool = recommendation?.primaryTool || "insufficient information";
+
+  if (tool === "insufficient information") {
+    return "Do not download yet; inspect the files, licence, and model card first.";
+  }
+
+  if (tool === "not suitable for ordinary chatbot use") {
+    return "Do not treat this as a normal chatbot model; check the specialist task first.";
+  }
+
+  return `Start with ${tool}`;
+}
+
+function buildLocalFitAnswer(hardwareEstimate) {
+  const fitLabel = getFitStatusLabel(hardwareEstimate?.fit?.overall, { includeHardware: true });
+  const runtimeRange = formatRuntimeRange(hardwareEstimate?.estimatedRuntimeMemoryGb);
+
+  if (runtimeRange === "Unknown") {
+    return fitLabel;
+  }
+
+  return `${fitLabel}; estimated runtime memory ${runtimeRange}`;
+}
+
+function buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate) {
+  const confidenceValues = [
+    interpreted?.modelKind?.confidence,
+    interpreted?.primaryTask?.confidence,
+    interpreted?.parameterCount?.confidence,
+    interpreted?.contextLength?.confidence,
+    recommendation?.confidence,
+    hardwareEstimate?.fit?.overall === "unknown" ? "low" : "medium"
+  ].filter(Boolean);
+  const score = confidenceValues.reduce((total, confidence) => total + confidenceScore(confidence), 0);
+  const average = confidenceValues.length ? score / confidenceValues.length : 0;
+
+  if (average >= 2.45) {
+    return "High confidence for the headline read";
+  }
+
+  if (average >= 1.65) {
+    return "Medium confidence; check the details below";
+  }
+
+  return "Low confidence; important information is missing";
+}
+
+function confidenceScore(confidence) {
+  switch (confidence) {
+    case "high":
+      return 3;
+    case "medium":
+      return 2;
+    case "low":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 function showFetchError(result) {
   factsSection.hidden = true;
 
   switch (result.status) {
     case "not-found":
       setStatus("Model not found", result.error.message);
+      renderLearnerState("Hugging Face could not find public data for this model.", [
+        ["What happened", "The model ID may be wrong, deleted, renamed, or not public."],
+        ["Next step", "Check the page address and try opening the main model page again."]
+      ]);
       renderTooltipText(overviewTextElement, "Hugging Face did not return public metadata for this model ID.");
       break;
     case "rate-limited":
       setStatus("Rate limited", result.error.message);
+      renderLearnerState("Hugging Face is temporarily limiting requests.", [
+        ["What happened", "The public API returned a rate-limit response."],
+        ["Next step", result.error.retryAfter ? `Wait until ${result.error.retryAfter}, then refresh this panel.` : "Wait a few minutes, then refresh this panel."]
+      ]);
       renderTooltipText(
         overviewTextElement,
         result.error.retryAfter
@@ -193,14 +318,26 @@ function showFetchError(result) {
       break;
     case "gated-or-private":
       setStatus("Gated or private model", result.error.message);
+      renderLearnerState("This model may require access before it can be explained fully.", [
+        ["What happened", "The model appears gated, private, or unavailable through public access."],
+        ["Next step", "Open the original model page, sign in if needed, and check whether you must accept access terms."]
+      ]);
       renderTooltipText(overviewTextElement, "The model may require a Hugging Face account or accepted access terms.");
       break;
     case "invalid-response":
       setStatus("Unexpected API response", result.error.message);
+      renderLearnerState("Hugging Face returned data the extension could not safely read.", [
+        ["What happened", "The API response was missing or not in the expected format."],
+        ["Next step", "Refresh this panel. If it keeps happening, use the original model page directly."]
+      ]);
       renderTooltipText(overviewTextElement, "The extension could not safely read the Hugging Face API response.");
       break;
     default:
       setStatus("Network error", result.error.message);
+      renderLearnerState("The extension could not reach Hugging Face.", [
+        ["What happened", "The network request failed before public model data could be loaded."],
+        ["Next step", "Check your connection, then refresh this panel."]
+      ]);
       renderTooltipText(overviewTextElement, "Check the network connection and refresh the side panel.");
   }
 }
@@ -236,28 +373,56 @@ function renderFacts(rows) {
   factsSection.hidden = false;
 }
 
-function renderInterpretation(interpreted) {
+function renderInterpretation(interpreted, apiWarnings = []) {
   renderDefinitionList(interpretationList, [
-    ["Likely model type", describeFact(interpreted.modelKind)],
-    ["Primary task", describeFact(interpreted.primaryTask)],
-    ["Parameter count", formatParameterFact(interpreted.parameterCount)],
-    ["Size category", describeFact(interpreted.sizeCategory)],
-    ["Architecture", describeFact(interpreted.architecture)],
-    ["Context length", formatContextFact(interpreted.contextLength)],
+    ["Likely model type", createFactDisplay(interpreted.modelKind)],
+    ["Primary task", createFactDisplay(interpreted.primaryTask)],
+    ["Parameter count", createFactDisplay(interpreted.parameterCount, formatParameterCount)],
+    ["Size category", createFactDisplay(interpreted.sizeCategory)],
+    ["Architecture", createFactDisplay(interpreted.architecture)],
+    ["Context length", createFactDisplay(interpreted.contextLength, (value) => `${value.toLocaleString()} tokens`)],
     ["Detected formats", interpreted.formats.length ? interpreted.formats.map((format) => format.label).join(", ") : "Unknown"],
     ["Detected quantisation", interpreted.quantisations.length ? interpreted.quantisations.map((item) => item.value).join(", ") : "None detected"]
   ]);
 
   warningList.replaceChildren();
 
-  for (const warning of interpreted.warnings) {
+  for (const warning of [
+    ...apiWarnings.map(formatApiWarning),
+    ...interpreted.warnings.map((warning) => ({ message: warning }))
+  ]) {
     const item = document.createElement("p");
     item.className = "warning-item";
-    renderTooltipText(item, warning);
+    renderTooltipText(item, warning.message);
     warningList.append(item);
   }
 
   interpretationSection.hidden = false;
+}
+
+function formatApiWarning(warning) {
+  switch (warning?.type) {
+    case "missing-model-card":
+      return {
+        message: "The model card was not found. Next step: use the original Hugging Face page to check whether the author documented intended use, limits, or licence details somewhere else."
+      };
+    case "restricted-model-card":
+      return {
+        message: "The model card could not be fetched without access. Next step: open the original page and check whether you need to sign in or accept terms."
+      };
+    case "model-card-rate-limited":
+      return {
+        message: "The model card request was rate-limited. Next step: wait a few minutes and refresh this panel."
+      };
+    case "model-card-network-error":
+      return {
+        message: "The model card could not be fetched because of a network problem. Next step: check your connection and refresh this panel."
+      };
+    default:
+      return {
+        message: warning?.message || "Some Hugging Face information could not be loaded. Next step: check the original model page before relying on this summary."
+      };
+  }
 }
 
 function renderHardwareEstimate(estimate, hardwareProfile) {
@@ -290,8 +455,8 @@ function renderRunRecommendation(recommendation, explanation) {
   renderTooltipText(runSummaryElement, explanation.run);
   renderDefinitionList(runList, [
     ["Recommended tool", recommendation.primaryTool],
-    ["Confidence", recommendation.confidence],
-    ["Why", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
+    ["Confidence", createRecommendationConfidenceDisplay(recommendation)],
+    ["Why this route", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
     ["Other options", recommendation.alternatives.length ? recommendation.alternatives.join(" ") : "No safer alternative detected from this page."],
     ["Commands", recommendation.commands.length ? recommendation.commands.join(" ") : "No command shown because no verified command is known."]
   ]);
@@ -400,13 +565,22 @@ function renderDefinitionList(listElement, rows) {
     const term = document.createElement("dt");
     const description = document.createElement("dd");
     renderTooltipText(term, label);
-    renderTooltipText(description, formatFactValue(value));
+
+    if (value instanceof Node) {
+      description.append(value);
+    } else {
+      renderTooltipText(description, formatFactValue(value));
+    }
+
     listElement.append(term, description);
   }
 }
 
 function resetFetchedDetails() {
   hideTooltip();
+  answerSummaryElement.replaceChildren();
+  answerList.replaceChildren();
+  learnerAnswerSection.hidden = true;
   factsList.replaceChildren();
   factsSection.hidden = true;
   interpretationList.replaceChildren();
@@ -792,30 +966,6 @@ async function loadHardwareProfile() {
   }
 }
 
-function describeFact(fact) {
-  if (!fact?.value) {
-    return "Unknown";
-  }
-
-  return `${fact.value} - ${fact.confidence} confidence`;
-}
-
-function formatParameterFact(fact) {
-  if (!Number.isFinite(fact?.value)) {
-    return "Unknown";
-  }
-
-  return `${formatParameterCount(fact.value)} - ${fact.confidence} confidence`;
-}
-
-function formatContextFact(fact) {
-  if (!Number.isFinite(fact?.value)) {
-    return "Unknown";
-  }
-
-  return `${fact.value.toLocaleString()} tokens - ${fact.confidence} confidence`;
-}
-
 function formatParameterCount(value) {
   if (value >= 1_000_000_000) {
     return `${trimDecimal(value / 1_000_000_000)}B`;
@@ -826,6 +976,109 @@ function formatParameterCount(value) {
   }
 
   return value.toLocaleString();
+}
+
+function createFactDisplay(fact, formatValue = (value) => value) {
+  const container = document.createElement("div");
+  const valueElement = document.createElement("div");
+  const badgeRow = document.createElement("div");
+  const hasKnownValue = fact?.value !== null && fact?.value !== undefined && fact?.value !== "";
+
+  container.className = "fact-display";
+  valueElement.className = "fact-display-value";
+  badgeRow.className = "badge-row";
+
+  renderTooltipText(valueElement, hasKnownValue ? formatValue(fact.value) : "Unknown");
+  badgeRow.append(createFactBadge(getKnowledgeBadgeLabel(fact), getKnowledgeBadgeKind(fact)));
+
+  if (hasKnownValue && fact?.confidence) {
+    badgeRow.append(createFactBadge(`${fact.confidence} confidence`, "confidence"));
+  }
+
+  if (hasKnownValue && fact?.source) {
+    badgeRow.append(createFactBadge(formatSourceLabel(fact.source), "source"));
+  }
+
+  container.append(valueElement, badgeRow);
+  return container;
+}
+
+function createRecommendationConfidenceDisplay(recommendation) {
+  const container = document.createElement("div");
+  const valueElement = document.createElement("div");
+  const badgeRow = document.createElement("div");
+  const confidence = recommendation?.confidence || "low";
+
+  container.className = "fact-display";
+  valueElement.className = "fact-display-value";
+  badgeRow.className = "badge-row";
+  renderTooltipText(valueElement, `${confidence} confidence`);
+  badgeRow.append(createFactBadge(getConfidenceKnowledgeLabel(confidence), getConfidenceKnowledgeKind(confidence)));
+  badgeRow.append(createFactBadge("Extension recommendation", "source"));
+  container.append(valueElement, badgeRow);
+  return container;
+}
+
+function createFactBadge(label, kind) {
+  const badge = document.createElement("span");
+  badge.className = `fact-badge fact-badge-${kind}`;
+  badge.textContent = label;
+  return badge;
+}
+
+function getKnowledgeBadgeLabel(fact) {
+  if (!fact?.value) {
+    return "Unknown";
+  }
+
+  return getConfidenceKnowledgeLabel(fact.confidence);
+}
+
+function getKnowledgeBadgeKind(fact) {
+  if (!fact?.value) {
+    return "unknown";
+  }
+
+  return getConfidenceKnowledgeKind(fact.confidence);
+}
+
+function getConfidenceKnowledgeLabel(confidence) {
+  if (confidence === "high") {
+    return "Known";
+  }
+
+  if (confidence === "medium") {
+    return "Likely";
+  }
+
+  return "Unclear";
+}
+
+function getConfidenceKnowledgeKind(confidence) {
+  if (confidence === "high") {
+    return "known";
+  }
+
+  if (confidence === "medium") {
+    return "likely";
+  }
+
+  return "unknown";
+}
+
+function formatSourceLabel(source) {
+  switch (source) {
+    case "metadata":
+      return "Hugging Face data";
+    case "filename":
+      return "File names";
+    case "model-card":
+      return "Model card";
+    case "inference":
+      return "Extension estimate";
+    default:
+      return "Available page data";
+  }
 }
 
 function formatRuntimeRange(range) {
