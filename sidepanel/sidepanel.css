@@ -1,29 +1,35 @@
 :root {
   color-scheme: light dark;
-  --background: #f7f8fa;
-  --surface: #ffffff;
-  --surface-muted: #eef1f4;
-  --text: #171a1f;
-  --muted: #5d6673;
-  --border: #d8dde4;
-  --accent: #0f6b5f;
-  --accent-strong: #0a4f46;
-  --focus: #1f75cb;
-  --shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  --background: #075e58;
+  --surface: #fff8e8;
+  --surface-muted: #ffedbd;
+  --text: #241a12;
+  --muted: #6c5a48;
+  --border: #d89b32;
+  --accent: #08766e;
+  --accent-strong: #075e58;
+  --accent-warm: #f59e2f;
+  --button-background: #ffe6a6;
+  --header-background: #ffbe55;
+  --focus: #0b7285;
+  --shadow: 0 7px 22px rgb(4 55 51 / 28%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #111418;
-    --surface: #191e24;
-    --surface-muted: #222933;
-    --text: #f2f5f8;
-    --muted: #aab4c0;
-    --border: #333c48;
-    --accent: #62c7b8;
-    --accent-strong: #8de2d5;
-    --focus: #84bfff;
-    --shadow: none;
+    --background: #ffbe55;
+    --surface: #16221f;
+    --surface-muted: #243a35;
+    --text: #fff8ec;
+    --muted: #d7c7ad;
+    --border: #0d766f;
+    --accent: #54d3c4;
+    --accent-strong: #8de9de;
+    --accent-warm: #ffb84d;
+    --button-background: #243a35;
+    --header-background: #16221f;
+    --focus: #6ee7df;
+    --shadow: 0 7px 22px rgb(20 13 5 / 25%);
   }
 }
 
@@ -59,8 +65,8 @@ a:focus-visible {
   justify-content: space-between;
   gap: 12px;
   padding: 18px 16px 14px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  border-bottom: 3px solid var(--accent);
+  background: var(--header-background);
 }
 
 .app-header > div {
@@ -83,6 +89,10 @@ h2 {
   margin-bottom: 8px;
   font-size: 15px;
   line-height: 1.3;
+}
+
+h2:has(.section-toggle) {
+  margin-bottom: 0;
 }
 
 .model-id {
@@ -157,7 +167,7 @@ h2 {
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--surface-muted);
+  background: var(--button-background);
   color: var(--text);
   cursor: pointer;
 }
@@ -182,6 +192,7 @@ main {
 
 .status-card {
   padding: 14px;
+  border-left: 4px solid var(--accent-warm);
 }
 
 .status-label {
@@ -197,6 +208,45 @@ main {
 
 .panel-section {
   padding: 14px;
+  border-top: 2px solid rgb(245 158 47 / 28%);
+}
+
+.section-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.section-toggle:hover {
+  color: var(--accent-strong);
+}
+
+.section-arrow {
+  display: inline-block;
+  width: 1em;
+  color: var(--accent);
+  font-size: 14px;
+  transform-origin: 50% 50%;
+  transition: transform 120ms ease;
+}
+
+.panel-section.is-collapsed .section-arrow {
+  transform: rotate(-90deg);
+}
+
+.section-body {
+  margin-top: 8px;
 }
 
 .facts-list {
@@ -230,7 +280,7 @@ main {
 .warning-item {
   margin: 0;
   padding: 8px 10px;
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--accent-warm);
   border-radius: 4px;
   background: var(--surface-muted);
   color: var(--text);
@@ -266,27 +316,48 @@ main {
   font-size: 12px;
 }
 
-.term-details {
+.terms-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.terms-table th,
+.terms-table td {
+  padding: 8px 9px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.terms-table thead th {
   background: var(--surface-muted);
+  color: var(--accent-strong);
+  font-size: 11px;
+  text-transform: uppercase;
 }
 
-.term-details summary {
-  cursor: pointer;
-  font-weight: 700;
-  padding: 9px 10px;
+.terms-table tbody tr:last-child th,
+.terms-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
-.term-details summary:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+.terms-table tbody th {
+  width: 34%;
+  color: var(--text);
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
-.term-details p {
-  padding: 0 10px 10px;
+.terms-table p {
+  margin-bottom: 5px;
 }
 
 .term-short {
   color: var(--muted);
+  font-weight: 700;
 }

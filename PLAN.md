@@ -32,13 +32,21 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Fix tooltip clipping by rendering tooltips in a panel-level fixed overlay instead of inside individual text containers.
 - [✅] Change extension icon to a distinct learner-face design with glasses and a subtle pencil/book motif.
 - [👍] The tooltip system looks great.
-- [❌] Remove "Hugging Face calls this an owner/model ID." as it makes no sense
-- [❌] "Runs Comfortably" needs more context, eg. on what? on my machine? What is the important spec of my machine if so?
+- [✅] Remove "Hugging Face calls this an owner/model ID." as it makes no sense
+- [✅] "Runs Comfortably" needs more context, eg. on what? on my machine? What is the important spec of my machine if so?
 - [👍] Overview is ok
-- [❌] In "Fetched Facts" - ALL detail should tooltips
-- [❌] In "Plain English Read" section you have something like this: "Likely model type   chat (metadata, high confidence)". The bracket text doesn't make sense. Why say "metadata"? "high confidence" is ok though.
-- [❌] Make sure you include ALL acronyms that aren't everyday parlance in the tooltips, eg. BF16
-- [❌] Let's do a fun one. Make the color scheme of the theme of the extension a bit more interesting but in the website colors - maybe contrasting colors that make the extension stand out.
+- [✅] In "Fetched Facts" - ALL detail should tooltips
+- [✅] In "Plain English Read" section you have something like this: "Likely model type   chat (metadata, high confidence)". The bracket text doesn't make sense. Why say "metadata"? "high confidence" is ok though.
+- [✅] Make sure you include ALL acronyms that aren't everyday parlance in the tooltips, eg. BF16
+- [✅] Let's do a fun one. Make the color scheme of the theme of the extension a bit more interesting but in the website colors - maybe contrasting colors that make the extension stand out.
+- [✅] The Technical Terms (glossary section) is really using the wrong UX paradigm. An expandable section is not good here. Rather a table with "Term" and "Explanation" would be way better
+- [✅] Make all the major sections collapsible with a dropdown arrow
+- [✅] Invert the theme colors. I think that will look better
+- [❌] Add multiple switchable color themes
+- [👍] The table of tech terms is very good
+- [❌] Start the extension with all sections closed except for Overview and above.
+- [❌] Icon still not great at small dimension. Make it look more like hugging face with glasses but have eyes as well. Change color to slightly darker
+- [❌] Ignore.
 
 ## Current Foundation
 

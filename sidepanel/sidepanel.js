@@ -165,7 +165,10 @@ async function loadModelFacts(modelId, refreshId) {
   } else if (result.status === "partial") {
     setStatus("Partial information", warningText.trim() || "Some Hugging Face information could not be fetched.");
   } else {
-    setStatus(getFitStatusLabel(hardwareEstimate.fit.overall), "Model facts and a cautious hardware estimate are available.");
+    setStatus(
+      getFitStatusLabel(hardwareEstimate.fit.overall, { includeHardware: true }),
+      `Estimated against your saved hardware profile: ${formatHardwareProfile(hardwareProfile)}.`
+    );
   }
 
   renderTooltipText(overviewTextElement, explanation.overview);
@@ -208,9 +211,7 @@ function renderModelIdentity(modelId) {
   activeUrlElement.textContent = modelName || modelId;
   renderTooltipText(
     modelOwnerElement,
-    owner
-      ? `by ${owner} on Hugging Face. Hugging Face calls this an owner/model ID.`
-      : "Hugging Face model page."
+    owner ? `by ${owner} on Hugging Face` : "Hugging Face model page."
   );
   modelOwnerElement.hidden = false;
 }
@@ -227,7 +228,7 @@ function renderFacts(rows) {
   for (const [label, value] of rows) {
     const term = document.createElement("dt");
     const description = document.createElement("dd");
-    term.textContent = label;
+    renderTooltipText(term, label);
     renderTooltipText(description, formatFactValue(value));
     factsList.append(term, description);
   }
@@ -262,7 +263,7 @@ function renderInterpretation(interpreted) {
 function renderHardwareEstimate(estimate, hardwareProfile) {
   renderTooltipText(hardwareSummaryElement, estimate.explanation);
   renderDefinitionList(hardwareList, [
-    ["Fit", getFitStatusLabel(estimate.fit.overall)],
+    ["Fit", getFitStatusLabel(estimate.fit.overall, { includeHardware: true })],
     ["GPU fit", formatFitCategory(estimate.fit.gpu)],
     ["System RAM fit", formatFitCategory(estimate.fit.systemRam)],
     ["Hardware profile", formatHardwareProfile(hardwareProfile)],
@@ -354,22 +355,41 @@ function renderTechnicalTerms(glossary, termIds) {
     return;
   }
 
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const tbody = document.createElement("tbody");
+  const headerRow = document.createElement("tr");
+  const termHeader = document.createElement("th");
+  const explanationHeader = document.createElement("th");
+
+  table.className = "terms-table";
+  termHeader.scope = "col";
+  explanationHeader.scope = "col";
+  termHeader.textContent = "Term";
+  explanationHeader.textContent = "Explanation";
+  headerRow.append(termHeader, explanationHeader);
+  thead.append(headerRow);
+
   for (const entry of entries) {
-    const details = document.createElement("details");
-    const summary = document.createElement("summary");
+    const row = document.createElement("tr");
+    const termCell = document.createElement("th");
+    const explanationCell = document.createElement("td");
     const short = document.createElement("p");
     const detail = document.createElement("p");
 
-    details.className = "term-details";
-    summary.textContent = entry.term;
+    termCell.scope = "row";
+    termCell.textContent = entry.term;
     short.className = "term-short";
     renderTooltipText(short, entry.short);
     renderTooltipText(detail, entry.detail);
 
-    details.append(summary, short, detail);
-    termsList.append(details);
+    explanationCell.append(short, detail);
+    row.append(termCell, explanationCell);
+    tbody.append(row);
   }
 
+  table.append(thead, tbody);
+  termsList.append(table);
   termsSection.hidden = false;
 }
 
@@ -379,7 +399,7 @@ function renderDefinitionList(listElement, rows) {
   for (const [label, value] of rows) {
     const term = document.createElement("dt");
     const description = document.createElement("dd");
-    term.textContent = label;
+    renderTooltipText(term, label);
     renderTooltipText(description, formatFactValue(value));
     listElement.append(term, description);
   }
@@ -406,6 +426,45 @@ function resetFetchedDetails() {
   termsSection.hidden = true;
   sourceTextElement.textContent = "";
   sourceSection.hidden = true;
+}
+
+function initCollapsibleSections() {
+  for (const section of document.querySelectorAll(".panel-section")) {
+    const heading = section.querySelector("h2");
+
+    if (!heading || heading.querySelector(".section-toggle")) {
+      continue;
+    }
+
+    const body = document.createElement("div");
+    body.className = "section-body";
+
+    while (heading.nextSibling) {
+      body.append(heading.nextSibling);
+    }
+
+    const button = document.createElement("button");
+    const arrow = document.createElement("span");
+    const label = document.createElement("span");
+
+    button.type = "button";
+    button.className = "section-toggle";
+    button.setAttribute("aria-expanded", "true");
+    arrow.className = "section-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.textContent = "▾";
+    label.textContent = heading.textContent;
+    button.append(arrow, label);
+    heading.replaceChildren(button);
+    section.append(body);
+
+    button.addEventListener("click", () => {
+      const expanded = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", String(!expanded));
+      section.classList.toggle("is-collapsed", expanded);
+      body.hidden = expanded;
+    });
+  }
 }
 
 function formatFactValue(value) {
@@ -738,7 +797,7 @@ function describeFact(fact) {
     return "Unknown";
   }
 
-  return `${fact.value} (${fact.source}, ${fact.confidence} confidence)`;
+  return `${fact.value} - ${fact.confidence} confidence`;
 }
 
 function formatParameterFact(fact) {
@@ -746,7 +805,7 @@ function formatParameterFact(fact) {
     return "Unknown";
   }
 
-  return `${formatParameterCount(fact.value)} (${fact.source}, ${fact.confidence} confidence)`;
+  return `${formatParameterCount(fact.value)} - ${fact.confidence} confidence`;
 }
 
 function formatContextFact(fact) {
@@ -754,7 +813,7 @@ function formatContextFact(fact) {
     return "Unknown";
   }
 
-  return `${fact.value.toLocaleString()} tokens (${fact.source}, ${fact.confidence} confidence)`;
+  return `${fact.value.toLocaleString()} tokens - ${fact.confidence} confidence`;
 }
 
 function formatParameterCount(value) {
@@ -781,18 +840,20 @@ function formatFitCategory(category) {
   return getFitStatusLabel(category);
 }
 
-function getFitStatusLabel(category) {
+function getFitStatusLabel(category, options = {}) {
+  const suffix = options.includeHardware ? " on your saved hardware profile" : "";
+
   switch (category) {
     case "comfortable":
-      return "Runs comfortably";
+      return `Runs comfortably${suffix}`;
     case "likely":
-      return "Likely to run";
+      return `Likely to run${suffix}`;
     case "possible-with-offloading":
-      return "May run with RAM offloading";
+      return `May run with RAM offloading${suffix}`;
     case "slow-or-tight":
-      return "May be slow or tight";
+      return `May be slow or tight${suffix}`;
     case "unlikely":
-      return "Unlikely to fit";
+      return `Unlikely to fit${suffix}`;
     default:
       return "Cannot estimate";
   }
@@ -840,4 +901,5 @@ refreshButton.addEventListener("click", () => {
 });
 
 initTooltipEvents();
+initCollapsibleSections();
 refreshActiveTabStatus();

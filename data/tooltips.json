@@ -131,5 +131,222 @@
     "title": "Licence",
     "text": "The rules for using or sharing the model. Missing metadata is not permission; check the original model page for actual terms.",
     "category": "trust"
+  },
+  {
+    "id": "author",
+    "terms": ["Author"],
+    "title": "Author",
+    "text": "The Hugging Face account or organisation that published the model repository.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "model-name",
+    "terms": ["Model name"],
+    "title": "Model name",
+    "text": "The repository name for this model. It may include version, size, tuning style, or format clues.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "library",
+    "terms": ["Library"],
+    "title": "Library",
+    "text": "The software ecosystem the repository is most likely designed for, such as Transformers, Diffusers, MLX, or another model library.",
+    "category": "tools"
+  },
+  {
+    "id": "private-model",
+    "terms": ["Private"],
+    "title": "Private model",
+    "text": "A private model is not publicly accessible. This extension is designed for public model pages.",
+    "category": "trust"
+  },
+  {
+    "id": "files",
+    "terms": ["Files", "file list"],
+    "title": "Files",
+    "text": "The files in the model repository. File names and formats often reveal how the model can be loaded or run.",
+    "category": "files"
+  },
+  {
+    "id": "last-modified",
+    "terms": ["Last modified"],
+    "title": "Last modified",
+    "text": "When Hugging Face reports that the model repository was last updated.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "confidence",
+    "terms": ["confidence", "high confidence", "medium confidence", "low confidence"],
+    "title": "Confidence",
+    "text": "How certain the extension is about an interpretation. High confidence usually means the fact came from structured data or a strong file-name signal.",
+    "category": "trust"
+  },
+  {
+    "id": "model-type",
+    "terms": ["Likely model type", "model type"],
+    "title": "Model type",
+    "text": "A plain-English category for how the model is likely meant to be used, such as chat, instruct, base, embedding, image, or audio.",
+    "category": "model-basics"
+  },
+  {
+    "id": "architecture",
+    "terms": ["Architecture"],
+    "title": "Architecture",
+    "text": "The model design or software class used by loading tools. It is useful for developers but can be hard to interpret without context.",
+    "category": "model-basics"
+  },
+  {
+    "id": "detected-formats",
+    "terms": ["Detected formats"],
+    "title": "Detected formats",
+    "text": "File formats the extension found in the repository, such as GGUF, safetensors, PyTorch, ONNX, or MLX.",
+    "category": "files"
+  },
+  {
+    "id": "detected-quantisation",
+    "terms": ["Detected quantisation"],
+    "title": "Detected quantisation",
+    "text": "Quantisation labels found in file names, tags, or model notes. These labels help estimate memory use.",
+    "category": "model-basics"
+  },
+  {
+    "id": "fit",
+    "terms": ["Fit", "GPU fit", "System RAM fit"],
+    "title": "Hardware fit",
+    "text": "A cautious estimate of whether the model can run on the saved hardware profile. It is not a guarantee.",
+    "category": "hardware"
+  },
+  {
+    "id": "hardware-profile",
+    "terms": ["Hardware profile", "saved hardware profile"],
+    "title": "Hardware profile",
+    "text": "The computer specs the extension uses for local-run estimates, especially GPU VRAM and system RAM.",
+    "category": "hardware"
+  },
+  {
+    "id": "bits-per-parameter",
+    "terms": ["Bits per parameter"],
+    "title": "Bits per parameter",
+    "text": "How many bits are used to store each learned number in the model. Lower values usually mean smaller memory use.",
+    "category": "hardware"
+  },
+  {
+    "id": "weight-memory",
+    "terms": ["Weight memory"],
+    "title": "Weight memory",
+    "text": "An estimate of memory used by the model weights alone, before extra runtime overhead.",
+    "category": "hardware"
+  },
+  {
+    "id": "runtime-range",
+    "terms": ["Runtime range"],
+    "title": "Runtime range",
+    "text": "A cautious estimate of memory while the model is actually running, including overhead beyond the weight files.",
+    "category": "hardware"
+  },
+  {
+    "id": "recommended-tool",
+    "terms": ["Recommended tool"],
+    "title": "Recommended tool",
+    "text": "The route that currently looks most practical from the model type, file formats, and saved hardware profile.",
+    "category": "tools"
+  },
+  {
+    "id": "commands",
+    "terms": ["Commands"],
+    "title": "Commands",
+    "text": "Example commands are shown only when the extension has enough verified information to avoid misleading the learner.",
+    "category": "tools"
+  },
+  {
+    "id": "gpu",
+    "terms": ["GPU"],
+    "title": "GPU",
+    "text": "A graphics processor. GPUs can make local AI models much faster when the model fits in VRAM.",
+    "category": "hardware"
+  },
+  {
+    "id": "cpu",
+    "terms": ["CPU"],
+    "title": "CPU",
+    "text": "The main processor in your computer. Some local models can run on CPU, but usually more slowly than on a GPU.",
+    "category": "hardware"
+  },
+  {
+    "id": "gb",
+    "terms": ["GB"],
+    "title": "GB",
+    "text": "Gigabytes, a common unit for memory and file size.",
+    "category": "hardware"
+  },
+  {
+    "id": "tokens",
+    "terms": ["tokens"],
+    "title": "Tokens",
+    "text": "Pieces of text processed by a model. A token can be a word, part of a word, punctuation, or spacing.",
+    "category": "model-basics"
+  },
+  {
+    "id": "fp16",
+    "terms": ["FP16"],
+    "title": "FP16",
+    "text": "A 16-bit number format often used for model weights. It uses less memory than FP32 but more than many quantised formats.",
+    "category": "model-basics"
+  },
+  {
+    "id": "bf16",
+    "terms": ["BF16"],
+    "title": "BF16",
+    "text": "A 16-bit number format common in modern machine learning. It has similar storage size to FP16 with different numeric behavior.",
+    "category": "model-basics"
+  },
+  {
+    "id": "fp32",
+    "terms": ["FP32"],
+    "title": "FP32",
+    "text": "A 32-bit number format. It is larger in memory than FP16, BF16, or quantised model files.",
+    "category": "model-basics"
+  },
+  {
+    "id": "int8",
+    "terms": ["INT8", "8-bit"],
+    "title": "INT8",
+    "text": "An 8-bit integer format or quantisation level that can reduce memory use compared with 16-bit or 32-bit weights.",
+    "category": "model-basics"
+  },
+  {
+    "id": "q4",
+    "terms": ["Q2", "Q3", "Q4", "Q5", "Q6", "Q8", "Q4_K_M", "Q4_K_S", "Q5_K_M", "Q5_K_S", "Q6_K", "Q8_0", "IQ2", "IQ3", "IQ4"],
+    "title": "GGUF quantisation label",
+    "text": "A compact label for how much the model weights were compressed. Lower-bit labels usually use less memory, with possible quality tradeoffs.",
+    "category": "model-basics"
+  },
+  {
+    "id": "pytorch",
+    "terms": ["PyTorch"],
+    "title": "PyTorch",
+    "text": "A popular machine-learning framework. PyTorch model files usually point toward a Python-based workflow.",
+    "category": "tools"
+  },
+  {
+    "id": "onnx",
+    "terms": ["ONNX"],
+    "title": "ONNX",
+    "text": "A model format designed for ONNX Runtime and compatible tools. It is usually more developer-oriented than beginner desktop apps.",
+    "category": "files"
+  },
+  {
+    "id": "mlx",
+    "terms": ["MLX"],
+    "title": "MLX",
+    "text": "Apple's machine-learning framework. MLX model files are mainly relevant to Apple silicon workflows.",
+    "category": "tools"
+  },
+  {
+    "id": "api",
+    "terms": ["API"],
+    "title": "API",
+    "text": "A way for software to request data from another service. This extension uses the public Hugging Face API for model metadata.",
+    "category": "hugging-face"
   }
 ]
