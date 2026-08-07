@@ -4,12 +4,19 @@ import { parseModelFacts } from "../services/model-parser.js";
 import { estimateHardwareFit } from "../services/hardware-estimator.js";
 import { recommendModelTool } from "../services/recommendation-engine.js";
 import { generateDeterministicExplanation } from "../services/explanation-service.js";
+import { buildModelFitFinder } from "../services/model-fit-finder.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
 const themeButtons = Array.from(document.querySelectorAll(".theme-button"));
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
+const modelFinderForm = document.querySelector("#model-finder-form");
+const modelFinderRouteElement = document.querySelector("#model-finder-route");
+const modelFinderPriorityElement = document.querySelector("#model-finder-priority");
+const modelFinderSummaryElement = document.querySelector("#model-finder-summary");
+const modelFinderList = document.querySelector("#model-finder-list");
+const modelFinderLinks = document.querySelector("#model-finder-links");
 const learnerAnswerSection = document.querySelector("#learner-answer-section");
 const answerSummaryElement = document.querySelector("#answer-summary");
 const answerList = document.querySelector("#answer-list");
@@ -41,6 +48,11 @@ const tooltipTextElement = document.querySelector("#tooltip-text");
 let activeRefreshId = 0;
 let tooltipDefinitions = [];
 let activeTooltipTrigger = null;
+let savedHardwareProfile = {};
+const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
+  savedHardwareProfile = profile;
+  return profile;
+});
 const tooltipDefinitionsPromise = loadTooltips().then((definitions) => {
   tooltipDefinitions = definitions;
   return definitions;
@@ -147,7 +159,7 @@ async function loadModelFacts(modelId, refreshId) {
   const interpreted = parseModelFacts(data);
   const [glossary, hardwareProfile] = await Promise.all([
     loadGlossary(),
-    loadHardwareProfile(),
+    hardwareProfilePromise,
     tooltipDefinitionsPromise
   ]);
   const hardwareEstimate = estimateHardwareFit(interpreted, hardwareProfile);
@@ -210,6 +222,95 @@ function renderLearnerState(summary, rows) {
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
   learnerAnswerSection.hidden = false;
+}
+
+async function initModelFinder() {
+  const [hardwareProfile] = await Promise.all([
+    hardwareProfilePromise,
+    tooltipDefinitionsPromise
+  ]);
+
+  restoreModelFinderChoices();
+  renderModelFinder(hardwareProfile);
+  modelFinderForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+  });
+  modelFinderForm.addEventListener("change", () => {
+    saveModelFinderChoices();
+    renderModelFinder(savedHardwareProfile);
+  });
+}
+
+function renderModelFinder(hardwareProfile) {
+  const finder = buildModelFitFinder(hardwareProfile, getModelFinderChoices());
+  renderTooltipText(modelFinderSummaryElement, finder.summary);
+  renderDefinitionList(modelFinderList, finder.rows);
+  renderModelFinderLinks(finder.searchLinks);
+}
+
+function renderModelFinderLinks(links) {
+  modelFinderLinks.replaceChildren();
+
+  for (const link of links) {
+    const anchor = document.createElement("a");
+    anchor.className = "finder-link";
+    anchor.href = link.url;
+    anchor.target = "_blank";
+    anchor.rel = "noreferrer";
+    anchor.textContent = link.label;
+    modelFinderLinks.append(anchor);
+  }
+}
+
+function getModelFinderChoices() {
+  return {
+    goal: modelFinderForm.elements["model-goal"].value,
+    route: modelFinderRouteElement.value,
+    priority: modelFinderPriorityElement.value
+  };
+}
+
+function restoreModelFinderChoices() {
+  const storedChoices = readStoredModelFinderChoices();
+  const goalInput = modelFinderForm.querySelector(`input[name="model-goal"][value="${storedChoices.goal}"]`);
+
+  if (goalInput) {
+    goalInput.checked = true;
+  }
+
+  setSelectValue(modelFinderRouteElement, storedChoices.route);
+  setSelectValue(modelFinderPriorityElement, storedChoices.priority);
+}
+
+function saveModelFinderChoices() {
+  localStorage.setItem("hfNewbies.modelFinder", JSON.stringify(getModelFinderChoices()));
+}
+
+function readStoredModelFinderChoices() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("hfNewbies.modelFinder") || "{}");
+    return {
+      goal: isAllowedChoice(parsed.goal, ["chat", "code", "embedding", "image"]) ? parsed.goal : "chat",
+      route: isAllowedChoice(parsed.route, ["beginner", "ollama", "python", "unsure"]) ? parsed.route : "beginner",
+      priority: isAllowedChoice(parsed.priority, ["balanced", "speed", "quality"]) ? parsed.priority : "balanced"
+    };
+  } catch {
+    return {
+      goal: "chat",
+      route: "beginner",
+      priority: "balanced"
+    };
+  }
+}
+
+function isAllowedChoice(value, allowedValues) {
+  return allowedValues.includes(value);
+}
+
+function setSelectValue(selectElement, value) {
+  if ([...selectElement.options].some((option) => option.value === value)) {
+    selectElement.value = value;
+  }
 }
 
 function buildWhatItIsAnswer(model, interpreted) {
@@ -682,7 +783,7 @@ function initCollapsibleSections() {
 }
 
 function isSectionInitiallyExpanded(section) {
-  return section.id === "learner-answer-section" || section.id === "first-read-section";
+  return section.id === "model-finder-section" || section.id === "learner-answer-section" || section.id === "first-read-section";
 }
 
 function initThemeControls() {
@@ -1214,4 +1315,5 @@ refreshButton.addEventListener("click", () => {
 initThemeControls();
 initTooltipEvents();
 initCollapsibleSections();
+initModelFinder();
 refreshActiveTabStatus();

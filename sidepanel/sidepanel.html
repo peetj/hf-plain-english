@@ -31,6 +31,53 @@
         <p id="status-message">Preparing the extension shell.</p>
       </section>
 
+      <section id="model-finder-section" class="panel-section model-finder-section">
+        <h2>Find a model for my machine</h2>
+        <p id="model-finder-summary" class="model-finder-summary"></p>
+        <form id="model-finder-form" class="model-finder-form">
+          <fieldset class="segmented-field">
+            <legend>I want to</legend>
+            <label>
+              <input type="radio" name="model-goal" value="chat" checked>
+              <span>Chat</span>
+            </label>
+            <label>
+              <input type="radio" name="model-goal" value="code">
+              <span>Code</span>
+            </label>
+            <label>
+              <input type="radio" name="model-goal" value="embedding">
+              <span>Search</span>
+            </label>
+            <label>
+              <input type="radio" name="model-goal" value="image">
+              <span>Images</span>
+            </label>
+          </fieldset>
+
+          <label class="finder-field">
+            <span>Run with</span>
+            <select id="model-finder-route">
+              <option value="beginner">Beginner app</option>
+              <option value="ollama">Ollama</option>
+              <option value="python">Python</option>
+              <option value="unsure">Not sure</option>
+            </select>
+          </label>
+
+          <label class="finder-field">
+            <span>Priority</span>
+            <select id="model-finder-priority">
+              <option value="balanced">Balanced</option>
+              <option value="speed">Speed</option>
+              <option value="quality">Quality</option>
+            </select>
+          </label>
+        </form>
+        <dl id="model-finder-list" class="facts-list"></dl>
+        <div id="model-finder-links" class="finder-links"></div>
+      </section>
+
       <section id="learner-answer-section" class="panel-section learner-answer-section" hidden>
         <h2>Quick answer</h2>
         <p id="answer-summary" class="answer-summary"></p>
