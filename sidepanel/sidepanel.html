@@ -14,6 +14,11 @@
           <p id="active-url" class="model-id">Checking active tab...</p>
         </div>
         <p id="model-owner" class="model-owner" hidden></p>
+        <div class="theme-switcher" aria-label="Theme">
+          <button class="theme-button" type="button" data-theme-value="sunrise">Sunrise</button>
+          <button class="theme-button" type="button" data-theme-value="teal">Teal</button>
+          <button class="theme-button" type="button" data-theme-value="contrast">Contrast</button>
+        </div>
       </div>
       <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh active tab status" title="Refresh">
         Refresh
@@ -32,7 +37,7 @@
         <dl id="answer-list" class="answer-list"></dl>
       </section>
 
-      <section class="panel-section">
+      <section id="first-read-section" class="panel-section">
         <h2>First read</h2>
         <p id="overview-text">
           Open a public Hugging Face model page to get a plain-English guide.

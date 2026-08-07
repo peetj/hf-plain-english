@@ -1,5 +1,10 @@
 :root {
   color-scheme: light dark;
+  --theme-control-background: rgb(255 248 232 / 72%);
+}
+
+body,
+body[data-theme="teal"] {
   --background: #075e58;
   --surface: #fff8e8;
   --surface-muted: #ffedbd;
@@ -15,8 +20,41 @@
   --shadow: 0 7px 22px rgb(4 55 51 / 28%);
 }
 
+body[data-theme="sunrise"] {
+  --background: #fff7e8;
+  --surface: #fffefd;
+  --surface-muted: #fff0c7;
+  --text: #241a12;
+  --muted: #6c5a48;
+  --border: #e0b35c;
+  --accent: #08766e;
+  --accent-strong: #075e58;
+  --accent-warm: #f59e2f;
+  --button-background: #ffe6a6;
+  --header-background: #ffbe55;
+  --focus: #0b7285;
+  --shadow: 0 2px 8px rgb(121 78 22 / 12%);
+}
+
+body[data-theme="contrast"] {
+  --background: #17120a;
+  --surface: #fff3c4;
+  --surface-muted: #ffd66b;
+  --text: #16110a;
+  --muted: #4e3d27;
+  --border: #0d5f59;
+  --accent: #0d5f59;
+  --accent-strong: #063f3b;
+  --accent-warm: #e36d27;
+  --button-background: #ffe08a;
+  --header-background: #ff9f2f;
+  --focus: #063f3b;
+  --shadow: 0 7px 22px rgb(0 0 0 / 34%);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  body:not([data-theme]),
+  body[data-theme="teal"] {
     --background: #ffbe55;
     --surface: #16221f;
     --surface-muted: #243a35;
@@ -115,6 +153,35 @@ h2:has(.section-toggle) {
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 12px;
+}
+
+.theme-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.theme-button {
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--theme-control-background);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.theme-button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff8e8;
+}
+
+.theme-button:hover {
+  border-color: var(--accent-strong);
 }
 
 .tooltip-term {
@@ -294,7 +361,9 @@ main {
 
 .fact-display {
   display: grid;
-  gap: 5px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: start;
 }
 
 .fact-display-value {
@@ -305,6 +374,7 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  justify-content: flex-end;
 }
 
 .fact-badge {
@@ -335,10 +405,6 @@ main {
 .fact-badge-unknown {
   border-color: var(--muted);
   color: var(--muted);
-}
-
-.fact-badge-source {
-  border-style: dashed;
 }
 
 .fact-badge-confidence {
