@@ -1,0 +1,405 @@
+# Model Mentor for Hugging Face Development Plan
+
+## Status Key
+
+- [✅] Done.
+- [⚠️] Started, partial, or needs review.
+- [❌] Not started.
+
+## Product Goal
+
+Build a Chrome extension that helps an AI Learner understand Hugging Face model pages in plain English.
+
+The learner should be able to open a public Hugging Face model page and quickly answer:
+
+- [⚠️] What is this model?
+- [⚠️] What can it do?
+- [⚠️] Is it meant for chat, coding, images, embeddings, or another task?
+- [⚠️] How large is it?
+- [⚠️] Can it likely run on my computer?
+- [⚠️] Which files matter?
+- [⚠️] Should I use LM Studio, Ollama, Python, or another route?
+- [⚠️] What licence, access, and safety issues should I check before using it?
+
+## Working Feedback
+
+- [✅] Remove redundant "Chrome side panel" text from the extension header.
+- [✅] Rename the extension away from "HF Plain English".
+- [✅] Make the shown model identity less confusing than repeating `owner/model` as the main label.
+- [✅] Add a custom, non-browser-default tooltip explaining Hugging Face `owner/model` names.
+- [❌] Create a tooltip architecture/event-flow for the extension. A toolip should have a dotted underline in green. Create a structure - maybe a separate tooltip.json file that can be parsed to add tooltips to the text in a final parse of the output ?
+- [❌] Review the new name after seeing it in the browser. Current name: "Model Mentor for Hugging Face". Change to "Hugging Face for Newbies"
+- [❌] Tooltip is obscured by main site panel.
+- [❌] Change extension icon to hugging face emoji
+
+## Current Foundation
+
+- [✅] Chrome Extension Manifest V3 structure.
+- [✅] Side panel extension shell.
+- [✅] Hugging Face model URL detection.
+- [✅] Public Hugging Face Hub API fetcher.
+- [✅] Model metadata and file parser.
+- [✅] Hardware fit estimator.
+- [✅] Tool recommendation engine.
+- [✅] Deterministic plain-English explanation service.
+- [✅] Local glossary and hardware profile data.
+
+The development plan below focuses on turning that foundation into a trustworthy learner-facing product.
+
+## Principles
+
+- [✅] Explain before recommending. The user should understand the reasoning, not just receive a verdict.
+- [✅] Separate facts from estimates. Metadata, inferred labels, and hardware estimates must be visibly different.
+- [✅] Prefer conservative recommendations. If the extension is uncertain, it should say so clearly.
+- [✅] Keep beginners safe. Avoid pretending that every Hugging Face model is easy to run locally.
+- [✅] Preserve source traceability. Important claims should point back to Hugging Face metadata, file names, or the model card.
+- [✅] No analytics in V1 unless explicitly added later.
+
+## Phase 1: Learner Experience
+
+### ⚠️ 1.1 Rewrite Side Panel Around Learner Questions
+
+- [✅] Remove developer-oriented header text.
+- [✅] Rename the extension to clearer learner-facing language.
+- [✅] Show the model name as the primary identity and the owner separately.
+- [✅] Add a custom tooltip explaining Hugging Face `owner/model` naming.
+- [❌] Replace remaining developer-oriented labels like "Fetched facts" with learner-facing sections.
+- [❌] Add a top-level answer card with what it is, best next action, local run likelihood, and confidence.
+- [❌] Make the side panel easy to scan in under 30 seconds.
+- [❌] Keep detailed facts available below the plain-English answer.
+
+Acceptance criteria:
+
+- [❌] A non-technical learner can identify the model type, likely use, and next step without reading raw metadata.
+- [⚠️] Technical facts remain visible for verification.
+
+### ⚠️ 1.2 Add Confidence and Source Badges
+
+- [⚠️] Show whether claims came from Hugging Face metadata.
+- [⚠️] Show whether claims came from repository file names.
+- [⚠️] Show whether claims came from model card text.
+- [⚠️] Show whether claims came from local inference by the extension.
+- [❌] Use clear visible badges such as "Known", "Likely", and "Unknown".
+- [⚠️] Avoid making low-confidence estimates look definitive.
+
+Acceptance criteria:
+
+- [❌] Every major recommendation has visible reasoning.
+- [⚠️] Inferred claims are clearly marked as inferred.
+
+### ⚠️ 1.3 Improve Empty, Unsupported, and Error States
+
+- [⚠️] Add specific messages for non-Hugging Face pages.
+- [⚠️] Add specific messages for Hugging Face pages that are not model pages.
+- [⚠️] Add specific messages for gated or private models.
+- [⚠️] Add specific messages for missing model cards.
+- [⚠️] Add specific messages for missing files.
+- [⚠️] Add specific messages for rate limits.
+- [⚠️] Add specific messages for network failure.
+- [❌] Provide learner-friendly next steps for each state.
+
+Acceptance criteria:
+
+- [⚠️] The user is never left with a generic failure message.
+- [⚠️] Each error state explains whether the problem is page type, access, metadata, or connectivity.
+
+## Phase 2: Model Understanding
+
+### ⚠️ 2.1 Expand Model Type Detection
+
+- [⚠️] Improve detection for chat models.
+- [⚠️] Improve detection for instruct models.
+- [⚠️] Improve detection for base models.
+- [⚠️] Improve detection for code models.
+- [⚠️] Improve detection for embedding models.
+- [⚠️] Improve detection for image generation models.
+- [⚠️] Improve detection for audio models.
+- [⚠️] Improve detection for multimodal models.
+- [❌] Improve detection for rerankers and classifiers.
+- [⚠️] Use Hugging Face `pipeline_tag`, tags, library name, config, model card clues, and file structure.
+
+Acceptance criteria:
+
+- [❌] Common model families are classified correctly in test fixtures.
+- [⚠️] Ambiguous pages return "unknown" or "unclear" instead of a false confident answer.
+
+### ⚠️ 2.2 Explain Common Hugging Face Concepts
+
+- [✅] Explain model card.
+- [❌] Explain dataset.
+- [❌] Explain Space.
+- [❌] Explain collection.
+- [✅] Explain GGUF.
+- [✅] Explain safetensors.
+- [✅] Explain quantisation.
+- [✅] Explain tokenizer.
+- [❌] Explain chat template.
+- [✅] Explain context length.
+- [✅] Explain parameters.
+- [✅] Explain gated model.
+- [✅] Explain licence.
+- [✅] Explain commercial use.
+- [❌] Explain evaluation benchmark.
+- [✅] Explain fine-tuning.
+- [⚠️] Show only relevant terms for the current model page.
+
+Acceptance criteria:
+
+- [⚠️] Glossary entries are short, accurate, and beginner readable.
+- [⚠️] The UI avoids overwhelming the learner with unrelated terms.
+
+### ❌ 2.3 Parse Model Card Content Safely
+
+- [❌] Extract intended use from README/model card markdown.
+- [❌] Extract limitations from README/model card markdown.
+- [❌] Extract licence notes from README/model card markdown.
+- [❌] Extract hardware or inference examples from README/model card markdown.
+- [❌] Extract training data notes from README/model card markdown.
+- [❌] Extract safety warnings from README/model card markdown.
+- [❌] Keep extraction conservative and source-aware.
+- [❌] Avoid hallucinating missing details.
+
+Acceptance criteria:
+
+- [❌] Model card statements are summarized only when present.
+- [❌] Missing sections are reported as missing, not guessed.
+
+## Phase 3: Running Guidance
+
+### ⚠️ 3.1 Improve File Relevance Ranking
+
+- [⚠️] Group model weights.
+- [⚠️] Group quantised local files.
+- [⚠️] Group tokenizer files.
+- [⚠️] Group config files.
+- [❌] Group adapter files.
+- [❌] Group example or metadata files.
+- [⚠️] Highlight the files a beginner most likely needs.
+- [❌] Hide noise by default while allowing expansion.
+
+Acceptance criteria:
+
+- [⚠️] A learner can identify whether a repository has a runnable file and which file likely matters.
+- [⚠️] GGUF, safetensors, PyTorch, ONNX, and MLX files are explained distinctly.
+- [❌] LoRA and adapter files are explained distinctly.
+
+### ⚠️ 3.2 Strengthen Tool Recommendations
+
+- [⚠️] Recommend LM Studio for beginner-friendly GGUF chat/instruct models.
+- [⚠️] Recommend Ollama only when a reliable Ollama route is known or can be explained safely.
+- [⚠️] Recommend Python Transformers for Transformers-compatible repositories.
+- [⚠️] Recommend MLX for Apple MLX repositories.
+- [⚠️] Recommend ONNX Runtime for ONNX models.
+- [⚠️] Recommend specialist workflows for embeddings, classifiers, image, audio, or multimodal models.
+- [⚠️] Explain why a tool is not recommended when appropriate.
+
+Acceptance criteria:
+
+- [⚠️] Recommendations never imply that every Hugging Face page can be run in LM Studio or Ollama.
+- [⚠️] Recommendations include caveats for base, gated, specialist, and oversized models.
+
+### ❌ 3.3 Add Safe Copyable Commands
+
+- [❌] Add commands only when the extension has enough verified information.
+- [❌] Add Python Transformers command examples.
+- [❌] Add llama.cpp command examples.
+- [❌] Add Ollama Modelfile examples, if supported later.
+- [❌] Label commands as examples, not guaranteed universal instructions.
+
+Acceptance criteria:
+
+- [❌] Commands are not shown for unsupported or ambiguous models.
+- [❌] Commands do not require secrets or tokens in the UI.
+
+## Phase 4: Hardware Fit
+
+### ❌ 4.1 Make Hardware Profile Editable
+
+- [❌] Add operating system setting.
+- [❌] Add system RAM setting.
+- [❌] Add GPU name setting.
+- [❌] Add GPU VRAM setting.
+- [❌] Add preferred tools setting.
+- [❌] Add beginner comfort level setting.
+- [❌] Store settings in Chrome storage instead of only the static JSON file.
+- [❌] Provide sensible defaults when hardware is unknown.
+
+Acceptance criteria:
+
+- [❌] A learner can adjust hardware without editing project files.
+- [❌] Estimates update after profile changes.
+
+### ⚠️ 4.2 Improve Memory Estimation
+
+- [✅] Estimate memory from parameter count.
+- [✅] Estimate memory from detected precision or quantisation.
+- [❌] Estimate memory from file size when available.
+- [⚠️] Estimate memory from context length.
+- [⚠️] Include likely runtime overhead.
+- [✅] Explain the limits of the estimate.
+- [✅] Show "unknown" when required inputs are unavailable.
+
+Acceptance criteria:
+
+- [⚠️] Estimates remain cautious and explain assumptions.
+- [❌] File-size-based estimates are used when parameter count is missing but model files have useful size metadata.
+
+### ❌ 4.3 Add Hardware Fit Test Cases
+
+- [❌] Test CPU-only laptop.
+- [❌] Test 8 GB VRAM GPU.
+- [❌] Test 12 GB VRAM GPU.
+- [❌] Test 16 GB VRAM GPU.
+- [❌] Test 24 GB VRAM GPU.
+- [❌] Test Apple silicon shared-memory machine.
+- [❌] Test small embedding model.
+- [❌] Test 7B Q4 GGUF chat model.
+- [❌] Test 13B Q4 GGUF model.
+- [❌] Test 70B quantised model.
+- [❌] Test FP16 safetensors model.
+
+Acceptance criteria:
+
+- [❌] Fit labels are consistent and conservative across fixtures.
+- [❌] Edge cases do not produce impossible memory claims.
+
+## Phase 5: Safety, Licence, and Trust
+
+### ⚠️ 5.1 Improve Licence Explanation
+
+- [✅] Show detected licence identifier.
+- [❌] Link or refer the user to the original model page for actual terms.
+- [⚠️] Explain when licence metadata is missing.
+- [⚠️] Warn that commercial use depends on the actual licence text.
+
+Acceptance criteria:
+
+- [⚠️] The extension does not provide legal advice.
+- [❌] The learner is prompted to verify licence terms before serious use.
+
+### ❌ 5.2 Add Safety and Suitability Signals
+
+- [❌] Highlight model card safety notes when present.
+- [❌] Detect likely medical model risk.
+- [❌] Detect likely legal model risk.
+- [❌] Detect likely financial model risk.
+- [❌] Detect likely code execution risk.
+- [❌] Detect likely security model risk.
+- [❌] Detect likely NSFW or adult content risk.
+- [❌] Use cautious, non-alarmist wording.
+
+Acceptance criteria:
+
+- [❌] Safety notes are source-grounded.
+- [❌] Missing safety information is clearly distinguished from "safe".
+
+### ⚠️ 5.3 Add Privacy Notes
+
+- [⚠️] Document what the extension sends over the network.
+- [⚠️] Confirm that V1 does not include analytics.
+- [❌] Explain optional local Ollama usage if implemented.
+
+Acceptance criteria:
+
+- [⚠️] README and side panel privacy text match actual behavior.
+- [⚠️] No hidden network destinations are introduced.
+
+## Phase 6: Quality and Testing
+
+### ❌ 6.1 Add Automated Unit Tests
+
+- [❌] Test URL parsing.
+- [❌] Test Hugging Face API normalization.
+- [❌] Test model fact parsing.
+- [❌] Test quantisation detection.
+- [❌] Test hardware estimation.
+- [❌] Test tool recommendation.
+- [❌] Test explanation text generation.
+- [❌] Use static fixtures for known Hugging Face API responses.
+
+Acceptance criteria:
+
+- [❌] Tests can run locally with one command.
+- [❌] Parser and recommendation regressions are caught before manual extension testing.
+
+### ❌ 6.2 Add Manual Browser Test Checklist
+
+- [❌] Document installing unpacked extension.
+- [❌] Test supported model pages.
+- [❌] Test unsupported Hugging Face pages.
+- [❌] Test non-Hugging Face pages.
+- [❌] Test refresh button behavior.
+- [❌] Test side panel behavior after tab changes.
+- [❌] Test gated/private model behavior.
+
+Acceptance criteria:
+
+- [❌] A contributor can manually verify V1 without guessing expected behavior.
+
+### ❌ 6.3 Add Fixture Model List
+
+- [❌] Add GGUF chat model.
+- [❌] Add Transformers text model.
+- [❌] Add embedding model.
+- [❌] Add image model.
+- [❌] Add gated model.
+- [❌] Add missing or sparse metadata model.
+- [❌] Add large model that should not fit local defaults.
+
+Acceptance criteria:
+
+- [❌] The project has stable examples for validating learner-facing output.
+
+## Phase 7: Documentation
+
+### ⚠️ 7.1 Expand README
+
+- [❌] Add installation instructions for Chrome unpacked extension.
+- [❌] Add supported page types.
+- [❌] Add current limitations.
+- [⚠️] Add privacy behavior.
+- [❌] Add development commands.
+- [❌] Add testing instructions.
+
+Acceptance criteria:
+
+- [❌] A new user can install and try the extension from the README alone.
+- [❌] A developer can run tests and understand the project layout.
+
+### ❌ 7.2 Add Contributor Notes
+
+- [❌] Document content script.
+- [❌] Document background service worker.
+- [❌] Document side panel.
+- [❌] Document Hugging Face API service.
+- [❌] Document parser.
+- [❌] Document hardware estimator.
+- [❌] Document recommendation engine.
+- [❌] Document explanation service.
+- [❌] Document the rule that learner-facing text must separate facts, estimates, and unknowns.
+
+Acceptance criteria:
+
+- [❌] Future changes can follow the same trust model.
+
+## Phase 8: V1 Release Checklist
+
+- [⚠️] The side panel works on public Hugging Face model pages.
+- [⚠️] Unsupported pages explain what to do next.
+- [✅] The extension fetches public metadata and model cards only.
+- [❌] The learner sees a plain-English answer before raw facts.
+- [⚠️] Model type, size, runnable files, hardware fit, recommended route, licence, and warnings are shown.
+- [⚠️] Low-confidence claims are marked.
+- [⚠️] Missing information is not guessed.
+- [❌] Manual browser testing has been completed.
+- [❌] Automated parser and recommendation tests pass.
+- [❌] README documents installation, usage, privacy, and limitations.
+
+## Later Ideas
+
+- [❌] Optional local Ollama explanation service for richer summaries.
+- [❌] Optional model comparison between two Hugging Face pages.
+- [❌] Optional "find a better beginner version" flow for GGUF alternatives.
+- [❌] Optional export/share summary.
+- [❌] Optional support for Hugging Face datasets and Spaces.
+- [❌] Optional browser action badge showing supported or unsupported page state.

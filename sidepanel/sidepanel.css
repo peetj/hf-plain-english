@@ -31,6 +31,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-width: 280px;
   margin: 0;
@@ -59,14 +63,6 @@ a:focus-visible {
   background: var(--surface);
 }
 
-.eyebrow {
-  margin: 0 0 2px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 650;
-  text-transform: uppercase;
-}
-
 h1,
 h2,
 p {
@@ -87,8 +83,91 @@ h2 {
 
 .model-id {
   margin-bottom: 0;
-  color: var(--muted);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.model-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.model-owner {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.tooltip-button {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: help;
+}
+
+.tooltip-button:hover,
+.tooltip-button:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.tooltip-bubble {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(260px, calc(100vw - 34px));
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.tooltip-bubble::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+
+.tooltip-wrap:hover .tooltip-bubble,
+.tooltip-button:focus + .tooltip-bubble,
+.tooltip-button:focus-visible + .tooltip-bubble {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .icon-button {

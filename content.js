@@ -25,7 +25,7 @@ async function reportCurrentPage() {
     const { parseHuggingFaceModelUrl } = await loadParserModule();
     parsedUrl = parseHuggingFaceModelUrl(currentUrl);
   } catch (error) {
-    console.warn("HF Plain English could not parse the current Hugging Face URL.", error);
+    console.warn("Model Mentor could not parse the current Hugging Face URL.", error);
   }
 
   chrome.runtime.sendMessage(

@@ -1,6 +1,6 @@
-# HF Plain English
+# Model Mentor for Hugging Face
 
-A Chrome extension that explains Hugging Face model pages in plain English.
+A Chrome extension that helps AI learners understand Hugging Face model pages in plain English.
 
 ## V1 objective
 

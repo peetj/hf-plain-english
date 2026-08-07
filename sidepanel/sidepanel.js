@@ -6,6 +6,9 @@ import { recommendModelTool } from "../services/recommendation-engine.js";
 import { generateDeterministicExplanation } from "../services/explanation-service.js";
 
 const activeUrlElement = document.querySelector("#active-url");
+const modelOwnerElement = document.querySelector("#model-owner");
+const modelIdHelpElement = document.querySelector("#model-id-help");
+const tooltipWrapElement = document.querySelector(".tooltip-wrap");
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
 const overviewTextElement = document.querySelector("#overview-text");
@@ -48,23 +51,25 @@ async function refreshActiveTabStatus() {
   activeRefreshId = refreshId;
 
   setStatus("Loading", "Checking the active browser tab.");
-  activeUrlElement.textContent = "Checking active tab...";
+  resetModelIdentity("Checking active tab...");
   resetFetchedDetails();
 
   try {
     const tab = await getActiveTab();
 
     if (!tab?.url) {
-      activeUrlElement.textContent = "No active tab";
+      resetModelIdentity("No active tab");
       setStatus("No active tab", "Open a public Hugging Face model page and try again.");
       return;
     }
 
     activeUrlElement.textContent = tab.url;
+    modelOwnerElement.hidden = true;
+    tooltipWrapElement.hidden = true;
     const parsedUrl = parseHuggingFaceModelUrl(tab.url);
 
     if (parsedUrl.ok) {
-      activeUrlElement.textContent = parsedUrl.modelId;
+      renderModelIdentity(parsedUrl.modelId);
       setStatus("Loading model facts", `Resolved model ID: ${parsedUrl.modelId}. Fetching public Hugging Face metadata.`);
       overviewTextElement.textContent =
         "This is a supported public Hugging Face model-page URL.";
@@ -73,18 +78,20 @@ async function refreshActiveTabStatus() {
     }
 
     if (parsedUrl.isHuggingFace) {
+      resetModelIdentity("Unsupported Hugging Face page");
       setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
       overviewTextElement.textContent =
         "V1 supports public model pages in the owner/model URL format, including model tree and blob subpages.";
       return;
     }
 
+    resetModelIdentity("Unsupported page");
     setStatus("Unsupported page", "This is not a Hugging Face model page.");
-    overviewTextElement.textContent = "Open a public Hugging Face model page, then click the HF Plain English extension icon again.";
+    overviewTextElement.textContent = "Open a public Hugging Face model page, then click the Model Mentor extension icon again.";
   } catch (error) {
-    activeUrlElement.textContent = "Unable to inspect active tab";
+    resetModelIdentity("Unable to inspect active tab");
     setStatus("Error", "Chrome did not return active tab information.");
-    console.warn("HF Plain English side panel failed to inspect the active tab.", error);
+    console.warn("Model Mentor side panel failed to inspect the active tab.", error);
   }
 }
 
@@ -179,6 +186,27 @@ function showFetchError(result) {
       setStatus("Network error", result.error.message);
       overviewTextElement.textContent = "Check the network connection and refresh the side panel.";
   }
+}
+
+function renderModelIdentity(modelId) {
+  const [owner, modelName] = String(modelId).split("/");
+
+  activeUrlElement.textContent = modelName || modelId;
+  modelOwnerElement.textContent = owner ? `by ${owner} on Hugging Face` : "Hugging Face model page";
+  modelOwnerElement.hidden = false;
+  tooltipWrapElement.hidden = false;
+
+  modelIdHelpElement.setAttribute(
+    "aria-label",
+    `Explain the Hugging Face model name ${modelId}`
+  );
+}
+
+function resetModelIdentity(label) {
+  activeUrlElement.textContent = label;
+  modelOwnerElement.textContent = "";
+  modelOwnerElement.hidden = true;
+  tooltipWrapElement.hidden = true;
 }
 
 function renderFacts(rows) {
@@ -388,7 +416,7 @@ async function loadGlossary() {
     const glossary = await response.json();
     return Array.isArray(glossary) ? glossary : [];
   } catch (error) {
-    console.warn("HF Plain English could not load the local glossary.", error);
+    console.warn("Model Mentor could not load the local glossary.", error);
     return [];
   }
 }
@@ -406,7 +434,7 @@ async function loadHardwareProfile() {
     const profile = await response.json();
     return profile && typeof profile === "object" ? profile : {};
   } catch (error) {
-    console.warn("HF Plain English could not load the local hardware profile.", error);
+    console.warn("Model Mentor could not load the local hardware profile.", error);
     return {};
   }
 }

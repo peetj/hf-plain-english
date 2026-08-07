@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "HF Plain English",
-  "description": "Explains public Hugging Face model pages in plain English.",
+  "name": "Model Mentor for Hugging Face",
+  "description": "A plain-English guide for understanding Hugging Face model pages.",
   "version": "0.1.0",
   "permissions": [
     "activeTab",
@@ -48,7 +48,7 @@
     "128": "assets/icons/icon-128.png"
   },
   "action": {
-    "default_title": "HF Plain English",
+    "default_title": "Model Mentor",
     "default_icon": {
       "16": "assets/icons/icon-16.png",
       "32": "assets/icons/icon-32.png",

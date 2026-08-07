@@ -3,15 +3,31 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HF Plain English</title>
+    <title>Model Mentor</title>
     <link rel="stylesheet" href="sidepanel.css">
   </head>
   <body>
     <header class="app-header">
       <div>
-        <p class="eyebrow">Chrome side panel</p>
-        <h1>HF Plain English</h1>
-        <p id="active-url" class="model-id">Checking active tab...</p>
+        <h1>Model Mentor</h1>
+        <div class="model-heading">
+          <p id="active-url" class="model-id">Checking active tab...</p>
+          <span class="tooltip-wrap" hidden>
+            <button
+              id="model-id-help"
+              class="tooltip-button"
+              type="button"
+              aria-label="Explain this Hugging Face model name"
+              aria-describedby="model-id-tooltip"
+            >
+              ?
+            </button>
+            <span id="model-id-tooltip" class="tooltip-bubble" role="tooltip">
+              Hugging Face model pages use owner/model. The owner is the account or organisation. The model is the repository name and version.
+            </span>
+          </span>
+        </div>
+        <p id="model-owner" class="model-owner" hidden></p>
       </div>
       <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh active tab status" title="Refresh">
         Refresh
@@ -27,7 +43,7 @@
       <section class="panel-section">
         <h2>Overview</h2>
         <p id="overview-text">
-          The side panel is installed and ready. Model detection and Hugging Face API analysis will be added in the next stages.
+          Open a public Hugging Face model page to get a plain-English guide.
         </p>
       </section>
 
