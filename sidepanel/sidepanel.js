@@ -7,8 +7,6 @@ import { generateDeterministicExplanation } from "../services/explanation-servic
 
 const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
-const modelIdHelpElement = document.querySelector("#model-id-help");
-const tooltipWrapElement = document.querySelector(".tooltip-wrap");
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
 const overviewTextElement = document.querySelector("#overview-text");
@@ -32,13 +30,22 @@ const termsSection = document.querySelector("#terms-section");
 const termsList = document.querySelector("#terms-list");
 const sourceSection = document.querySelector("#source-section");
 const sourceTextElement = document.querySelector("#source-text");
+const tooltipLayerElement = document.querySelector("#tooltip-layer");
+const tooltipTitleElement = document.querySelector("#tooltip-title");
+const tooltipTextElement = document.querySelector("#tooltip-text");
 
 let activeRefreshId = 0;
+let tooltipDefinitions = [];
+let activeTooltipTrigger = null;
+const tooltipDefinitionsPromise = loadTooltips().then((definitions) => {
+  tooltipDefinitions = definitions;
+  return definitions;
+});
 
 function setStatus(label, message) {
   const labelElement = statusCard.querySelector(".status-label");
   labelElement.textContent = label;
-  statusMessageElement.textContent = message;
+  renderTooltipText(statusMessageElement, message);
 }
 
 async function getActiveTab() {
@@ -65,14 +72,12 @@ async function refreshActiveTabStatus() {
 
     activeUrlElement.textContent = tab.url;
     modelOwnerElement.hidden = true;
-    tooltipWrapElement.hidden = true;
     const parsedUrl = parseHuggingFaceModelUrl(tab.url);
 
     if (parsedUrl.ok) {
       renderModelIdentity(parsedUrl.modelId);
       setStatus("Loading model facts", `Resolved model ID: ${parsedUrl.modelId}. Fetching public Hugging Face metadata.`);
-      overviewTextElement.textContent =
-        "This is a supported public Hugging Face model-page URL.";
+      renderTooltipText(overviewTextElement, "This is a supported public Hugging Face model-page URL.");
       await loadModelFacts(parsedUrl.modelId, refreshId);
       return;
     }
@@ -80,18 +85,23 @@ async function refreshActiveTabStatus() {
     if (parsedUrl.isHuggingFace) {
       resetModelIdentity("Unsupported Hugging Face page");
       setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
-      overviewTextElement.textContent =
-        "V1 supports public model pages in the owner/model URL format, including model tree and blob subpages.";
+      renderTooltipText(
+        overviewTextElement,
+        "V1 supports public model pages in the owner/model URL format, including model tree and blob subpages."
+      );
       return;
     }
 
     resetModelIdentity("Unsupported page");
     setStatus("Unsupported page", "This is not a Hugging Face model page.");
-    overviewTextElement.textContent = "Open a public Hugging Face model page, then click the Model Mentor extension icon again.";
+    renderTooltipText(
+      overviewTextElement,
+      "Open a public Hugging Face model page, then click the Hugging Face for Newbies extension icon again."
+    );
   } catch (error) {
     resetModelIdentity("Unable to inspect active tab");
     setStatus("Error", "Chrome did not return active tab information.");
-    console.warn("Model Mentor side panel failed to inspect the active tab.", error);
+    console.warn("Hugging Face for Newbies side panel failed to inspect the active tab.", error);
   }
 }
 
@@ -117,7 +127,8 @@ async function loadModelFacts(modelId, refreshId) {
   const interpreted = parseModelFacts(data);
   const [glossary, hardwareProfile] = await Promise.all([
     loadGlossary(),
-    loadHardwareProfile()
+    loadHardwareProfile(),
+    tooltipDefinitionsPromise
   ]);
   const hardwareEstimate = estimateHardwareFit(interpreted, hardwareProfile);
   const recommendation = recommendModelTool(data, interpreted, hardwareEstimate, hardwareProfile);
@@ -157,7 +168,7 @@ async function loadModelFacts(modelId, refreshId) {
     setStatus(getFitStatusLabel(hardwareEstimate.fit.overall), "Model facts and a cautious hardware estimate are available.");
   }
 
-  overviewTextElement.textContent = explanation.overview;
+  renderTooltipText(overviewTextElement, explanation.overview);
 }
 
 function showFetchError(result) {
@@ -166,25 +177,28 @@ function showFetchError(result) {
   switch (result.status) {
     case "not-found":
       setStatus("Model not found", result.error.message);
-      overviewTextElement.textContent = "Hugging Face did not return public metadata for this model ID.";
+      renderTooltipText(overviewTextElement, "Hugging Face did not return public metadata for this model ID.");
       break;
     case "rate-limited":
       setStatus("Rate limited", result.error.message);
-      overviewTextElement.textContent = result.error.retryAfter
-        ? `Try again after ${result.error.retryAfter}.`
-        : "Try again later. The extension did not make any further requests.";
+      renderTooltipText(
+        overviewTextElement,
+        result.error.retryAfter
+          ? `Try again after ${result.error.retryAfter}.`
+          : "Try again later. The extension did not make any further requests."
+      );
       break;
     case "gated-or-private":
       setStatus("Gated or private model", result.error.message);
-      overviewTextElement.textContent = "The model may require a Hugging Face account or accepted access terms.";
+      renderTooltipText(overviewTextElement, "The model may require a Hugging Face account or accepted access terms.");
       break;
     case "invalid-response":
       setStatus("Unexpected API response", result.error.message);
-      overviewTextElement.textContent = "The extension could not safely read the Hugging Face API response.";
+      renderTooltipText(overviewTextElement, "The extension could not safely read the Hugging Face API response.");
       break;
     default:
       setStatus("Network error", result.error.message);
-      overviewTextElement.textContent = "Check the network connection and refresh the side panel.";
+      renderTooltipText(overviewTextElement, "Check the network connection and refresh the side panel.");
   }
 }
 
@@ -192,21 +206,19 @@ function renderModelIdentity(modelId) {
   const [owner, modelName] = String(modelId).split("/");
 
   activeUrlElement.textContent = modelName || modelId;
-  modelOwnerElement.textContent = owner ? `by ${owner} on Hugging Face` : "Hugging Face model page";
-  modelOwnerElement.hidden = false;
-  tooltipWrapElement.hidden = false;
-
-  modelIdHelpElement.setAttribute(
-    "aria-label",
-    `Explain the Hugging Face model name ${modelId}`
+  renderTooltipText(
+    modelOwnerElement,
+    owner
+      ? `by ${owner} on Hugging Face. Hugging Face calls this an owner/model ID.`
+      : "Hugging Face model page."
   );
+  modelOwnerElement.hidden = false;
 }
 
 function resetModelIdentity(label) {
   activeUrlElement.textContent = label;
-  modelOwnerElement.textContent = "";
+  modelOwnerElement.replaceChildren();
   modelOwnerElement.hidden = true;
-  tooltipWrapElement.hidden = true;
 }
 
 function renderFacts(rows) {
@@ -216,7 +228,7 @@ function renderFacts(rows) {
     const term = document.createElement("dt");
     const description = document.createElement("dd");
     term.textContent = label;
-    description.textContent = formatFactValue(value);
+    renderTooltipText(description, formatFactValue(value));
     factsList.append(term, description);
   }
 
@@ -240,7 +252,7 @@ function renderInterpretation(interpreted) {
   for (const warning of interpreted.warnings) {
     const item = document.createElement("p");
     item.className = "warning-item";
-    item.textContent = warning;
+    renderTooltipText(item, warning);
     warningList.append(item);
   }
 
@@ -248,7 +260,7 @@ function renderInterpretation(interpreted) {
 }
 
 function renderHardwareEstimate(estimate, hardwareProfile) {
-  hardwareSummaryElement.textContent = estimate.explanation;
+  renderTooltipText(hardwareSummaryElement, estimate.explanation);
   renderDefinitionList(hardwareList, [
     ["Fit", getFitStatusLabel(estimate.fit.overall)],
     ["GPU fit", formatFitCategory(estimate.fit.gpu)],
@@ -266,7 +278,7 @@ function renderHardwareEstimate(estimate, hardwareProfile) {
   for (const assumption of estimate.assumptions) {
     const item = document.createElement("p");
     item.className = "warning-item";
-    item.textContent = assumption;
+    renderTooltipText(item, assumption);
     assumptionsList.append(item);
   }
 
@@ -274,7 +286,7 @@ function renderHardwareEstimate(estimate, hardwareProfile) {
 }
 
 function renderRunRecommendation(recommendation, explanation) {
-  runSummaryElement.textContent = explanation.run;
+  renderTooltipText(runSummaryElement, explanation.run);
   renderDefinitionList(runList, [
     ["Recommended tool", recommendation.primaryTool],
     ["Confidence", recommendation.confidence],
@@ -288,7 +300,7 @@ function renderRunRecommendation(recommendation, explanation) {
   for (const warning of Array.from(new Set([...recommendation.warnings, ...explanation.limitations]))) {
     const item = document.createElement("p");
     item.className = "warning-item";
-    item.textContent = warning;
+    renderTooltipText(item, warning);
     runWarningList.append(item);
   }
 
@@ -320,7 +332,7 @@ function renderRelevantFiles(files) {
       file.formats.join(", "),
       file.quantisations.length ? `Quantisation: ${file.quantisations.join(", ")}` : ""
     ].filter(Boolean).join(" | ");
-    explanation.textContent = file.explanation;
+    renderTooltipText(explanation, file.explanation);
 
     item.append(name, meta, explanation);
     filesList.append(item);
@@ -351,8 +363,8 @@ function renderTechnicalTerms(glossary, termIds) {
     details.className = "term-details";
     summary.textContent = entry.term;
     short.className = "term-short";
-    short.textContent = entry.short;
-    detail.textContent = entry.detail;
+    renderTooltipText(short, entry.short);
+    renderTooltipText(detail, entry.detail);
 
     details.append(summary, short, detail);
     termsList.append(details);
@@ -368,12 +380,13 @@ function renderDefinitionList(listElement, rows) {
     const term = document.createElement("dt");
     const description = document.createElement("dd");
     term.textContent = label;
-    description.textContent = formatFactValue(value);
+    renderTooltipText(description, formatFactValue(value));
     listElement.append(term, description);
   }
 }
 
 function resetFetchedDetails() {
+  hideTooltip();
   factsList.replaceChildren();
   factsSection.hidden = true;
   interpretationList.replaceChildren();
@@ -403,6 +416,287 @@ function formatFactValue(value) {
   return value;
 }
 
+function renderTooltipText(element, value) {
+  const text = String(formatFactValue(value));
+  element.replaceChildren();
+
+  if (tooltipDefinitions.length === 0 || text.trim() === "") {
+    element.textContent = text;
+    return;
+  }
+
+  for (const part of createTooltipParts(text)) {
+    if (part.type === "text") {
+      element.append(document.createTextNode(part.text));
+      continue;
+    }
+
+    element.append(createTooltipTrigger(part.text, part.definition));
+  }
+}
+
+function createTooltipParts(text) {
+  const parts = [];
+  let index = 0;
+
+  while (index < text.length) {
+    const match = findTooltipMatchAt(text, index);
+
+    if (!match) {
+      const nextMatchIndex = findNextTooltipMatchIndex(text, index + 1);
+      const textEnd = nextMatchIndex === -1 ? text.length : nextMatchIndex;
+      parts.push({
+        type: "text",
+        text: text.slice(index, textEnd)
+      });
+      index = textEnd;
+      continue;
+    }
+
+    parts.push({
+      type: "tooltip",
+      text: text.slice(index, index + match.term.length),
+      definition: match.definition
+    });
+    index += match.term.length;
+  }
+
+  return parts;
+}
+
+function findNextTooltipMatchIndex(text, startIndex) {
+  for (let index = startIndex; index < text.length; index += 1) {
+    if (findTooltipMatchAt(text, index)) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function findTooltipMatchAt(text, index) {
+  const lowerText = text.toLowerCase();
+  let bestMatch = null;
+
+  for (const definition of tooltipDefinitions) {
+    for (const term of definition.terms) {
+      if (
+        lowerText.startsWith(term.lower, index) &&
+        hasTooltipBoundaries(text, index, index + term.value.length, term.value)
+      ) {
+        if (!bestMatch || term.value.length > bestMatch.term.length) {
+          bestMatch = {
+            definition,
+            term: term.value
+          };
+        }
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
+function hasTooltipBoundaries(text, start, end, term) {
+  const firstTermCharacter = term.charAt(0);
+  const lastTermCharacter = term.charAt(term.length - 1);
+  const before = start > 0 ? text.charAt(start - 1) : "";
+  const after = end < text.length ? text.charAt(end) : "";
+
+  if (isAlphaNumeric(firstTermCharacter) && isAlphaNumeric(before)) {
+    return false;
+  }
+
+  if (isAlphaNumeric(lastTermCharacter) && isAlphaNumeric(after)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isAlphaNumeric(character) {
+  return /^[a-z0-9]$/i.test(character);
+}
+
+function createTooltipTrigger(text, definition) {
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "tooltip-term";
+  trigger.dataset.tooltipId = definition.id;
+  trigger.setAttribute("aria-describedby", "tooltip-layer");
+  trigger.setAttribute("aria-label", `Explain ${text}`);
+  trigger.textContent = text;
+  return trigger;
+}
+
+function initTooltipEvents() {
+  document.addEventListener("pointerover", (event) => {
+    const trigger = event.target.closest?.(".tooltip-term");
+
+    if (trigger) {
+      showTooltip(trigger);
+    }
+  });
+
+  document.addEventListener("pointerout", (event) => {
+    const trigger = event.target.closest?.(".tooltip-term");
+
+    if (trigger && trigger === activeTooltipTrigger && !trigger.matches(":focus")) {
+      hideTooltip();
+    }
+  });
+
+  document.addEventListener("focusin", (event) => {
+    const trigger = event.target.closest?.(".tooltip-term");
+
+    if (trigger) {
+      showTooltip(trigger);
+    }
+  });
+
+  document.addEventListener("focusout", (event) => {
+    const trigger = event.target.closest?.(".tooltip-term");
+
+    if (trigger && trigger === activeTooltipTrigger) {
+      globalThis.setTimeout(() => {
+        if (document.activeElement !== trigger) {
+          hideTooltip();
+        }
+      }, 0);
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest?.(".tooltip-term");
+
+    if (trigger) {
+      showTooltip(trigger);
+      return;
+    }
+
+    hideTooltip();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      hideTooltip();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (activeTooltipTrigger) {
+      positionTooltip(activeTooltipTrigger);
+    }
+  });
+
+  document.addEventListener("scroll", () => {
+    if (activeTooltipTrigger) {
+      positionTooltip(activeTooltipTrigger);
+    }
+  }, true);
+}
+
+function showTooltip(trigger) {
+  const definition = getTooltipDefinition(trigger.dataset.tooltipId);
+
+  if (!definition) {
+    return;
+  }
+
+  if (activeTooltipTrigger && activeTooltipTrigger !== trigger) {
+    activeTooltipTrigger.removeAttribute("data-tooltip-open");
+  }
+
+  activeTooltipTrigger = trigger;
+  activeTooltipTrigger.dataset.tooltipOpen = "true";
+  tooltipTitleElement.textContent = definition.title;
+  tooltipTextElement.textContent = definition.text;
+  tooltipLayerElement.hidden = false;
+  positionTooltip(trigger);
+}
+
+function hideTooltip() {
+  if (activeTooltipTrigger) {
+    activeTooltipTrigger.removeAttribute("data-tooltip-open");
+  }
+
+  activeTooltipTrigger = null;
+  tooltipLayerElement.hidden = true;
+}
+
+function positionTooltip(trigger) {
+  const triggerRect = trigger.getBoundingClientRect();
+  const tooltipRect = tooltipLayerElement.getBoundingClientRect();
+  const margin = 10;
+  const preferredTop = triggerRect.bottom + 8;
+  const fallbackTop = triggerRect.top - tooltipRect.height - 8;
+  const top = preferredTop + tooltipRect.height <= window.innerHeight - margin
+    ? preferredTop
+    : Math.max(margin, fallbackTop);
+  const centeredLeft = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2);
+  const maxLeft = Math.max(margin, window.innerWidth - tooltipRect.width - margin);
+  const left = Math.min(Math.max(margin, centeredLeft), maxLeft);
+
+  tooltipLayerElement.style.top = `${top}px`;
+  tooltipLayerElement.style.left = `${left}px`;
+}
+
+function getTooltipDefinition(id) {
+  return tooltipDefinitions.find((definition) => definition.id === id) || null;
+}
+
+async function loadTooltips() {
+  try {
+    const response = await fetch(chrome.runtime.getURL("data/tooltips.json"), {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const tooltips = await response.json();
+    return normalizeTooltips(tooltips);
+  } catch (error) {
+    console.warn("Hugging Face for Newbies could not load the local tooltip definitions.", error);
+    return [];
+  }
+}
+
+function normalizeTooltips(tooltips) {
+  if (!Array.isArray(tooltips)) {
+    return [];
+  }
+
+  return tooltips
+    .filter((entry) => (
+      entry &&
+      typeof entry.id === "string" &&
+      typeof entry.title === "string" &&
+      typeof entry.text === "string" &&
+      Array.isArray(entry.terms)
+    ))
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.title,
+      text: entry.text,
+      category: typeof entry.category === "string" ? entry.category : "general",
+      terms: entry.terms
+        .filter((term) => typeof term === "string" && term.trim() !== "")
+        .map((term) => ({
+          value: term,
+          lower: term.toLowerCase()
+        }))
+        .sort((a, b) => b.value.length - a.value.length)
+    }))
+    .filter((entry) => entry.terms.length > 0)
+    .sort((a, b) => {
+      const longestA = a.terms[0]?.value.length || 0;
+      const longestB = b.terms[0]?.value.length || 0;
+      return longestB - longestA;
+    });
+}
+
 async function loadGlossary() {
   try {
     const response = await fetch(chrome.runtime.getURL("data/glossary.json"), {
@@ -416,7 +710,7 @@ async function loadGlossary() {
     const glossary = await response.json();
     return Array.isArray(glossary) ? glossary : [];
   } catch (error) {
-    console.warn("Model Mentor could not load the local glossary.", error);
+    console.warn("Hugging Face for Newbies could not load the local glossary.", error);
     return [];
   }
 }
@@ -434,7 +728,7 @@ async function loadHardwareProfile() {
     const profile = await response.json();
     return profile && typeof profile === "object" ? profile : {};
   } catch (error) {
-    console.warn("Model Mentor could not load the local hardware profile.", error);
+    console.warn("Hugging Face for Newbies could not load the local hardware profile.", error);
     return {};
   }
 }
@@ -545,4 +839,5 @@ refreshButton.addEventListener("click", () => {
   refreshActiveTabStatus();
 });
 
+initTooltipEvents();
 refreshActiveTabStatus();

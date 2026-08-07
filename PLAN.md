@@ -1,4 +1,4 @@
-# Model Mentor for Hugging Face Development Plan
+# Hugging Face for Newbies Development Plan
 
 ## Status Key
 
@@ -27,10 +27,18 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Rename the extension away from "HF Plain English".
 - [✅] Make the shown model identity less confusing than repeating `owner/model` as the main label.
 - [✅] Add a custom, non-browser-default tooltip explaining Hugging Face `owner/model` names.
-- [❌] Create a tooltip architecture/event-flow for the extension. A toolip should have a dotted underline in green. Create a structure - maybe a separate tooltip.json file that can be parsed to add tooltips to the text in a final parse of the output ?
-- [❌] Review the new name after seeing it in the browser. Current name: "Model Mentor for Hugging Face". Change to "Hugging Face for Newbies"
-- [❌] Tooltip is obscured by main site panel.
-- [❌] Change extension icon to hugging face emoji
+- [✅] Create a tooltip architecture/event-flow for the extension. Tooltips use a green dotted underline and structured `data/tooltips.json` definitions parsed into rendered explanation text.
+- [✅] Review the new name after seeing it in the browser. Current name changed to "Hugging Face for Newbies".
+- [✅] Fix tooltip clipping by rendering tooltips in a panel-level fixed overlay instead of inside individual text containers.
+- [✅] Change extension icon to a distinct learner-face design with glasses and a subtle pencil/book motif.
+- [👍] The tooltip system looks great.
+- [❌] Remove "Hugging Face calls this an owner/model ID." as it makes no sense
+- [❌] "Runs Comfortably" needs more context, eg. on what? on my machine? What is the important spec of my machine if so?
+- [👍] Overview is ok
+- [❌] In "Fetched Facts" - ALL detail should tooltips
+- [❌] In "Plain English Read" section you have something like this: "Likely model type   chat (metadata, high confidence)". The bracket text doesn't make sense. Why say "metadata"? "high confidence" is ok though.
+- [❌] Make sure you include ALL acronyms that aren't everyday parlance in the tooltips, eg. BF16
+- [❌] Let's do a fun one. Make the color scheme of the theme of the extension a bit more interesting but in the website colors - maybe contrasting colors that make the extension stand out.
 
 ## Current Foundation
 

@@ -1,0 +1,135 @@
+[
+  {
+    "id": "owner-model",
+    "terms": ["owner/model", "model ID"],
+    "title": "Owner/model",
+    "text": "Hugging Face names model repositories as owner/model. The owner is the account or organisation. The model is the repository name.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "hugging-face",
+    "terms": ["Hugging Face"],
+    "title": "Hugging Face",
+    "text": "A large website where people publish AI models, datasets, demos, and documentation. It is powerful, but many pages assume technical background.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "model-card",
+    "terms": ["model card"],
+    "title": "Model card",
+    "text": "The README-style explanation for a model. It may describe intended use, limitations, examples, training notes, and licence details.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "metadata",
+    "terms": ["metadata"],
+    "title": "Metadata",
+    "text": "Structured facts attached to the model page, such as task, licence, tags, files, and update time. Metadata can be incomplete.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "repository",
+    "terms": ["repository", "repo"],
+    "title": "Repository",
+    "text": "The model's folder on Hugging Face. It usually contains weights, tokenizer files, config files, and the model card.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "pipeline-tag",
+    "terms": ["pipeline tag", "task"],
+    "title": "Pipeline tag",
+    "text": "A Hugging Face label for the model's likely job, such as text-generation, feature-extraction, or text-to-image.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "parameters",
+    "terms": ["parameters", "parameter count"],
+    "title": "Parameters",
+    "text": "The learned numbers inside a model. More parameters usually mean larger files and more memory use, but not automatically better results.",
+    "category": "model-basics"
+  },
+  {
+    "id": "quantisation",
+    "terms": ["quantisation", "quantised", "quantization", "quantized"],
+    "title": "Quantisation",
+    "text": "A way to store model weights with fewer bits so they use less disk and memory. It can make local use easier, with possible quality tradeoffs.",
+    "category": "model-basics"
+  },
+  {
+    "id": "gguf",
+    "terms": ["GGUF"],
+    "title": "GGUF",
+    "text": "A model file format commonly used by local model tools built around llama.cpp, including many beginner desktop workflows.",
+    "category": "files"
+  },
+  {
+    "id": "safetensors",
+    "terms": ["safetensors"],
+    "title": "safetensors",
+    "text": "A common format for storing model weights, often used with Python machine-learning tools.",
+    "category": "files"
+  },
+  {
+    "id": "tokenizer",
+    "terms": ["tokenizer", "tokenizer files"],
+    "title": "Tokenizer",
+    "text": "The part that turns text into tokens the model can process, then turns output tokens back into text.",
+    "category": "files"
+  },
+  {
+    "id": "context-length",
+    "terms": ["context length", "context window"],
+    "title": "Context length",
+    "text": "How much text the model can consider at once. Longer context can require more memory while the model runs.",
+    "category": "model-basics"
+  },
+  {
+    "id": "vram",
+    "terms": ["VRAM", "GPU VRAM"],
+    "title": "VRAM",
+    "text": "Fast memory on a graphics card. Many local model tools use VRAM when available.",
+    "category": "hardware"
+  },
+  {
+    "id": "system-ram",
+    "terms": ["system RAM", "RAM"],
+    "title": "System RAM",
+    "text": "The main memory in your computer. Some model setups can use system RAM when the model does not fully fit in VRAM.",
+    "category": "hardware"
+  },
+  {
+    "id": "lm-studio",
+    "terms": ["LM Studio"],
+    "title": "LM Studio",
+    "text": "A desktop app that can be beginner-friendly for trying many local language models, especially GGUF models.",
+    "category": "tools"
+  },
+  {
+    "id": "ollama",
+    "terms": ["Ollama"],
+    "title": "Ollama",
+    "text": "A local model runner controlled mainly by commands and a local API. A Hugging Face page does not always map directly to an Ollama model.",
+    "category": "tools"
+  },
+  {
+    "id": "python-transformers",
+    "terms": ["Python Transformers", "Transformers"],
+    "title": "Python Transformers",
+    "text": "Hugging Face's Python library for loading and running many models. Powerful, but usually more technical than a desktop app.",
+    "category": "tools"
+  },
+  {
+    "id": "gated-model",
+    "terms": ["gated", "gated model"],
+    "title": "Gated model",
+    "text": "A model that may require signing in, accepting terms, or getting approval before files can be downloaded.",
+    "category": "trust"
+  },
+  {
+    "id": "licence",
+    "terms": ["licence", "license"],
+    "title": "Licence",
+    "text": "The rules for using or sharing the model. Missing metadata is not permission; check the original model page for actual terms.",
+    "category": "trust"
+  }
+]

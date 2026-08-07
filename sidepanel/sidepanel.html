@@ -3,29 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Model Mentor</title>
+    <title>Hugging Face for Newbies</title>
     <link rel="stylesheet" href="sidepanel.css">
   </head>
   <body>
     <header class="app-header">
       <div>
-        <h1>Model Mentor</h1>
+        <h1>Hugging Face for Newbies</h1>
         <div class="model-heading">
           <p id="active-url" class="model-id">Checking active tab...</p>
-          <span class="tooltip-wrap" hidden>
-            <button
-              id="model-id-help"
-              class="tooltip-button"
-              type="button"
-              aria-label="Explain this Hugging Face model name"
-              aria-describedby="model-id-tooltip"
-            >
-              ?
-            </button>
-            <span id="model-id-tooltip" class="tooltip-bubble" role="tooltip">
-              Hugging Face model pages use owner/model. The owner is the account or organisation. The model is the repository name and version.
-            </span>
-          </span>
         </div>
         <p id="model-owner" class="model-owner" hidden></p>
       </div>
@@ -94,6 +80,11 @@
         </p>
       </section>
     </main>
+
+    <div id="tooltip-layer" class="tooltip-layer" role="tooltip" hidden>
+      <p id="tooltip-title" class="tooltip-title"></p>
+      <p id="tooltip-text" class="tooltip-text"></p>
+    </div>
 
     <script src="sidepanel.js" type="module"></script>
   </body>

@@ -18,8 +18,8 @@ async function setSidePanelForTab(tabId, url) {
   await chrome.action.setTitle({
     tabId,
     title: parsedUrl.ok
-      ? "Open Model Mentor"
-      : "Model Mentor works on public Hugging Face model pages"
+      ? "Open Hugging Face for Newbies"
+      : "Hugging Face for Newbies works on public Hugging Face model pages"
   });
 }
 
@@ -45,23 +45,23 @@ async function openSidePanel(tab) {
 
 chrome.runtime.onInstalled.addListener(() => {
   configureSidePanelBehavior().catch((error) => {
-    console.warn("Unable to configure Model Mentor side panel action behavior.", error);
+    console.warn("Unable to configure Hugging Face for Newbies side panel action behavior.", error);
   });
 });
 
 chrome.runtime.onStartup.addListener(() => {
   configureSidePanelBehavior().catch((error) => {
-    console.warn("Unable to configure Model Mentor side panel action behavior on startup.", error);
+    console.warn("Unable to configure Hugging Face for Newbies side panel action behavior on startup.", error);
   });
 });
 
 configureSidePanelBehavior().catch((error) => {
-  console.warn("Unable to configure Model Mentor side panel action behavior on worker start.", error);
+  console.warn("Unable to configure Hugging Face for Newbies side panel action behavior on worker start.", error);
 });
 
 chrome.action.onClicked.addListener((tab) => {
   openSidePanel(tab).catch((error) => {
-    console.warn("Unable to open Model Mentor side panel.", error);
+    console.warn("Unable to open Hugging Face for Newbies side panel.", error);
   });
 });
 
@@ -71,7 +71,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 
   setSidePanelForTab(tabId, tab.url || changeInfo.url).catch((error) => {
-    console.warn("Unable to update Model Mentor side panel state.", error);
+    console.warn("Unable to update Hugging Face for Newbies side panel state.", error);
   });
 });
 
@@ -110,7 +110,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     .set({ [`hfPlainEnglish.tab.${tabId}`]: payload })
     .then(() => sendResponse({ ok: true }))
     .catch((error) => {
-      console.warn("Unable to store Model Mentor tab state.", error);
+      console.warn("Unable to store Hugging Face for Newbies tab state.", error);
       sendResponse({ ok: false, reason: "storage-error" });
     });
 

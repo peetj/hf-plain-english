@@ -1,4 +1,4 @@
-# Model Mentor for Hugging Face
+# Hugging Face for Newbies
 
 A Chrome extension that helps AI learners understand Hugging Face model pages in plain English.
 

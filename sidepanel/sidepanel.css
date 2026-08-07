@@ -63,6 +63,10 @@ a:focus-visible {
   background: var(--surface);
 }
 
+.app-header > div {
+  min-width: 0;
+}
+
 h1,
 h2,
 p {
@@ -103,71 +107,48 @@ h2 {
   font-size: 12px;
 }
 
-.tooltip-wrap {
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-}
-
-.tooltip-button {
-  display: inline-grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface-muted);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
+.tooltip-term {
+  margin: 0;
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 2px dotted var(--accent);
+  background: transparent;
+  color: inherit;
   cursor: help;
+  font: inherit;
+  text-align: inherit;
 }
 
-.tooltip-button:hover,
-.tooltip-button:focus-visible {
-  border-color: var(--accent);
+.tooltip-term:hover,
+.tooltip-term:focus-visible,
+.tooltip-term[data-tooltip-open="true"] {
   color: var(--accent-strong);
 }
 
-.tooltip-bubble {
-  position: absolute;
-  z-index: 5;
-  top: calc(100% + 8px);
-  right: 0;
-  width: min(260px, calc(100vw - 34px));
-  padding: 10px 11px;
+.tooltip-layer {
+  position: fixed;
+  z-index: 1000;
+  width: min(280px, calc(100vw - 28px));
+  padding: 11px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
   color: var(--text);
   font-size: 12px;
   line-height: 1.4;
-  opacity: 0;
   pointer-events: none;
-  transform: translateY(-3px);
-  transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.tooltip-bubble::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  right: 8px;
-  width: 10px;
-  height: 10px;
-  border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-  background: var(--surface);
-  transform: rotate(45deg);
+.tooltip-title {
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+  font-weight: 800;
 }
 
-.tooltip-wrap:hover .tooltip-bubble,
-.tooltip-button:focus + .tooltip-bubble,
-.tooltip-button:focus-visible + .tooltip-bubble {
-  opacity: 1;
-  transform: translateY(0);
+.tooltip-text {
+  margin: 0;
+  color: var(--text);
 }
 
 .icon-button {
