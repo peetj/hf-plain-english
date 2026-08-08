@@ -235,7 +235,7 @@ function renderUnsupportedHuggingFaceState(reason) {
   renderLearnerState("This is a useful Hugging Face page, but it is not a model page the extension can explain yet.", [
     ["What happened", getUnsupportedMessage(reason)],
     ["Where to go", createUnsupportedNavigation(reason)],
-    ["What to look for", "Choose a model result whose address looks like huggingface.co/owner/model, then refresh this panel."]
+    ["What to look for", "Choose a specific model page. For example, huggingface.co/Qwen/Qwen3-0.6B works because Qwen is the publisher and Qwen3-0.6B is the model."]
   ]);
 }
 
@@ -1432,9 +1432,9 @@ function getUnsupportedMessage(reason) {
     case "unsupported-hugging-face-section":
       return "This is a Hugging Face section such as models, datasets, Spaces, docs, or settings. The extension needs an individual model repository.";
     case "not-a-model-page":
-      return "This Hugging Face URL does not include both an owner and a model name.";
+      return "This Hugging Face URL is not an individual model page. Open a page like huggingface.co/Qwen/Qwen3-0.6B, where Qwen is the publisher and Qwen3-0.6B is the model.";
     case "invalid-model-id":
-      return "This URL does not contain a valid owner/model identifier.";
+      return "This URL does not contain a valid model address. A valid example is huggingface.co/Qwen/Qwen3-0.6B.";
     case "malformed-url":
       return "Chrome returned a malformed URL for the active tab.";
     default:
