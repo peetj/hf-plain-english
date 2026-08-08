@@ -31,6 +31,24 @@
         <p id="status-message">Preparing the extension shell.</p>
       </section>
 
+      <section id="ask-helper-section" class="ask-helper-section" aria-labelledby="ask-helper-title">
+        <div class="ask-helper-heading">
+          <h2 id="ask-helper-title">Ask a question</h2>
+          <p class="ask-helper-subtitle">Ask about the current model, a suggested model, or a confusing term.</p>
+        </div>
+        <form id="ask-helper-form" class="ask-helper-form">
+          <label class="sr-only" for="ask-helper-input">Question</label>
+          <input id="ask-helper-input" type="search" autocomplete="off" placeholder="What does Instruct mean?">
+          <button class="ask-helper-button" type="submit">Ask</button>
+        </form>
+        <div class="ask-suggestions" aria-label="Suggested questions">
+          <button type="button" data-ask-suggestion="What does this model name mean?">Model name</button>
+          <button type="button" data-ask-suggestion="Will this run on my computer?">Run locally?</button>
+          <button type="button" data-ask-suggestion="Which file should I download?">Which file?</button>
+        </div>
+        <section id="ask-helper-answer" class="ask-helper-answer" aria-live="polite" hidden></section>
+      </section>
+
       <section id="model-finder-section" class="panel-section model-finder-section">
         <h2>Model match</h2>
         <p id="model-finder-summary" class="model-finder-summary"></p>

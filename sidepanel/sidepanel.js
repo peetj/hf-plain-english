@@ -6,12 +6,16 @@ import { recommendModelTool } from "../services/recommendation-engine.js";
 import { generateDeterministicExplanation } from "../services/explanation-service.js";
 import { fetchModelCandidates } from "../services/model-candidate-search.js";
 import { buildModelFitFinder, rankModelCandidates } from "../services/model-fit-finder.js";
+import { answerLearnerQuestion } from "../services/question-answer-service.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
 const themeButtons = Array.from(document.querySelectorAll(".theme-button"));
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
+const askHelperForm = document.querySelector("#ask-helper-form");
+const askHelperInput = document.querySelector("#ask-helper-input");
+const askHelperAnswerElement = document.querySelector("#ask-helper-answer");
 const modelFinderForm = document.querySelector("#model-finder-form");
 const modelFinderTargetElement = document.querySelector("#model-finder-target");
 const modelFinderFormatElement = document.querySelector("#model-finder-format");
@@ -74,6 +78,8 @@ let savedHardwareProfile = {};
 let activeModelFinderRequestId = 0;
 let modelFinderRenderTimeout = 0;
 let refreshActiveTabStatusTimeout = 0;
+let currentLearnerContext = createLearnerContext();
+let currentModelFinderRecommendation = null;
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
@@ -99,6 +105,7 @@ async function getActiveTab() {
 async function refreshActiveTabStatus() {
   const refreshId = activeRefreshId + 1;
   activeRefreshId = refreshId;
+  currentLearnerContext = createLearnerContext({ pageState: "loading" });
 
   setStatus("Loading", "Checking the active browser tab.");
   resetModelIdentity("Checking active tab...");
@@ -108,6 +115,10 @@ async function refreshActiveTabStatus() {
     const tab = await getActiveTab();
 
     if (!tab?.url) {
+      currentLearnerContext = createLearnerContext({
+        pageState: "no-active-tab",
+        currentUrl: ""
+      });
       resetModelIdentity("No active tab");
       setStatus("No active tab", "Open a public Hugging Face model page and try again.");
       renderLearnerState("Nothing to explain yet.", [
@@ -122,6 +133,12 @@ async function refreshActiveTabStatus() {
     const parsedUrl = parseHuggingFaceModelUrl(tab.url);
 
     if (parsedUrl.ok) {
+      currentLearnerContext = createLearnerContext({
+        pageState: "model-loading",
+        currentUrl: tab.url,
+        parsedUrl,
+        modelId: parsedUrl.modelId
+      });
       renderModelIdentity(parsedUrl.modelId);
       setStatus("Loading model facts", `Resolved model ID: ${parsedUrl.modelId}. Fetching public Hugging Face metadata.`);
       renderTooltipText(overviewTextElement, "This is a supported public Hugging Face model-page URL.");
@@ -130,6 +147,11 @@ async function refreshActiveTabStatus() {
     }
 
     if (parsedUrl.isHuggingFace) {
+      currentLearnerContext = createLearnerContext({
+        pageState: "unsupported-hugging-face-page",
+        currentUrl: tab.url,
+        parsedUrl
+      });
       resetModelIdentity("Unsupported Hugging Face page");
       setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
       renderUnsupportedHuggingFaceState(parsedUrl.reason);
@@ -140,6 +162,11 @@ async function refreshActiveTabStatus() {
       return;
     }
 
+    currentLearnerContext = createLearnerContext({
+      pageState: "unsupported-page",
+      currentUrl: tab.url,
+      parsedUrl
+    });
     resetModelIdentity("Unsupported page");
     setStatus("Unsupported page", "This is not a Hugging Face model page.");
     renderLearnerState("This page is not a Hugging Face model page.", [
@@ -151,6 +178,10 @@ async function refreshActiveTabStatus() {
       "Open a public Hugging Face model page, then click the Hugging Face for Newbies extension icon again."
     );
   } catch (error) {
+    currentLearnerContext = createLearnerContext({
+      pageState: "tab-error",
+      currentUrl: ""
+    });
     resetModelIdentity("Unable to inspect active tab");
     setStatus("Error", "Chrome did not return active tab information.");
     renderLearnerState("The extension could not inspect the current tab.", [
@@ -175,6 +206,11 @@ async function loadModelFacts(modelId, refreshId) {
   ].filter(Boolean).join(" ");
 
   if (!result.ok) {
+    currentLearnerContext = createLearnerContext({
+      pageState: result.status,
+      modelId,
+      currentUrl: `https://huggingface.co/${modelId}`
+    });
     showFetchError(result);
     return;
   }
@@ -212,6 +248,17 @@ async function loadModelFacts(modelId, refreshId) {
   renderRunRecommendation(recommendation, explanation);
   renderRelevantFiles(interpreted.relevantFiles);
   renderTechnicalTerms(glossary, interpreted.glossaryTermIds);
+  currentLearnerContext = createLearnerContext({
+    pageState: "model-ready",
+    currentUrl: `https://huggingface.co/${data.modelId}`,
+    modelId: data.modelId,
+    model: data,
+    interpreted,
+    hardwareEstimate,
+    recommendation,
+    hardwareProfile,
+    glossary
+  });
 
   const warningText = result.warnings.length > 0
     ? ` Partial information: ${result.warnings.map((warning) => warning.message).join(" ")}`
@@ -601,6 +648,7 @@ function renderModelFinderLoading() {
 }
 
 function renderModelFinderRecommendation(recommendation) {
+  currentModelFinderRecommendation = recommendation;
   modelFinderRecommendationElement.replaceChildren();
   modelFinderRecommendationElement.className = `finder-recommendation finder-recommendation-${recommendation.status}`;
 
@@ -637,6 +685,81 @@ function renderModelFinderRecommendation(recommendation) {
   renderTooltipText(detail, recommendation.justification);
 
   modelFinderRecommendationElement.append(title, modelLink, stats, detail);
+}
+
+function initAskHelper() {
+  askHelperForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    renderAskHelperAnswer(askHelperInput.value);
+  });
+
+  for (const button of document.querySelectorAll("[data-ask-suggestion]")) {
+    button.addEventListener("click", () => {
+      askHelperInput.value = button.dataset.askSuggestion || "";
+      renderAskHelperAnswer(askHelperInput.value);
+      askHelperInput.focus();
+    });
+  }
+}
+
+function renderAskHelperAnswer(question) {
+  const answer = answerLearnerQuestion(question, {
+    ...currentLearnerContext,
+    modelFinderRecommendation: currentModelFinderRecommendation,
+    tooltips: tooltipDefinitions
+  });
+
+  askHelperAnswerElement.replaceChildren();
+  askHelperAnswerElement.className = `ask-helper-answer ask-helper-answer-${answer.status}`;
+
+  const title = document.createElement("p");
+  const detail = document.createElement("p");
+  const source = document.createElement("p");
+
+  title.className = "ask-answer-title";
+  detail.className = "ask-answer-text";
+  source.className = "ask-answer-source";
+  title.textContent = answer.title;
+  renderTooltipText(detail, answer.answer);
+  source.textContent = `Source: ${answer.sourceLabel}`;
+  askHelperAnswerElement.append(title, detail, source);
+
+  if (Array.isArray(answer.followUps) && answer.followUps.length > 0) {
+    const followUps = document.createElement("div");
+    followUps.className = "ask-answer-followups";
+
+    for (const followUp of answer.followUps.slice(0, 4)) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = followUp;
+      button.addEventListener("click", () => {
+        askHelperInput.value = followUp;
+        renderAskHelperAnswer(followUp);
+        askHelperInput.focus();
+      });
+      followUps.append(button);
+    }
+
+    askHelperAnswerElement.append(followUps);
+  }
+
+  askHelperAnswerElement.hidden = false;
+}
+
+function createLearnerContext(overrides = {}) {
+  return {
+    pageState: "starting",
+    currentUrl: "",
+    parsedUrl: null,
+    modelId: "",
+    model: null,
+    interpreted: null,
+    hardwareEstimate: null,
+    recommendation: null,
+    hardwareProfile: savedHardwareProfile,
+    glossary: [],
+    ...overrides
+  };
 }
 
 function buildWhatItIsAnswer(model, interpreted) {
@@ -1853,5 +1976,6 @@ if (globalThis.chrome?.tabs?.onUpdated) {
 initThemeControls();
 initTooltipEvents();
 initCollapsibleSections();
+initAskHelper();
 initModelFinder();
 refreshActiveTabStatus();

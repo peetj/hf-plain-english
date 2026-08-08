@@ -95,6 +95,18 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .app-header {
   display: flex;
   align-items: flex-start;
@@ -335,6 +347,116 @@ main {
 
 .learner-answer-section {
   border-left: 5px solid var(--accent);
+}
+
+.ask-helper-section {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 2px solid var(--header-border);
+  border-left: 6px solid var(--accent-warm);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.ask-helper-heading h2 {
+  margin-bottom: 3px;
+}
+
+.ask-helper-subtitle {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ask-helper-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.ask-helper-form input {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.ask-helper-button {
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.ask-suggestions,
+.ask-answer-followups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ask-suggestions button,
+.ask-answer-followups button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--button-background);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.ask-helper-answer {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.ask-answer-title {
+  margin-bottom: 0;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.ask-answer-text,
+.ask-answer-source {
+  margin-bottom: 0;
+}
+
+.ask-answer-source {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ask-answer-followups {
+  margin-top: 3px;
+}
+
+.ask-answer-followups button {
+  min-height: 26px;
+  padding: 3px 7px;
+  background: var(--surface);
+  font-size: 11px;
 }
 
 .answer-summary {

@@ -168,6 +168,7 @@ Acceptance criteria:
 - [❌] Explain evaluation benchmark.
 - [✅] Explain fine-tuning.
 - [⚠️] Show only relevant terms for the current model page.
+- [✅] Add a prominent local Ask a Question helper for beginner questions about terms, model names, files, licence, tools, popularity, and hardware fit.
 
 Acceptance criteria:
 
