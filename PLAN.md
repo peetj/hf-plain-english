@@ -204,8 +204,10 @@ Acceptance criteria:
 - [✅] Fix Model Match ranking so Downloads and Likes select the top eligible live search result for that metric, and select changes trigger a fresh search.
 - [✅] Add movable Model Match fields so higher fields take priority when ranking candidate models.
 - [✅] Show the full clickable Hugging Face URL for the suggested starting candidate.
+- [✅] Replace ranking-process candidate prose with a plain-English summary plus a compact "why suggested" note.
 - [⚠️] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
 - [❌] Add richer comparison between multiple candidate models.
+- [❌] Fetch the suggested candidate's full Hugging Face metadata and model card for a richer page-aware summary.
 - [✅] Persist editable hardware settings in Chrome storage.
 
 ### ❌ 2.5 Parse Model Card Content Safely

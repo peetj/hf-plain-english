@@ -294,6 +294,7 @@ export function rankModelCandidates(candidates, finder, choices = {}) {
   return {
     status: "found",
     model: best,
+    summary: buildCandidateSummary(best, finder, choices),
     justification: buildCandidateJustification(best, finder, choices)
   };
 }
@@ -814,35 +815,195 @@ function normalizeCandidate(candidate) {
 function buildCandidateJustification(candidate, finder, choices) {
   const normalized = normalizeCandidate(candidate);
   const reasons = [];
+  const searchFilter = finder.rows.find(([label]) => label === "Search filter")?.[1] || "the selected filters";
+  const topPriorities = normalizeFieldOrder(choices.fieldOrder)
+    .slice(0, 3)
+    .map((key) => FIELD_PRIORITY_LABELS[key])
+    .join(", ");
 
-  reasons.push(`It appeared in a current Hugging Face search for ${finder.rows.find(([label]) => label === "Search filter")?.[1] || "the selected filters"}.`);
-  reasons.push(`The fields higher in Model Match had more influence: ${formatFieldPriority(choices.fieldOrder)}.`);
+  reasons.push(`Why suggested: it came from a current ${searchFilter} search.`);
+
+  if (topPriorities) {
+    reasons.push(`Your top priorities were ${topPriorities}.`);
+  }
 
   if (choices.rankBy === "downloads") {
-    reasons.push("You asked for downloads; that signal is strongest when Rank by is higher in the field order.");
+    reasons.push("Downloads were favoured.");
   } else if (choices.rankBy === "likes") {
-    reasons.push("You asked for likes; that signal is strongest when Rank by is higher in the field order.");
+    reasons.push("Likes were favoured.");
   } else {
-    reasons.push("The ranking uses downloads and likes as a popularity signal, then follows the visible field order.");
+    reasons.push("Popularity and fit were both considered.");
   }
 
   if (normalized.tags.some((tag) => tag.toLowerCase() === "gguf")) {
-    reasons.push("It is tagged as GGUF, which fits beginner local tools better than raw full-precision weights.");
+    reasons.push("GGUF matched the local-app format preference.");
   }
 
   if (normalized.tags.some((tag) => /q4/i.test(tag)) || /q4/i.test(normalized.modelId)) {
-    reasons.push("The name or tags suggest a Q4 quantised variant, which is a practical starting point for modest hardware.");
+    reasons.push("Q4 clues matched the modest-hardware preference.");
   }
 
   if (hasPermissiveLicense(normalized.tags)) {
-    reasons.push("Its tags include a permissive-looking licence, but the model page still needs checking.");
+    reasons.push("Its tags include a permissive-looking licence.");
   } else if (choices.permissiveOnly) {
-    reasons.push("The search did not confirm a permissive licence, so check the licence before use.");
+    reasons.push("The search did not confirm a permissive licence.");
   }
 
-  reasons.push(`This is a starting candidate, not a guarantee: compare the model card, files, and fit estimate before downloading.`);
+  reasons.push("Still check the model card, files, licence, and fit estimate before downloading.");
 
   return reasons.join(" ");
+}
+
+function buildCandidateSummary(candidate, finder, choices) {
+  const normalized = normalizeCandidate(candidate);
+  const nameParts = explainCandidateName(normalized.modelId);
+  const summaryParts = [];
+  const popularity = formatCandidatePopularity(normalized);
+  const purpose = describeCandidatePurpose(normalized, choices);
+  const targetFitClue = describeCandidateSizeAgainstTarget(normalized.modelId, finder?.candidateRequest?.sizeHints || []);
+  const hardwareHint = finder?.summaryGuidance ? `For your saved hardware profile, ${lowerFirst(finder.summaryGuidance)}` : "";
+
+  summaryParts.push(`${normalized.modelId} looks like ${purpose}.`);
+
+  if (nameParts.length > 0) {
+    summaryParts.push(`The name suggests ${formatSentenceList(nameParts)}.`);
+  }
+
+  if (targetFitClue) {
+    summaryParts.push(targetFitClue);
+  }
+
+  if (popularity) {
+    summaryParts.push(`${popularity} That is a useful sign that people have tried it, but it is not a quality guarantee.`);
+  }
+
+  if (hardwareHint) {
+    summaryParts.push(hardwareHint);
+  }
+
+  summaryParts.push("Treat this as a starting candidate: open the model page and check the model card, licence, and files before downloading.");
+
+  return summaryParts.join(" ");
+}
+
+function describeCandidatePurpose(candidate, choices) {
+  const searchable = `${candidate.modelId} ${candidate.pipelineTag} ${candidate.tags.join(" ")}`.toLowerCase();
+
+  if (choices.goal === "code" || /\b(code|coder|coding)\b/i.test(searchable)) {
+    return "a coding-focused language model candidate";
+  }
+
+  if (choices.goal === "embedding" || /feature-extraction|embedding|sentence-transformers/i.test(searchable)) {
+    return "an embedding model candidate for search, matching, or retrieval rather than normal chat";
+  }
+
+  if (choices.goal === "image" || /text-to-image|diffusers|image/i.test(searchable)) {
+    return "an image-generation model candidate for specialist image tools";
+  }
+
+  if (/\b(instruct|instruction|chat|it)\b/i.test(searchable)) {
+    return "an instruction or chat language model candidate";
+  }
+
+  if (/text-generation/i.test(searchable)) {
+    return "a text-generation language model candidate";
+  }
+
+  return "a Hugging Face model candidate";
+}
+
+function explainCandidateName(modelId) {
+  const modelName = String(modelId).split("/").pop() || "";
+  const clues = [];
+  const seen = new Set();
+  const addClue = (key, text) => {
+    if (!seen.has(key)) {
+      clues.push(text);
+      seen.add(key);
+    }
+  };
+
+  const sizeMatch = modelName.match(/\b(\d+(?:\.\d+)?B)\b/i);
+
+  if (sizeMatch) {
+    addClue("size", `${sizeMatch[1]} means roughly ${sizeMatch[1].replace(/b/i, " billion")} parameters`);
+  }
+
+  if (/\b(instruct|instruction|it)\b/i.test(modelName)) {
+    addClue("instruct", "Instruct means it has been tuned to follow user instructions");
+  }
+
+  if (/\bchat\b/i.test(modelName)) {
+    addClue("chat", "Chat means it is likely tuned for conversation");
+  }
+
+  const quantisationMatch = modelName.match(/\b(?:IQ[1-4]|Q[2-8])(?:_[A-Z0-9]+)*\b/i);
+
+  if (quantisationMatch) {
+    addClue("quantisation", `${quantisationMatch[0]} is a quantisation label, usually meaning the model is compressed to use less memory`);
+  }
+
+  if (/\bGGUF\b/i.test(modelName)) {
+    addClue("gguf", "GGUF is a file format commonly used by local desktop model tools");
+  }
+
+  return clues;
+}
+
+function describeCandidateSizeAgainstTarget(modelId, sizeHints) {
+  const modelSizes = extractBillionParameterSizes(modelId);
+  const targetSizes = sizeHints
+    .map((hint) => Number.parseFloat(String(hint).toLowerCase().replace("b", "")))
+    .filter(Number.isFinite);
+
+  if (modelSizes.length === 0 || targetSizes.length === 0) {
+    return "";
+  }
+
+  const largestModelSize = Math.max(...modelSizes);
+  const smallestTarget = Math.min(...targetSizes);
+  const largestTarget = Math.max(...targetSizes);
+
+  if (largestModelSize < smallestTarget * 0.85) {
+    return "It is smaller than the current target range, which can make it easier to try locally but may reduce capability compared with larger models.";
+  }
+
+  if (largestModelSize > largestTarget * 1.25) {
+    return "It is larger than the current target range, so check hardware fit carefully before downloading.";
+  }
+
+  return "Its size appears to sit inside the current target range.";
+}
+
+function formatCandidatePopularity(candidate) {
+  const parts = [];
+
+  if (candidate.downloads > 0) {
+    parts.push(`${candidate.downloads.toLocaleString()} downloads`);
+  }
+
+  if (candidate.likes > 0) {
+    parts.push(`${candidate.likes.toLocaleString()} likes`);
+  }
+
+  return parts.length ? `Hugging Face reports ${parts.join(" and ")}.` : "";
+}
+
+function formatSentenceList(items) {
+  if (items.length <= 1) {
+    return items[0] || "";
+  }
+
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
+
+  return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+}
+
+function lowerFirst(text) {
+  const value = String(text || "");
+  return `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
 }
 
 function hasPermissiveLicense(tags) {

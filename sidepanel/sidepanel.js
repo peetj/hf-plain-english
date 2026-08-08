@@ -733,10 +733,15 @@ function renderModelFinderRecommendation(recommendation) {
     recommendation.model.pipelineTag || ""
   ].filter(Boolean).join(" | ");
 
+  const summary = document.createElement("p");
+  summary.className = "finder-candidate-summary";
+  renderTooltipText(summary, recommendation.summary || recommendation.justification);
+
   const detail = document.createElement("p");
+  detail.className = "finder-candidate-reason";
   renderTooltipText(detail, recommendation.justification);
 
-  modelFinderRecommendationElement.append(title, modelLink, stats, detail);
+  modelFinderRecommendationElement.append(title, modelLink, stats, summary, detail);
   revealUpdatedElement(modelFinderRecommendationElement, { show: false });
 }
 

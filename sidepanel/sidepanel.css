@@ -804,6 +804,15 @@ main {
   font-size: 12px;
 }
 
+.finder-candidate-summary {
+  color: var(--text);
+}
+
+.finder-candidate-reason {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .finder-links {
   display: flex;
   flex-wrap: wrap;
