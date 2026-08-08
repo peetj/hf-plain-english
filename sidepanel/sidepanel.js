@@ -670,11 +670,12 @@ function renderModelFinderRecommendation(recommendation) {
   title.textContent = "Starting candidate";
 
   const modelLink = document.createElement("a");
+  const modelUrl = `https://huggingface.co/${recommendation.model.modelId}`;
   modelLink.className = "finder-model-link";
-  modelLink.href = `https://huggingface.co/${recommendation.model.modelId}`;
+  modelLink.href = modelUrl;
   modelLink.target = "_blank";
   modelLink.rel = "noreferrer";
-  modelLink.textContent = recommendation.model.modelId;
+  modelLink.textContent = modelUrl;
 
   const stats = document.createElement("p");
   stats.className = "finder-model-stats";
