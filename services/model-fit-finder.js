@@ -103,6 +103,21 @@ const PRIORITY_CONFIG = {
   }
 };
 
+const RANK_CONFIG = {
+  popular: {
+    label: "Downloads + likes",
+    text: "Rank candidates by a mix of download count, likes, and fit for your selected target."
+  },
+  downloads: {
+    label: "Most downloads",
+    text: "Prefer candidates that many people have downloaded."
+  },
+  likes: {
+    label: "Most liked",
+    text: "Prefer candidates that many people have liked."
+  }
+};
+
 const TARGET_CONFIG = {
   auto: {
     label: "Auto for my machine",
@@ -198,6 +213,7 @@ export function buildModelFitFinder(hardwareProfile = {}, choices = {}) {
   const goal = getConfig(GOAL_CONFIG, choices.goal, "chat");
   const route = getConfig(ROUTE_CONFIG, choices.route, "beginner");
   const priority = getConfig(PRIORITY_CONFIG, choices.priority, "balanced");
+  const rank = getConfig(RANK_CONFIG, choices.rankBy, "popular");
   const target = getConfig(TARGET_CONFIG, choices.targetSize, "auto");
   const format = getConfig(FORMAT_CONFIG, choices.fileFormat, "auto");
   const quantisation = getConfig(QUANTISATION_CONFIG, choices.quantisation, "auto");
@@ -214,12 +230,13 @@ export function buildModelFitFinder(hardwareProfile = {}, choices = {}) {
       ["File format", effectiveFormat],
       ["Quantisation", effectiveQuantisation],
       ["Route", `${route.routeText} ${priority.text}`],
+      ["Rank by", `${rank.label}. ${rank.text}`],
       ["Search filter", goal.searchFilter],
       ["Scan results for", sizing.scanAdvice],
       ["Avoid", buildAvoidText(goal, choices)]
     ],
     candidateRequest,
-    searchLinks: buildSearchLinks(goal)
+    searchLinks: buildSearchLinks(goal, choices)
   };
 }
 
@@ -383,7 +400,8 @@ function buildCandidateRequest(goal, sizing, choices, quantisation, format) {
     search: searchParts.filter(Boolean).join(" "),
     sizeHints: sizing.sizeHints || [],
     permissiveOnly: choices.permissiveOnly === true,
-    localOnly: choices.localOnly !== false
+    localOnly: choices.localOnly !== false,
+    sortBy: choices.rankBy || "popular"
   };
 }
 
@@ -416,25 +434,25 @@ function getSelectedLibraryFilter(format) {
   }
 }
 
-function buildSearchLinks(goal) {
+function buildSearchLinks(goal, choices) {
   return [
     {
       label: `${goal.label} filtered search`,
-      url: buildHuggingFaceModelsUrl(goal.filters)
+      url: buildHuggingFaceModelsUrl(goal.filters, choices)
     },
     {
       label: goal.secondaryLabel,
       url: buildHuggingFaceModelsUrl({
         ...goal.filters,
         search: goal.secondarySearch
-      })
+      }, choices)
     }
   ];
 }
 
-function buildHuggingFaceModelsUrl(filters) {
+function buildHuggingFaceModelsUrl(filters, choices = {}) {
   const params = new URLSearchParams({
-    sort: "trending"
+    sort: getBrowserSort(choices.rankBy)
   });
 
   if (filters?.library) {
@@ -450,6 +468,18 @@ function buildHuggingFaceModelsUrl(filters) {
   }
 
   return `https://huggingface.co/models?${params.toString()}`;
+}
+
+function getBrowserSort(rankBy) {
+  if (rankBy === "downloads") {
+    return "downloads";
+  }
+
+  if (rankBy === "likes") {
+    return "likes";
+  }
+
+  return "trending";
 }
 
 function buildAvoidText(goal, choices) {
@@ -471,8 +501,19 @@ function scoreCandidate(candidate, finder, choices) {
   const searchable = `${normalized.modelId} ${normalized.tags.join(" ")}`.toLowerCase();
   let score = 0;
 
-  score += Math.min(Math.log10((normalized.downloads || 0) + 1), 8);
-  score += Math.min((normalized.likes || 0) / 250, 4);
+  const downloadsScore = Math.min(Math.log10((normalized.downloads || 0) + 1), 8);
+  const likesScore = Math.min((normalized.likes || 0) / 250, 6);
+
+  if (choices.rankBy === "downloads") {
+    score += downloadsScore * 1.7;
+    score += likesScore * 0.3;
+  } else if (choices.rankBy === "likes") {
+    score += likesScore * 1.6;
+    score += downloadsScore * 0.4;
+  } else {
+    score += downloadsScore;
+    score += likesScore;
+  }
 
   if (finder?.candidateRequest?.permissiveOnly && !hasPermissiveLicense(normalized.tags)) {
     score -= 10;
@@ -557,6 +598,14 @@ function buildCandidateJustification(candidate, finder, choices) {
   const reasons = [];
 
   reasons.push(`It appeared in a current Hugging Face search for ${finder.rows.find(([label]) => label === "Search filter")?.[1] || "the selected filters"}.`);
+
+  if (choices.rankBy === "downloads") {
+    reasons.push("You asked to favour models with many downloads.");
+  } else if (choices.rankBy === "likes") {
+    reasons.push("You asked to favour models with many likes.");
+  } else {
+    reasons.push("The ranking balances downloads, likes, and fit for your target size.");
+  }
 
   if (normalized.tags.some((tag) => tag.toLowerCase() === "gguf")) {
     reasons.push("It is tagged as GGUF, which fits beginner local tools better than raw full-precision weights.");

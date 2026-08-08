@@ -64,9 +64,16 @@
   },
   {
     "id": "parameters",
-    "terms": ["parameters", "parameter count"],
+    "terms": ["parameters", "parameter", "parameter count"],
     "title": "Parameters",
     "text": "The learned numbers inside a model. More parameters usually mean larger files and more memory use, but not automatically better results.",
+    "category": "model-basics"
+  },
+  {
+    "id": "billion-parameter-label",
+    "terms": ["1B", "2B", "3B", "4B", "7B", "8B", "13B", "14B", "30B", "3B-4B", "7B-13B", "13B-30B"],
+    "title": "B model size label",
+    "text": "In model names, B usually means billion parameters. A 3B model has about 3 billion learned numbers. Bigger models usually need more memory.",
     "category": "model-basics"
   },
   {
@@ -263,6 +270,20 @@
     "terms": ["Model match"],
     "title": "Model match",
     "text": "A guided search helper that turns your goal, hardware profile, and preferences into a safer starting point on Hugging Face.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "rank-by",
+    "terms": ["Rank by"],
+    "title": "Rank by",
+    "text": "How the extension chooses a starting candidate from Hugging Face search results. Downloads and likes are popularity signals, not guarantees.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "downloads-likes",
+    "terms": ["downloads", "download count", "likes"],
+    "title": "Downloads and likes",
+    "text": "Popularity signals from Hugging Face. They can help find active models, but they do not prove a model is safe, high quality, or right for your computer.",
     "category": "hugging-face"
   },
   {

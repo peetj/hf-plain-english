@@ -18,6 +18,7 @@ const modelFinderFormatElement = document.querySelector("#model-finder-format");
 const modelFinderQuantisationElement = document.querySelector("#model-finder-quantisation");
 const modelFinderRouteElement = document.querySelector("#model-finder-route");
 const modelFinderPriorityElement = document.querySelector("#model-finder-priority");
+const modelFinderRankElement = document.querySelector("#model-finder-rank");
 const modelFinderKeywordElement = document.querySelector("#model-finder-keyword");
 const modelFinderLocalOnlyElement = document.querySelector("#model-finder-local-only");
 const modelFinderPermissiveOnlyElement = document.querySelector("#model-finder-permissive-only");
@@ -26,6 +27,7 @@ const modelFinderRecommendationElement = document.querySelector("#model-finder-r
 const modelFinderList = document.querySelector("#model-finder-list");
 const modelFinderLinks = document.querySelector("#model-finder-links");
 const learnerAnswerSection = document.querySelector("#learner-answer-section");
+const learnerAnswerHeadingElement = document.querySelector("#learner-answer-heading");
 const answerSummaryElement = document.querySelector("#answer-summary");
 const answerList = document.querySelector("#answer-list");
 const overviewTextElement = document.querySelector("#overview-text");
@@ -59,6 +61,7 @@ let activeTooltipTrigger = null;
 let savedHardwareProfile = {};
 let activeModelFinderRequestId = 0;
 let modelFinderRenderTimeout = 0;
+let refreshActiveTabStatusTimeout = 0;
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -215,17 +218,21 @@ async function loadModelFacts(modelId, refreshId) {
 }
 
 function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation, hardwareProfile) {
+  learnerAnswerHeadingElement.textContent = "Model at a glance";
   renderTooltipText(answerSummaryElement, explanation.summary);
   renderDefinitionList(answerList, [
     ["What it is", buildWhatItIsAnswer(model, interpreted)],
-    ["Best next step", buildNextStepAnswer(recommendation, hardwareEstimate, hardwareProfile, interpreted)],
+    ["Good for", buildGoodForAnswer(interpreted)],
     ["Local fit", buildLocalFitAnswer(hardwareEstimate)],
+    ["Start with", buildNextStepAnswer(recommendation, hardwareEstimate, hardwareProfile, interpreted)],
+    ["Check before downloading", buildDownloadCautionAnswer(model, recommendation, hardwareEstimate)],
     ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
   ]);
   learnerAnswerSection.hidden = false;
 }
 
 function renderLearnerState(summary, rows) {
+  learnerAnswerHeadingElement.textContent = "Current page";
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
   learnerAnswerSection.hidden = false;
@@ -262,6 +269,7 @@ async function initModelFinder() {
   ]);
 
   initStaticTooltipText();
+  renderModelMatchTerms();
   restoreModelFinderChoices();
   renderModelFinder(hardwareProfile);
   modelFinderForm.addEventListener("submit", (event) => {
@@ -330,6 +338,7 @@ function getModelFinderChoices() {
     quantisation: modelFinderQuantisationElement.value,
     route: modelFinderRouteElement.value,
     priority: modelFinderPriorityElement.value,
+    rankBy: modelFinderRankElement.value,
     keyword: modelFinderKeywordElement.value.trim(),
     localOnly: modelFinderLocalOnlyElement.checked,
     permissiveOnly: modelFinderPermissiveOnlyElement.checked
@@ -349,6 +358,7 @@ function restoreModelFinderChoices() {
   setSelectValue(modelFinderQuantisationElement, storedChoices.quantisation);
   setSelectValue(modelFinderRouteElement, storedChoices.route);
   setSelectValue(modelFinderPriorityElement, storedChoices.priority);
+  setSelectValue(modelFinderRankElement, storedChoices.rankBy);
   modelFinderKeywordElement.value = storedChoices.keyword;
   modelFinderLocalOnlyElement.checked = storedChoices.localOnly;
   modelFinderPermissiveOnlyElement.checked = storedChoices.permissiveOnly;
@@ -368,6 +378,7 @@ function readStoredModelFinderChoices() {
       quantisation: isAllowedChoice(parsed.quantisation, ["auto", "q4", "q5", "fp16"]) ? parsed.quantisation : "auto",
       route: isAllowedChoice(parsed.route, ["beginner", "ollama", "python", "unsure"]) ? parsed.route : "beginner",
       priority: isAllowedChoice(parsed.priority, ["balanced", "speed", "quality"]) ? parsed.priority : "balanced",
+      rankBy: isAllowedChoice(parsed.rankBy, ["popular", "downloads", "likes"]) ? parsed.rankBy : "popular",
       keyword: typeof parsed.keyword === "string" ? parsed.keyword.slice(0, 40) : "",
       localOnly: parsed.localOnly !== false,
       permissiveOnly: parsed.permissiveOnly === true
@@ -380,6 +391,7 @@ function readStoredModelFinderChoices() {
       quantisation: "auto",
       route: "beginner",
       priority: "balanced",
+      rankBy: "popular",
       keyword: "",
       localOnly: true,
       permissiveOnly: false
@@ -466,6 +478,29 @@ function buildWhatItIsAnswer(model, interpreted) {
   return "Model type is not clear yet";
 }
 
+function buildGoodForAnswer(interpreted) {
+  const kind = interpreted?.modelKind?.value;
+  const task = interpreted?.primaryTask?.value;
+
+  if (kind === "chat" || kind === "instruct") {
+    return "Prompts, instructions, and conversation if the files and licence fit your use.";
+  }
+
+  if (kind === "embedding" || task === "feature-extraction") {
+    return "Search, matching, retrieval, clustering, or recommendation workflows; not ordinary chat.";
+  }
+
+  if (kind === "image" || task === "text-to-image") {
+    return "Generating or editing images with specialist image tools.";
+  }
+
+  if (kind === "code") {
+    return "Coding help, code completion, or programming chat if it is instruction tuned.";
+  }
+
+  return task ? `Likely related to ${task}, but check the model card before assuming.` : "Unclear from the available page data.";
+}
+
 function buildNextStepAnswer(recommendation, hardwareEstimate, hardwareProfile, interpreted) {
   const tool = recommendation?.primaryTool || "insufficient information";
   const fit = hardwareEstimate?.fit?.overall || "unknown";
@@ -518,6 +553,32 @@ function buildLocalFitAnswer(hardwareEstimate) {
   }
 
   return `${fitLabel}; estimated runtime memory ${runtimeRange}`;
+}
+
+function buildDownloadCautionAnswer(model, recommendation, hardwareEstimate) {
+  const cautions = [];
+
+  if (!model?.license) {
+    cautions.push("licence");
+  }
+
+  if (model?.gated || model?.private) {
+    cautions.push("access terms");
+  }
+
+  if (hardwareEstimate?.fit?.overall === "unlikely" || hardwareEstimate?.fit?.overall === "unknown") {
+    cautions.push("hardware fit");
+  }
+
+  if (recommendation?.warnings?.length) {
+    cautions.push("warnings");
+  }
+
+  if (cautions.length === 0) {
+    return "Model card, licence, and the exact file you plan to download.";
+  }
+
+  return `Check ${Array.from(new Set(cautions)).join(", ")} before downloading.`;
 }
 
 function buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate) {
@@ -779,17 +840,51 @@ function renderRelevantFiles(files) {
 }
 
 function renderTechnicalTerms(glossary, termIds) {
-  termsList.replaceChildren();
-
   const glossaryById = new Map(glossary.map((entry) => [entry.id, entry]));
   const entries = termIds
     .map((termId) => glossaryById.get(termId))
     .filter(Boolean);
 
   if (entries.length === 0) {
-    termsSection.hidden = true;
+    renderModelMatchTerms();
     return;
   }
+
+  renderTermsTable(entries);
+}
+
+function renderModelMatchTerms() {
+  renderTermsTable([
+    {
+      term: "3B or 3B-4B",
+      short: "Model size shorthand",
+      detail: "3B means about 3 billion parameters. More parameters usually need more memory, but bigger is not automatically better."
+    },
+    {
+      term: "Parameters",
+      short: "The learned numbers in a model",
+      detail: "A model with billions of parameters stores a lot of learned patterns. Parameter count is one clue for size and memory use."
+    },
+    {
+      term: "GGUF",
+      short: "A local-friendly model file format",
+      detail: "GGUF is commonly used by beginner local tools such as LM Studio and llama.cpp-based apps."
+    },
+    {
+      term: "Q4_K_M",
+      short: "A compressed model variant",
+      detail: "Q4_K_M usually uses much less memory than full-precision weights, which can make local testing more realistic."
+    },
+    {
+      term: "Downloads and likes",
+      short: "Popularity signals, not quality guarantees",
+      detail: "Many downloads and likes can help find active models, but you still need to check the model card, files, licence, and fit."
+    }
+  ]);
+}
+
+function renderTermsTable(entries) {
+  termsList.replaceChildren();
 
   const table = document.createElement("table");
   const thead = document.createElement("thead");
@@ -867,8 +962,7 @@ function resetFetchedDetails() {
   runSection.hidden = true;
   filesList.replaceChildren();
   filesSection.hidden = true;
-  termsList.replaceChildren();
-  termsSection.hidden = true;
+  renderModelMatchTerms();
   sourceTextElement.textContent = "";
   sourceSection.hidden = true;
 }
@@ -917,7 +1011,7 @@ function initCollapsibleSections() {
 }
 
 function isSectionInitiallyExpanded(section) {
-  return section.id === "model-finder-section" || section.id === "learner-answer-section" || section.id === "first-read-section";
+  return section.id === "model-finder-section" || section.id === "learner-answer-section" || section.id === "terms-section";
 }
 
 function initThemeControls() {
@@ -1479,6 +1573,27 @@ function getUnsupportedNavigationLinks(reason) {
 refreshButton.addEventListener("click", () => {
   refreshActiveTabStatus();
 });
+
+function scheduleActiveTabRefresh() {
+  globalThis.clearTimeout(refreshActiveTabStatusTimeout);
+  refreshActiveTabStatusTimeout = globalThis.setTimeout(() => {
+    refreshActiveTabStatus();
+  }, 200);
+}
+
+if (globalThis.chrome?.tabs?.onActivated) {
+  chrome.tabs.onActivated.addListener(() => {
+    scheduleActiveTabRefresh();
+  });
+}
+
+if (globalThis.chrome?.tabs?.onUpdated) {
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (tab.active && (changeInfo.url || changeInfo.status === "complete")) {
+      scheduleActiveTabRefresh();
+    }
+  });
+}
 
 initThemeControls();
 initTooltipEvents();

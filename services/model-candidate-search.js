@@ -42,7 +42,7 @@ export async function fetchModelCandidates(request, options = {}) {
 
 function buildModelSearchApiUrl(request = {}) {
   const params = new URLSearchParams({
-    sort: "downloads",
+    sort: getApiSort(request.sortBy),
     direction: "-1",
     limit: "20"
   });
@@ -60,6 +60,14 @@ function buildModelSearchApiUrl(request = {}) {
   }
 
   return `${HUGGING_FACE_BASE_URL}/api/models?${params.toString()}`;
+}
+
+function getApiSort(sortBy) {
+  if (sortBy === "likes") {
+    return "likes";
+  }
+
+  return "downloads";
 }
 
 async function fetchWithTimeout(url, { headers, timeoutMs }) {

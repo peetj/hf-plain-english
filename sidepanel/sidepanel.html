@@ -20,8 +20,8 @@
           <button class="theme-button" type="button" data-theme-value="gruvbox">Gruvbox</button>
         </div>
       </div>
-      <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh active tab status" title="Refresh">
-        Refresh
+      <button id="refresh-button" class="icon-button" type="button" aria-label="Check the active tab now" title="Check the active tab now">
+        Check page
       </button>
     </header>
 
@@ -109,6 +109,15 @@
           </label>
 
           <label class="finder-field">
+            <span data-tooltip-copy>Rank by</span>
+            <select id="model-finder-rank">
+              <option value="popular">Downloads + likes</option>
+              <option value="downloads">Most downloads</option>
+              <option value="likes">Most liked</option>
+            </select>
+          </label>
+
+          <label class="finder-field">
             <span data-tooltip-copy>Search phrase</span>
             <input id="model-finder-keyword" type="search" placeholder="Optional, e.g. Qwen, Llama, coder">
           </label>
@@ -130,15 +139,15 @@
       </section>
 
       <section id="learner-answer-section" class="panel-section learner-answer-section" hidden>
-        <h2>Quick answer</h2>
+        <h2 id="learner-answer-heading">Current page</h2>
         <p id="answer-summary" class="answer-summary"></p>
         <dl id="answer-list" class="answer-list"></dl>
       </section>
 
       <section id="first-read-section" class="panel-section">
-        <h2>First read</h2>
+        <h2>Plain English read</h2>
         <p id="overview-text">
-          Open a public Hugging Face model page to get a plain-English guide.
+          Use Model match to find a model, or open a specific Hugging Face model page to get a plain-English read.
         </p>
       </section>
 

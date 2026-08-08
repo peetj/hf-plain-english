@@ -161,6 +161,7 @@ Acceptance criteria:
 - [❌] Explain chat template.
 - [✅] Explain context length.
 - [✅] Explain parameters.
+- [✅] Explain `3B`, `7B`, and similar billion-parameter size labels.
 - [✅] Explain gated model.
 - [✅] Explain licence.
 - [✅] Explain commercial use.
@@ -191,6 +192,10 @@ Acceptance criteria:
 - [✅] Add tooltip-capable labels for search controls where terms need explanation.
 - [✅] Recommend a live Hugging Face starting candidate from the selected filters.
 - [✅] Justify the candidate using current search filters, format clues, quantisation clues, licence tags, and saved hardware guidance.
+- [✅] Add ranking controls for downloads, likes, and balanced popularity.
+- [✅] Keep a compact glossary table visible for Model Match terms before a model page is loaded.
+- [✅] Make the top current-page/model summary more practical and collapse the generic plain-English read by default.
+- [✅] Make active-tab checking automatic and rename the refresh button to "Check page".
 - [⚠️] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
 - [❌] Add richer comparison between multiple candidate models.
 - [❌] Persist editable hardware settings in Chrome storage.
