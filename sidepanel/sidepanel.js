@@ -288,10 +288,13 @@ async function initModelFinder() {
   modelFinderForm.addEventListener("submit", (event) => {
     event.preventDefault();
   });
-  modelFinderForm.addEventListener("input", () => {
+  modelFinderForm.addEventListener("input", handleModelFinderChange);
+  modelFinderForm.addEventListener("change", handleModelFinderChange);
+}
+
+function handleModelFinderChange() {
     saveModelFinderChoices();
     scheduleModelFinderRender();
-  });
 }
 
 function initHardwareProfileEditor() {

@@ -44,7 +44,7 @@ function buildModelSearchApiUrl(request = {}) {
   const params = new URLSearchParams({
     sort: getApiSort(request.sortBy),
     direction: "-1",
-    limit: "20"
+    limit: "50"
   });
 
   const filters = Array.isArray(request.filters)

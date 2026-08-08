@@ -261,21 +261,82 @@ export function rankModelCandidates(candidates, finder, choices = {}) {
     };
   }
 
-  const ranked = candidates
+  const eligible = candidates
     .filter((candidate) => candidate && !candidate.private)
-    .map((candidate) => ({
-      candidate,
-      score: scoreCandidate(candidate, finder, choices)
-    }))
-    .sort((a, b) => b.score - a.score);
+    .map((candidate) => normalizeCandidate(candidate))
+    .filter((candidate) => isCandidateEligibleForRank(candidate, finder, choices));
 
-  const best = ranked[0]?.candidate || candidates[0];
+  if (eligible.length === 0) {
+    return {
+      status: "empty",
+      model: null,
+      justification: "No eligible candidate model was returned by the Hugging Face search. Use the filtered search links and scan manually."
+    };
+  }
+
+  const ranked = rankEligibleCandidates(eligible, finder, choices);
+
+  const best = ranked[0]?.candidate || eligible[0];
 
   return {
     status: "found",
-    model: normalizeCandidate(best),
+    model: best,
     justification: buildCandidateJustification(best, finder, choices)
   };
+}
+
+function rankEligibleCandidates(candidates, finder, choices) {
+  if (choices.rankBy === "downloads") {
+    return candidates
+      .map((candidate) => ({
+        candidate,
+        score: candidate.downloads,
+        tieBreak: candidate.likes
+      }))
+      .sort(compareRankedCandidateScores);
+  }
+
+  if (choices.rankBy === "likes") {
+    return candidates
+      .map((candidate) => ({
+        candidate,
+        score: candidate.likes,
+        tieBreak: candidate.downloads
+      }))
+      .sort(compareRankedCandidateScores);
+  }
+
+  return candidates
+    .map((candidate) => ({
+      candidate,
+      score: scoreCandidate(candidate, finder, choices),
+      tieBreak: candidate.downloads + candidate.likes
+    }))
+    .sort(compareRankedCandidateScores);
+}
+
+function compareRankedCandidateScores(a, b) {
+  return (b.score - a.score)
+    || (b.tieBreak - a.tieBreak)
+    || String(a.candidate.modelId).localeCompare(String(b.candidate.modelId));
+}
+
+function isCandidateEligibleForRank(candidate, finder, choices) {
+  const searchable = `${candidate.modelId} ${candidate.tags.join(" ")}`.toLowerCase();
+
+  if (finder?.candidateRequest?.permissiveOnly && !hasPermissiveLicense(candidate.tags)) {
+    return false;
+  }
+
+  if (finder?.candidateRequest?.localOnly && !searchable.includes("gguf") && (choices.goal === "chat" || choices.goal === "code")) {
+    return false;
+  }
+
+  if (/\b(layer-package|distributed-inference|skippy)\b/i.test(searchable)) {
+    return false;
+  }
+
+  return true;
 }
 
 function estimateLocalSizeGuidance(hardwareProfile, goal, priority, target) {
@@ -604,9 +665,9 @@ function buildCandidateJustification(candidate, finder, choices) {
   reasons.push(`It appeared in a current Hugging Face search for ${finder.rows.find(([label]) => label === "Search filter")?.[1] || "the selected filters"}.`);
 
   if (choices.rankBy === "downloads") {
-    reasons.push("You asked to favour models with many downloads.");
+    reasons.push("You asked for downloads, so this is the highest-download eligible candidate returned by the current search filters.");
   } else if (choices.rankBy === "likes") {
-    reasons.push("You asked to favour models with many likes.");
+    reasons.push("You asked for likes, so this is the highest-liked eligible candidate returned by the current search filters.");
   } else {
     reasons.push("The ranking balances downloads, likes, and fit for your target size.");
   }
