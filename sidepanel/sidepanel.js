@@ -78,6 +78,7 @@ let savedHardwareProfile = {};
 let activeModelFinderRequestId = 0;
 let modelFinderRenderTimeout = 0;
 let refreshActiveTabStatusTimeout = 0;
+let uiRevealTokenCounter = 0;
 let currentLearnerContext = createLearnerContext();
 let currentModelFinderRecommendation = null;
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
@@ -95,6 +96,7 @@ function setStatus(label, message) {
   const labelElement = statusCard.querySelector(".status-label");
   labelElement.textContent = label;
   renderTooltipText(statusMessageElement, message);
+  revealUpdatedElement(statusCard, { kind: "soft", show: false });
 }
 
 async function getActiveTab() {
@@ -289,14 +291,14 @@ function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendatio
     ["Check before downloading", buildDownloadCautionAnswer(model, recommendation, hardwareEstimate)],
     ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
   ]);
-  learnerAnswerSection.hidden = false;
+  revealUpdatedElement(learnerAnswerSection);
 }
 
 function renderLearnerState(summary, rows) {
   learnerAnswerHeadingElement.textContent = "Current page";
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
-  learnerAnswerSection.hidden = false;
+  revealUpdatedElement(learnerAnswerSection);
 }
 
 function renderUnsupportedHuggingFaceState(reason) {
@@ -645,6 +647,7 @@ function initStaticTooltipText() {
 function renderModelFinderLoading() {
   modelFinderRecommendationElement.className = "finder-recommendation finder-recommendation-loading";
   renderTooltipText(modelFinderRecommendationElement, "Looking for a starting candidate on Hugging Face...");
+  revealUpdatedElement(modelFinderRecommendationElement, { kind: "soft", show: false });
 }
 
 function renderModelFinderRecommendation(recommendation) {
@@ -660,6 +663,7 @@ function renderModelFinderRecommendation(recommendation) {
     const detail = document.createElement("p");
     renderTooltipText(detail, recommendation.justification);
     modelFinderRecommendationElement.append(title, detail);
+    revealUpdatedElement(modelFinderRecommendationElement, { kind: "soft", show: false });
     return;
   }
 
@@ -685,6 +689,7 @@ function renderModelFinderRecommendation(recommendation) {
   renderTooltipText(detail, recommendation.justification);
 
   modelFinderRecommendationElement.append(title, modelLink, stats, detail);
+  revealUpdatedElement(modelFinderRecommendationElement, { show: false });
 }
 
 function initAskHelper() {
@@ -743,7 +748,7 @@ function renderAskHelperAnswer(question) {
     askHelperAnswerElement.append(followUps);
   }
 
-  askHelperAnswerElement.hidden = false;
+  revealUpdatedElement(askHelperAnswerElement, { kind: "emphasis" });
 }
 
 function createLearnerContext(overrides = {}) {
@@ -760,6 +765,36 @@ function createLearnerContext(overrides = {}) {
     glossary: [],
     ...overrides
   };
+}
+
+function revealUpdatedElement(element, options = {}) {
+  if (!element) {
+    return;
+  }
+
+  if (options.show !== false) {
+    element.hidden = false;
+  }
+
+  const kind = options.kind === "emphasis" || options.kind === "soft" ? options.kind : "standard";
+  element.classList.remove("ui-reveal-update", "ui-reveal-soft", "ui-reveal-emphasis");
+
+  // Restart the animation when the same element is updated repeatedly.
+  void element.offsetWidth;
+
+  element.classList.add("ui-reveal-update", `ui-reveal-${kind}`);
+  const revealToken = String(uiRevealTokenCounter + 1);
+  uiRevealTokenCounter += 1;
+  element.dataset.revealToken = revealToken;
+
+  globalThis.setTimeout(() => {
+    if (element.dataset.revealToken !== revealToken) {
+      return;
+    }
+
+    element.classList.remove("ui-reveal-update", "ui-reveal-soft", "ui-reveal-emphasis");
+    delete element.dataset.revealToken;
+  }, kind === "emphasis" ? 1000 : 900);
 }
 
 function buildWhatItIsAnswer(model, interpreted) {

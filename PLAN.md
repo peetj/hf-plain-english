@@ -55,6 +55,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
           - Saying "No GGUF file was detected in this repository." in this section seems misplaced
 - [✅] Add a feature that helps the user find the ideal model to fit on their machine. Make this a primary feature as what is the point of using the site otherwise. May involve recommending models based on some quick questions and their h/w profile?
 - [✅] Improve model finder search links by removing weak terms like instruct, lm studio, and raw size-number searches.
+- [✅] Add a reusable reveal animation hook for important UI updates, with reduced-motion support.
 - [❌] Ignore.
 
 ## Current Foundation

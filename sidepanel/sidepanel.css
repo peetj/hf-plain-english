@@ -286,6 +286,58 @@ main {
   box-shadow: var(--shadow);
 }
 
+.ui-reveal-update {
+  animation:
+    uiRevealMotion 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    uiRevealOutline 850ms ease-out;
+  will-change: opacity, transform, outline-color, outline-offset;
+}
+
+.ui-reveal-soft {
+  animation-duration: 280ms, 700ms;
+}
+
+.ui-reveal-emphasis {
+  animation-duration: 420ms, 950ms;
+}
+
+@keyframes uiRevealMotion {
+  from {
+    opacity: 0.68;
+    transform: translateY(4px) scale(0.995);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes uiRevealOutline {
+  0% {
+    outline: 2px solid var(--accent-warm);
+    outline-offset: 0;
+  }
+
+  45% {
+    outline: 2px solid var(--accent-warm);
+    outline-offset: 2px;
+  }
+
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-reveal-update {
+    animation: uiRevealOutline 650ms ease-out;
+    transform: none;
+    will-change: outline-color, outline-offset;
+  }
+}
+
 .status-card {
   padding: 14px;
   border-left: 4px solid var(--accent-warm);
