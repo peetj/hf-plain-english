@@ -83,6 +83,7 @@ let currentLearnerContext = createLearnerContext();
 let currentModelFinderRecommendation = null;
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
+const EXAMPLE_MODEL_URL = "https://huggingface.co/Qwen/Qwen3-0.6B";
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -95,7 +96,13 @@ const tooltipDefinitionsPromise = loadTooltips().then((definitions) => {
 function setStatus(label, message) {
   const labelElement = statusCard.querySelector(".status-label");
   labelElement.textContent = label;
-  renderTooltipText(statusMessageElement, message);
+
+  if (message instanceof Node) {
+    statusMessageElement.replaceChildren(message);
+  } else {
+    renderTooltipText(statusMessageElement, message);
+  }
+
   revealUpdatedElement(statusCard, { kind: "soft", show: false });
 }
 
@@ -155,7 +162,7 @@ async function refreshActiveTabStatus() {
         parsedUrl
       });
       resetModelIdentity("Unsupported Hugging Face page");
-      setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
+      setStatus("Unsupported Hugging Face page", createUnsupportedStatusMessage(parsedUrl.reason));
       renderUnsupportedHuggingFaceState(parsedUrl.reason);
       renderTooltipText(
         overviewTextElement,
@@ -305,8 +312,48 @@ function renderUnsupportedHuggingFaceState(reason) {
   renderLearnerState("This is a useful Hugging Face page, but it is not a model page the extension can explain yet.", [
     ["What happened", getUnsupportedMessage(reason)],
     ["Where to go", createUnsupportedNavigation(reason)],
-    ["What to look for", "Choose a specific model page. For example, huggingface.co/Qwen/Qwen3-0.6B works because Qwen is the publisher and Qwen3-0.6B is the model."]
+    ["What to look for", createExampleModelUrlGuidance()]
   ]);
+}
+
+function createUnsupportedStatusMessage(reason) {
+  if (reason === "not-a-model-page" || reason === "invalid-model-id" || reason === "unsupported-hugging-face-section") {
+    return createTextWithLink([
+      "Open a specific model page like ",
+      { href: EXAMPLE_MODEL_URL, text: EXAMPLE_MODEL_URL },
+      ", where Qwen is the publisher and Qwen3-0.6B is the model."
+    ]);
+  }
+
+  return document.createTextNode(getUnsupportedMessage(reason));
+}
+
+function createExampleModelUrlGuidance() {
+  return createTextWithLink([
+    "Choose a specific model page. For example, ",
+    { href: EXAMPLE_MODEL_URL, text: EXAMPLE_MODEL_URL },
+    " works because Qwen is the publisher and Qwen3-0.6B is the model."
+  ]);
+}
+
+function createTextWithLink(parts) {
+  const container = document.createElement("span");
+
+  for (const part of parts) {
+    if (typeof part === "string") {
+      container.append(document.createTextNode(part));
+      continue;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = part.href;
+    anchor.target = "_blank";
+    anchor.rel = "noreferrer";
+    anchor.textContent = part.text || part.href;
+    container.append(anchor);
+  }
+
+  return container;
 }
 
 function createUnsupportedNavigation(reason) {
@@ -1940,9 +1987,9 @@ function getUnsupportedMessage(reason) {
     case "unsupported-hugging-face-section":
       return "This is a Hugging Face section such as models, datasets, Spaces, docs, or settings. The extension needs an individual model repository.";
     case "not-a-model-page":
-      return "This Hugging Face URL is not an individual model page. Open a page like huggingface.co/Qwen/Qwen3-0.6B, where Qwen is the publisher and Qwen3-0.6B is the model.";
+      return `This Hugging Face URL is not an individual model page. Open a page like ${EXAMPLE_MODEL_URL}, where Qwen is the publisher and Qwen3-0.6B is the model.`;
     case "invalid-model-id":
-      return "This URL does not contain a valid model address. A valid example is huggingface.co/Qwen/Qwen3-0.6B.";
+      return `This URL does not contain a valid model address. A valid example is ${EXAMPLE_MODEL_URL}.`;
     case "malformed-url":
       return "Chrome returned a malformed URL for the active tab.";
     default:
@@ -1952,7 +1999,7 @@ function getUnsupportedMessage(reason) {
 
 function getUnsupportedOverview(reason) {
   if (reason === "unsupported-hugging-face-section") {
-    return "Open a result from the Hugging Face Models directory. A supported model page has an owner/model address, for example huggingface.co/Qwen/Qwen3-0.6B.";
+    return `Open a result from the Hugging Face Models directory. A supported model page has an owner/model address, for example ${EXAMPLE_MODEL_URL}.`;
   }
 
   return "Navigate to the Hugging Face Models directory, open a specific public model repository, then refresh this panel.";

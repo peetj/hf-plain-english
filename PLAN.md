@@ -182,6 +182,7 @@ Acceptance criteria:
 - [✅] Tell the learner that the extension needs an individual `owner/model` repository.
 - [✅] Provide direct links to Hugging Face Models, text-generation models, and GGUF local models.
 - [✅] Explain what a supported model URL looks like.
+- [✅] Make the supported model example URL full and clickable in the top unsupported-page guidance.
 
 Acceptance criteria:
 
