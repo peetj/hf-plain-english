@@ -26,6 +26,15 @@ const modelFinderSummaryElement = document.querySelector("#model-finder-summary"
 const modelFinderRecommendationElement = document.querySelector("#model-finder-recommendation");
 const modelFinderList = document.querySelector("#model-finder-list");
 const modelFinderLinks = document.querySelector("#model-finder-links");
+const hardwareProfileDisplayElement = document.querySelector("#hardware-profile-display");
+const hardwareProfileEditButton = document.querySelector("#hardware-profile-edit-button");
+const hardwareProfileForm = document.querySelector("#hardware-profile-form");
+const hardwareProfileOsElement = document.querySelector("#hardware-profile-os");
+const hardwareProfileVramElement = document.querySelector("#hardware-profile-vram");
+const hardwareProfileRamElement = document.querySelector("#hardware-profile-ram");
+const hardwareProfileExperienceElement = document.querySelector("#hardware-profile-experience");
+const hardwareProfileToolElements = Array.from(document.querySelectorAll(".hardware-profile-tool"));
+const hardwareProfileCancelButton = document.querySelector("#hardware-profile-cancel-button");
 const learnerAnswerSection = document.querySelector("#learner-answer-section");
 const learnerAnswerHeadingElement = document.querySelector("#learner-answer-heading");
 const answerSummaryElement = document.querySelector("#answer-summary");
@@ -62,6 +71,7 @@ let savedHardwareProfile = {};
 let activeModelFinderRequestId = 0;
 let modelFinderRenderTimeout = 0;
 let refreshActiveTabStatusTimeout = 0;
+const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -167,11 +177,11 @@ async function loadModelFacts(modelId, refreshId) {
 
   const data = result.data;
   const interpreted = parseModelFacts(data);
-  const [glossary, hardwareProfile] = await Promise.all([
+  const [glossary] = await Promise.all([
     loadGlossary(),
-    hardwareProfilePromise,
     tooltipDefinitionsPromise
   ]);
+  const hardwareProfile = getCurrentHardwareProfile();
   const hardwareEstimate = estimateHardwareFit(interpreted, hardwareProfile);
   const recommendation = recommendModelTool(data, interpreted, hardwareEstimate, hardwareProfile);
   const explanation = generateDeterministicExplanation(data, interpreted, hardwareEstimate, recommendation);
@@ -270,8 +280,11 @@ async function initModelFinder() {
 
   initStaticTooltipText();
   renderModelMatchTerms();
+  renderSavedHardwareProfile(hardwareProfile);
+  populateHardwareProfileForm(hardwareProfile);
   restoreModelFinderChoices();
   renderModelFinder(hardwareProfile);
+  initHardwareProfileEditor();
   modelFinderForm.addEventListener("submit", (event) => {
     event.preventDefault();
   });
@@ -279,6 +292,64 @@ async function initModelFinder() {
     saveModelFinderChoices();
     scheduleModelFinderRender();
   });
+}
+
+function initHardwareProfileEditor() {
+  hardwareProfileEditButton.addEventListener("click", () => {
+    populateHardwareProfileForm(getCurrentHardwareProfile());
+    hardwareProfileForm.hidden = false;
+    hardwareProfileEditButton.hidden = true;
+  });
+
+  hardwareProfileCancelButton.addEventListener("click", () => {
+    populateHardwareProfileForm(getCurrentHardwareProfile());
+    hardwareProfileForm.hidden = true;
+    hardwareProfileEditButton.hidden = false;
+  });
+
+  hardwareProfileForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    savedHardwareProfile = normalizeHardwareProfile(readHardwareProfileForm(), getCurrentHardwareProfile());
+    await saveHardwareProfile(savedHardwareProfile);
+    renderSavedHardwareProfile(savedHardwareProfile);
+    hardwareProfileForm.hidden = true;
+    hardwareProfileEditButton.hidden = false;
+    renderModelFinder(savedHardwareProfile);
+    refreshActiveTabStatus();
+  });
+}
+
+function renderSavedHardwareProfile(profile) {
+  renderTooltipText(hardwareProfileDisplayElement, formatHardwareProfile(profile));
+}
+
+function populateHardwareProfileForm(profile) {
+  const preferredTools = Array.isArray(profile?.preferredTools) ? profile.preferredTools : [];
+
+  hardwareProfileOsElement.value = profile?.operatingSystem || "";
+  hardwareProfileVramElement.value = profile?.gpuVramGb !== null && profile?.gpuVramGb !== undefined && Number.isFinite(Number(profile.gpuVramGb)) ? String(profile.gpuVramGb) : "";
+  hardwareProfileRamElement.value = profile?.systemRamGb !== null && profile?.systemRamGb !== undefined && Number.isFinite(Number(profile.systemRamGb)) ? String(profile.systemRamGb) : "";
+  setSelectValue(hardwareProfileExperienceElement, profile?.experienceLevel || "Beginner");
+
+  for (const toolElement of hardwareProfileToolElements) {
+    toolElement.checked = preferredTools.includes(toolElement.value);
+  }
+}
+
+function readHardwareProfileForm() {
+  return {
+    operatingSystem: hardwareProfileOsElement.value.trim(),
+    gpuVramGb: numberOrNull(hardwareProfileVramElement.value),
+    systemRamGb: numberOrNull(hardwareProfileRamElement.value),
+    experienceLevel: hardwareProfileExperienceElement.value,
+    preferredTools: hardwareProfileToolElements
+      .filter((toolElement) => toolElement.checked)
+      .map((toolElement) => toolElement.value)
+  };
+}
+
+function getCurrentHardwareProfile() {
+  return savedHardwareProfile && typeof savedHardwareProfile === "object" ? savedHardwareProfile : {};
 }
 
 function scheduleModelFinderRender() {
@@ -293,7 +364,7 @@ async function renderModelFinder(hardwareProfile) {
   activeModelFinderRequestId = requestId;
   const choices = getModelFinderChoices();
   const finder = buildModelFitFinder(hardwareProfile, choices);
-  renderTooltipText(modelFinderSummaryElement, finder.summary);
+  renderModelFinderSummary(finder);
   renderDefinitionList(modelFinderList, finder.rows);
   renderModelFinderLinks(finder.searchLinks);
   renderModelFinderLoading();
@@ -314,6 +385,19 @@ async function renderModelFinder(hardwareProfile) {
   }
 
   renderModelFinderRecommendation(rankModelCandidates(result.candidates, finder, choices));
+}
+
+function renderModelFinderSummary(finder) {
+  modelFinderSummaryElement.replaceChildren();
+
+  const profile = document.createElement("strong");
+  renderTooltipText(profile, finder.summaryProfile || "Saved hardware profile");
+
+  modelFinderSummaryElement.append(profile, document.createTextNode(": "));
+
+  const guidance = document.createElement("span");
+  renderTooltipText(guidance, finder.summaryGuidance || "");
+  modelFinderSummaryElement.append(guidance);
 }
 
 function renderModelFinderLinks(links) {
@@ -1353,6 +1437,12 @@ async function loadGlossary() {
 }
 
 async function loadHardwareProfile() {
+  const defaultProfile = await loadDefaultHardwareProfile();
+  const storedProfile = await loadStoredHardwareProfile();
+  return normalizeHardwareProfile(storedProfile || {}, defaultProfile);
+}
+
+async function loadDefaultHardwareProfile() {
   try {
     const response = await fetch(chrome.runtime.getURL("data/hardware-profile.json"), {
       cache: "no-store"
@@ -1365,9 +1455,78 @@ async function loadHardwareProfile() {
     const profile = await response.json();
     return profile && typeof profile === "object" ? profile : {};
   } catch (error) {
-    console.warn("Hugging Face for Newbies could not load the local hardware profile.", error);
+    console.warn("Hugging Face for Newbies could not load the default hardware profile.", error);
     return {};
   }
+}
+
+async function loadStoredHardwareProfile() {
+  if (globalThis.chrome?.storage?.local) {
+    try {
+      const result = await chrome.storage.local.get(HARDWARE_PROFILE_STORAGE_KEY);
+      const profile = result?.[HARDWARE_PROFILE_STORAGE_KEY];
+      return profile && typeof profile === "object" ? profile : null;
+    } catch (error) {
+      console.warn("Hugging Face for Newbies could not load the saved hardware profile.", error);
+    }
+  }
+
+  try {
+    const profile = JSON.parse(localStorage.getItem(HARDWARE_PROFILE_STORAGE_KEY) || "null");
+    return profile && typeof profile === "object" ? profile : null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveHardwareProfile(profile) {
+  if (globalThis.chrome?.storage?.local) {
+    await chrome.storage.local.set({
+      [HARDWARE_PROFILE_STORAGE_KEY]: profile
+    });
+    return;
+  }
+
+  localStorage.setItem(HARDWARE_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+}
+
+function normalizeHardwareProfile(profile, fallback = {}) {
+  const source = profile && typeof profile === "object" ? profile : {};
+  const fallbackSource = fallback && typeof fallback === "object" ? fallback : {};
+  const gpuVramGb = numberOrNull(source.gpuVramGb);
+  const systemRamGb = numberOrNull(source.systemRamGb);
+  const preferredTools = Array.isArray(source.preferredTools)
+    ? source.preferredTools.filter((tool) => typeof tool === "string" && tool.trim() !== "")
+    : Array.isArray(fallbackSource.preferredTools) ? fallbackSource.preferredTools : [];
+
+  return {
+    operatingSystem: stringOrFallback(source.operatingSystem, fallbackSource.operatingSystem, "Unknown OS"),
+    gpuVramGb: gpuVramGb ?? numberOrNull(fallbackSource.gpuVramGb),
+    systemRamGb: systemRamGb ?? numberOrNull(fallbackSource.systemRamGb),
+    preferredTools,
+    experienceLevel: stringOrFallback(source.experienceLevel, fallbackSource.experienceLevel, "Beginner")
+  };
+}
+
+function numberOrNull(value) {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return null;
+  }
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function stringOrFallback(value, fallback, defaultValue) {
+  if (typeof value === "string" && value.trim() !== "") {
+    return value.trim();
+  }
+
+  if (typeof fallback === "string" && fallback.trim() !== "") {
+    return fallback.trim();
+  }
+
+  return defaultValue;
 }
 
 function formatParameterCount(value) {
@@ -1506,11 +1665,11 @@ function formatHardwareProfile(profile) {
     parts.push(profile.operatingSystem);
   }
 
-  if (Number.isFinite(Number(profile?.gpuVramGb))) {
+  if (profile?.gpuVramGb !== null && profile?.gpuVramGb !== undefined && Number.isFinite(Number(profile.gpuVramGb))) {
     parts.push(`${profile.gpuVramGb} GB VRAM`);
   }
 
-  if (Number.isFinite(Number(profile?.systemRamGb))) {
+  if (profile?.systemRamGb !== null && profile?.systemRamGb !== undefined && Number.isFinite(Number(profile.systemRamGb))) {
     parts.push(`${profile.systemRamGb} GB RAM`);
   }
 

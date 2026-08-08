@@ -348,7 +348,68 @@ main {
 
 .model-finder-summary {
   margin-bottom: 10px;
-  font-weight: 700;
+}
+
+.model-finder-summary strong {
+  font-weight: 850;
+}
+
+.hardware-profile-box {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--header-border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.hardware-profile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hardware-profile-title {
+  margin-bottom: 2px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.hardware-profile-display {
+  margin-bottom: 0;
+}
+
+.hardware-profile-form {
+  display: grid;
+  gap: 10px;
+}
+
+.hardware-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.small-button {
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--button-background);
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.secondary-button {
+  border-color: var(--border);
+  color: var(--text);
 }
 
 .model-finder-form {
@@ -428,7 +489,9 @@ main {
 }
 
 .finder-field select,
-.finder-field input[type="search"] {
+.finder-field input[type="search"],
+.finder-field input[type="text"],
+.finder-field input[type="number"] {
   width: 100%;
   min-height: 34px;
   padding: 5px 8px;

@@ -301,6 +301,20 @@
     "category": "hardware"
   },
   {
+    "id": "operating-system",
+    "terms": ["Operating system"],
+    "title": "Operating system",
+    "text": "The main software your computer runs, such as Windows, macOS, or Linux. Some local AI tools work differently depending on this.",
+    "category": "hardware"
+  },
+  {
+    "id": "experience-level",
+    "terms": ["Experience level"],
+    "title": "Experience level",
+    "text": "How comfortable you are with technical setup. Beginner settings favour desktop tools and simpler next steps.",
+    "category": "hardware"
+  },
+  {
     "id": "bits-per-parameter",
     "terms": ["Bits per parameter"],
     "title": "Bits per parameter",

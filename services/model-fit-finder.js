@@ -221,9 +221,13 @@ export function buildModelFitFinder(hardwareProfile = {}, choices = {}) {
   const effectiveFormat = format.format || goal.format;
   const effectiveQuantisation = quantisation.value || goal.quantisation;
   const candidateRequest = buildCandidateRequest(goal, sizing, choices, quantisation, format);
+  const summaryProfile = formatHardwareProfile(hardwareProfile);
+  const summaryGuidance = buildSummaryGuidance(goal, sizing);
 
   return {
-    summary: buildSummary(hardwareProfile, goal, sizing),
+    summary: `${summaryProfile}: ${summaryGuidance}`,
+    summaryProfile,
+    summaryGuidance,
     rows: [
       ["Best target", `${goal.taskPhrase}; ${sizing.primaryRange}.`],
       ["Stretch target", sizing.stretchRange],
@@ -630,15 +634,14 @@ function hasPermissiveLicense(tags) {
   return tags.some((tag) => /^license:(apache-2\.0|mit|bsd|cc-by|cc-by-sa)/i.test(tag));
 }
 
-function buildSummary(hardwareProfile, goal, sizing) {
-  const profile = formatHardwareProfile(hardwareProfile);
-  return `${profile}: ${capitalizeFirst(sizing.primaryRange)} ${getRangeVerb(sizing.primaryRange)} the safest starting point for ${withIndefiniteArticle(goal.taskPhrase)}.`;
+function buildSummaryGuidance(goal, sizing) {
+  return `${capitalizeFirst(sizing.primaryRange)} ${getRangeVerb(sizing.primaryRange)} the safest starting point for ${withIndefiniteArticle(goal.taskPhrase)}.`;
 }
 
 function formatHardwareProfile(profile) {
   const parts = [];
-  const gpuVramGb = Number(profile?.gpuVramGb);
-  const systemRamGb = Number(profile?.systemRamGb);
+  const gpuVramGb = profile?.gpuVramGb !== null && profile?.gpuVramGb !== undefined ? Number(profile.gpuVramGb) : null;
+  const systemRamGb = profile?.systemRamGb !== null && profile?.systemRamGb !== undefined ? Number(profile.systemRamGb) : null;
 
   if (profile?.operatingSystem) {
     parts.push(profile.operatingSystem);

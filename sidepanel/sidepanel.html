@@ -34,6 +34,55 @@
       <section id="model-finder-section" class="panel-section model-finder-section">
         <h2>Model match</h2>
         <p id="model-finder-summary" class="model-finder-summary"></p>
+        <section class="hardware-profile-box" aria-labelledby="hardware-profile-title">
+          <div class="hardware-profile-header">
+            <div>
+              <p id="hardware-profile-title" class="hardware-profile-title">Saved hardware</p>
+              <p id="hardware-profile-display" class="hardware-profile-display"></p>
+            </div>
+            <button id="hardware-profile-edit-button" class="small-button" type="button">Edit</button>
+          </div>
+          <form id="hardware-profile-form" class="hardware-profile-form" hidden>
+            <label class="finder-field">
+              <span data-tooltip-copy>Operating system</span>
+              <input id="hardware-profile-os" type="text" autocomplete="off">
+            </label>
+            <label class="finder-field">
+              <span data-tooltip-copy>GPU VRAM</span>
+              <input id="hardware-profile-vram" type="number" min="0" max="128" step="0.5">
+            </label>
+            <label class="finder-field">
+              <span data-tooltip-copy>System RAM</span>
+              <input id="hardware-profile-ram" type="number" min="1" max="512" step="1">
+            </label>
+            <label class="finder-field">
+              <span data-tooltip-copy>Experience level</span>
+              <select id="hardware-profile-experience">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </label>
+            <div class="finder-checks">
+              <label>
+                <input class="hardware-profile-tool" type="checkbox" value="LM Studio">
+                <span data-tooltip-copy>LM Studio</span>
+              </label>
+              <label>
+                <input class="hardware-profile-tool" type="checkbox" value="Ollama">
+                <span data-tooltip-copy>Ollama</span>
+              </label>
+              <label>
+                <input class="hardware-profile-tool" type="checkbox" value="Python Transformers">
+                <span data-tooltip-copy>Python Transformers</span>
+              </label>
+            </div>
+            <div class="hardware-profile-actions">
+              <button class="small-button" type="submit">Save</button>
+              <button id="hardware-profile-cancel-button" class="small-button secondary-button" type="button">Cancel</button>
+            </div>
+          </form>
+        </section>
         <form id="model-finder-form" class="model-finder-form">
           <fieldset class="segmented-field">
             <legend data-tooltip-copy>I want to</legend>

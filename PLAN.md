@@ -196,9 +196,11 @@ Acceptance criteria:
 - [✅] Keep a compact glossary table visible for Model Match terms before a model page is loaded.
 - [✅] Make the top current-page/model summary more practical and collapse the generic plain-English read by default.
 - [✅] Make active-tab checking automatic and rename the refresh button to "Check page".
+- [✅] Add an inline saved hardware profile editor for Model Match.
+- [✅] Bold only the saved hardware profile in the Model Match summary, not the whole recommendation sentence.
 - [⚠️] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
 - [❌] Add richer comparison between multiple candidate models.
-- [❌] Persist editable hardware settings in Chrome storage.
+- [✅] Persist editable hardware settings in Chrome storage.
 
 ### ❌ 2.5 Parse Model Card Content Safely
 
@@ -265,21 +267,21 @@ Acceptance criteria:
 
 ## Phase 4: Hardware Fit
 
-### ❌ 4.1 Make Hardware Profile Editable
+### ⚠️ 4.1 Make Hardware Profile Editable
 
-- [❌] Add operating system setting.
-- [❌] Add system RAM setting.
+- [✅] Add operating system setting.
+- [✅] Add system RAM setting.
 - [❌] Add GPU name setting.
-- [❌] Add GPU VRAM setting.
-- [❌] Add preferred tools setting.
-- [❌] Add beginner comfort level setting.
-- [❌] Store settings in Chrome storage instead of only the static JSON file.
-- [❌] Provide sensible defaults when hardware is unknown.
+- [✅] Add GPU VRAM setting.
+- [✅] Add preferred tools setting.
+- [✅] Add beginner comfort level setting.
+- [✅] Store settings in Chrome storage instead of only the static JSON file.
+- [✅] Provide sensible defaults when hardware is unknown.
 
 Acceptance criteria:
 
-- [❌] A learner can adjust hardware without editing project files.
-- [❌] Estimates update after profile changes.
+- [✅] A learner can adjust hardware without editing project files.
+- [✅] Estimates update after profile changes.
 
 ### ⚠️ 4.2 Improve Memory Estimation
 
