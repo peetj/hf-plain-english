@@ -151,9 +151,9 @@ Acceptance criteria:
 ### ⚠️ 2.2 Explain Common Hugging Face Concepts
 
 - [✅] Explain model card.
-- [❌] Explain dataset.
-- [❌] Explain Space.
-- [❌] Explain collection.
+- [✅] Explain dataset.
+- [✅] Explain Space.
+- [✅] Explain collection.
 - [✅] Explain GGUF.
 - [✅] Explain safetensors.
 - [✅] Explain quantisation.
@@ -173,7 +173,29 @@ Acceptance criteria:
 - [⚠️] Glossary entries are short, accurate, and beginner readable.
 - [⚠️] The UI avoids overwhelming the learner with unrelated terms.
 
-### ❌ 2.3 Parse Model Card Content Safely
+### ✅ 2.3 Teach Navigation From Non-Model Hugging Face Pages
+
+- [✅] Explain why Hugging Face directory, dataset, Space, collection, docs, or settings pages are not model pages.
+- [✅] Tell the learner that the extension needs an individual `owner/model` repository.
+- [✅] Provide direct links to Hugging Face Models, text-generation models, and GGUF local models.
+- [✅] Explain what a supported model URL looks like.
+
+Acceptance criteria:
+
+- [✅] Unsupported Hugging Face pages do not stop at a generic error.
+- [✅] The learner gets a clear next navigation step.
+
+### ⚠️ 2.4 Improve Model Match Search Interface
+
+- [✅] Convert model match guidance into form controls for goal, target size, file format, quantisation, route, priority, search phrase, local-only preference, and licence preference.
+- [✅] Add tooltip-capable labels for search controls where terms need explanation.
+- [✅] Recommend a live Hugging Face starting candidate from the selected filters.
+- [✅] Justify the candidate using current search filters, format clues, quantisation clues, licence tags, and saved hardware guidance.
+- [⚠️] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
+- [❌] Add richer comparison between multiple candidate models.
+- [❌] Persist editable hardware settings in Chrome storage.
+
+### ❌ 2.5 Parse Model Card Content Safely
 
 - [❌] Extract intended use from README/model card markdown.
 - [❌] Extract limitations from README/model card markdown.

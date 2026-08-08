@@ -21,6 +21,27 @@
     "category": "hugging-face"
   },
   {
+    "id": "dataset",
+    "terms": ["dataset", "datasets"],
+    "title": "Dataset",
+    "text": "A collection of examples used for training, testing, or evaluating models. It is not itself a model you run for chat or generation.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "space",
+    "terms": ["Space", "Spaces"],
+    "title": "Space",
+    "text": "A hosted demo or app on Hugging Face. A Space may use a model, but it is different from a model repository.",
+    "category": "hugging-face"
+  },
+  {
+    "id": "collection",
+    "terms": ["collection", "collections"],
+    "title": "Collection",
+    "text": "A curated group of Hugging Face models, datasets, Spaces, or papers. Open an individual model inside the collection for this extension to explain it.",
+    "category": "hugging-face"
+  },
+  {
     "id": "metadata",
     "terms": ["metadata"],
     "title": "Metadata",
@@ -197,7 +218,7 @@
   },
   {
     "id": "detected-formats",
-    "terms": ["Detected formats"],
+    "terms": ["Detected formats", "File format"],
     "title": "Detected formats",
     "text": "File formats the extension found in the repository, such as GGUF, safetensors, PyTorch, ONNX, or MLX.",
     "category": "files"
@@ -208,6 +229,41 @@
     "title": "Detected quantisation",
     "text": "Quantisation labels found in file names, tags, or model notes. These labels help estimate memory use.",
     "category": "model-basics"
+  },
+  {
+    "id": "best-target",
+    "terms": ["Best target"],
+    "title": "Best target",
+    "text": "The model size range the extension thinks is the most sensible starting point for the saved hardware profile and selected goal.",
+    "category": "hardware"
+  },
+  {
+    "id": "stretch-target",
+    "terms": ["Stretch target"],
+    "title": "Stretch target",
+    "text": "A larger or more demanding option that might work, but is more likely to be slow, tight, or require extra setup.",
+    "category": "hardware"
+  },
+  {
+    "id": "local-only",
+    "terms": ["Local only"],
+    "title": "Local only",
+    "text": "Prefer models and file formats that are practical to run on your own computer instead of relying on hosted inference.",
+    "category": "hardware"
+  },
+  {
+    "id": "permissive-licence",
+    "terms": ["permissive licence", "permissive license"],
+    "title": "Permissive licence",
+    "text": "A licence that usually allows broad reuse, often including Apache-2.0 or MIT. Always check the model page before relying on this.",
+    "category": "trust"
+  },
+  {
+    "id": "model-match",
+    "terms": ["Model match"],
+    "title": "Model match",
+    "text": "A guided search helper that turns your goal, hardware profile, and preferences into a safer starting point on Hugging Face.",
+    "category": "hugging-face"
   },
   {
     "id": "fit",

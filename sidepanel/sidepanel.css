@@ -427,7 +427,8 @@ main {
   font-weight: 750;
 }
 
-.finder-field select {
+.finder-field select,
+.finder-field input[type="search"] {
   width: 100%;
   min-height: 34px;
   padding: 5px 8px;
@@ -436,6 +437,65 @@ main {
   background: var(--surface);
   color: var(--text);
   font: inherit;
+}
+
+.finder-checks {
+  display: grid;
+  gap: 7px;
+}
+
+.finder-checks label {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.finder-checks input {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.finder-recommendation {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.finder-recommendation p {
+  margin-bottom: 0;
+}
+
+.finder-recommendation-title {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.finder-recommendation-loading,
+.finder-recommendation-error,
+.finder-recommendation-empty {
+  border-left-color: var(--accent-warm);
+}
+
+.finder-model-link {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.finder-model-stats {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .finder-links {
@@ -461,6 +521,11 @@ main {
 
 .finder-link:hover {
   border-color: var(--accent-strong);
+}
+
+.nav-link-list {
+  display: grid;
+  gap: 7px;
 }
 
 .answer-list {

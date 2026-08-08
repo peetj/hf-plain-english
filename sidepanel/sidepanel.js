@@ -4,7 +4,8 @@ import { parseModelFacts } from "../services/model-parser.js";
 import { estimateHardwareFit } from "../services/hardware-estimator.js";
 import { recommendModelTool } from "../services/recommendation-engine.js";
 import { generateDeterministicExplanation } from "../services/explanation-service.js";
-import { buildModelFitFinder } from "../services/model-fit-finder.js";
+import { fetchModelCandidates } from "../services/model-candidate-search.js";
+import { buildModelFitFinder, rankModelCandidates } from "../services/model-fit-finder.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
@@ -12,9 +13,16 @@ const themeButtons = Array.from(document.querySelectorAll(".theme-button"));
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
 const modelFinderForm = document.querySelector("#model-finder-form");
+const modelFinderTargetElement = document.querySelector("#model-finder-target");
+const modelFinderFormatElement = document.querySelector("#model-finder-format");
+const modelFinderQuantisationElement = document.querySelector("#model-finder-quantisation");
 const modelFinderRouteElement = document.querySelector("#model-finder-route");
 const modelFinderPriorityElement = document.querySelector("#model-finder-priority");
+const modelFinderKeywordElement = document.querySelector("#model-finder-keyword");
+const modelFinderLocalOnlyElement = document.querySelector("#model-finder-local-only");
+const modelFinderPermissiveOnlyElement = document.querySelector("#model-finder-permissive-only");
 const modelFinderSummaryElement = document.querySelector("#model-finder-summary");
+const modelFinderRecommendationElement = document.querySelector("#model-finder-recommendation");
 const modelFinderList = document.querySelector("#model-finder-list");
 const modelFinderLinks = document.querySelector("#model-finder-links");
 const learnerAnswerSection = document.querySelector("#learner-answer-section");
@@ -49,6 +57,8 @@ let activeRefreshId = 0;
 let tooltipDefinitions = [];
 let activeTooltipTrigger = null;
 let savedHardwareProfile = {};
+let activeModelFinderRequestId = 0;
+let modelFinderRenderTimeout = 0;
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -105,13 +115,10 @@ async function refreshActiveTabStatus() {
     if (parsedUrl.isHuggingFace) {
       resetModelIdentity("Unsupported Hugging Face page");
       setStatus("Unsupported Hugging Face page", getUnsupportedMessage(parsedUrl.reason));
-      renderLearnerState("This Hugging Face page is outside the current model-page guide.", [
-        ["What happened", getUnsupportedMessage(parsedUrl.reason)],
-        ["Next step", "Open a public model page with an owner/model address, such as huggingface.co/Qwen/Qwen3-0.6B."]
-      ]);
+      renderUnsupportedHuggingFaceState(parsedUrl.reason);
       renderTooltipText(
         overviewTextElement,
-        "V1 supports public model pages in the owner/model URL format, including model tree and blob subpages."
+        getUnsupportedOverview(parsedUrl.reason)
       );
       return;
     }
@@ -224,28 +231,81 @@ function renderLearnerState(summary, rows) {
   learnerAnswerSection.hidden = false;
 }
 
+function renderUnsupportedHuggingFaceState(reason) {
+  renderLearnerState("This is a useful Hugging Face page, but it is not a model page the extension can explain yet.", [
+    ["What happened", getUnsupportedMessage(reason)],
+    ["Where to go", createUnsupportedNavigation(reason)],
+    ["What to look for", "Choose a model result whose address looks like huggingface.co/owner/model, then refresh this panel."]
+  ]);
+}
+
+function createUnsupportedNavigation(reason) {
+  const container = document.createElement("div");
+  container.className = "nav-link-list";
+
+  for (const link of getUnsupportedNavigationLinks(reason)) {
+    const anchor = document.createElement("a");
+    anchor.href = link.url;
+    anchor.target = "_blank";
+    anchor.rel = "noreferrer";
+    anchor.textContent = link.label;
+    container.append(anchor);
+  }
+
+  return container;
+}
+
 async function initModelFinder() {
   const [hardwareProfile] = await Promise.all([
     hardwareProfilePromise,
     tooltipDefinitionsPromise
   ]);
 
+  initStaticTooltipText();
   restoreModelFinderChoices();
   renderModelFinder(hardwareProfile);
   modelFinderForm.addEventListener("submit", (event) => {
     event.preventDefault();
   });
-  modelFinderForm.addEventListener("change", () => {
+  modelFinderForm.addEventListener("input", () => {
     saveModelFinderChoices();
-    renderModelFinder(savedHardwareProfile);
+    scheduleModelFinderRender();
   });
 }
 
-function renderModelFinder(hardwareProfile) {
-  const finder = buildModelFitFinder(hardwareProfile, getModelFinderChoices());
+function scheduleModelFinderRender() {
+  globalThis.clearTimeout(modelFinderRenderTimeout);
+  modelFinderRenderTimeout = globalThis.setTimeout(() => {
+    renderModelFinder(savedHardwareProfile);
+  }, 250);
+}
+
+async function renderModelFinder(hardwareProfile) {
+  const requestId = activeModelFinderRequestId + 1;
+  activeModelFinderRequestId = requestId;
+  const choices = getModelFinderChoices();
+  const finder = buildModelFitFinder(hardwareProfile, choices);
   renderTooltipText(modelFinderSummaryElement, finder.summary);
   renderDefinitionList(modelFinderList, finder.rows);
   renderModelFinderLinks(finder.searchLinks);
+  renderModelFinderLoading();
+
+  const result = await fetchModelCandidates(finder.candidateRequest);
+
+  if (requestId !== activeModelFinderRequestId) {
+    return;
+  }
+
+  if (!result.ok) {
+    renderModelFinderRecommendation({
+      status: "error",
+      model: null,
+      justification: `${result.error} Use the filtered search links below and scan for the target range manually.`
+    });
+    return;
+  }
+
+  renderModelFinderRecommendation(rankModelCandidates(result.candidates, finder, choices));
 }
 
 function renderModelFinderLinks(links) {
@@ -265,8 +325,14 @@ function renderModelFinderLinks(links) {
 function getModelFinderChoices() {
   return {
     goal: modelFinderForm.elements["model-goal"].value,
+    targetSize: modelFinderTargetElement.value,
+    fileFormat: modelFinderFormatElement.value,
+    quantisation: modelFinderQuantisationElement.value,
     route: modelFinderRouteElement.value,
-    priority: modelFinderPriorityElement.value
+    priority: modelFinderPriorityElement.value,
+    keyword: modelFinderKeywordElement.value.trim(),
+    localOnly: modelFinderLocalOnlyElement.checked,
+    permissiveOnly: modelFinderPermissiveOnlyElement.checked
   };
 }
 
@@ -278,8 +344,14 @@ function restoreModelFinderChoices() {
     goalInput.checked = true;
   }
 
+  setSelectValue(modelFinderTargetElement, storedChoices.targetSize);
+  setSelectValue(modelFinderFormatElement, storedChoices.fileFormat);
+  setSelectValue(modelFinderQuantisationElement, storedChoices.quantisation);
   setSelectValue(modelFinderRouteElement, storedChoices.route);
   setSelectValue(modelFinderPriorityElement, storedChoices.priority);
+  modelFinderKeywordElement.value = storedChoices.keyword;
+  modelFinderLocalOnlyElement.checked = storedChoices.localOnly;
+  modelFinderPermissiveOnlyElement.checked = storedChoices.permissiveOnly;
 }
 
 function saveModelFinderChoices() {
@@ -291,14 +363,26 @@ function readStoredModelFinderChoices() {
     const parsed = JSON.parse(localStorage.getItem("hfNewbies.modelFinder") || "{}");
     return {
       goal: isAllowedChoice(parsed.goal, ["chat", "code", "embedding", "image"]) ? parsed.goal : "chat",
+      targetSize: isAllowedChoice(parsed.targetSize, ["auto", "small", "comfort", "stretch", "tiny", "compact", "sevenB", "thirteenB"]) ? parsed.targetSize : "auto",
+      fileFormat: isAllowedChoice(parsed.fileFormat, ["auto", "gguf", "safetensors", "diffusers"]) ? parsed.fileFormat : "auto",
+      quantisation: isAllowedChoice(parsed.quantisation, ["auto", "q4", "q5", "fp16"]) ? parsed.quantisation : "auto",
       route: isAllowedChoice(parsed.route, ["beginner", "ollama", "python", "unsure"]) ? parsed.route : "beginner",
-      priority: isAllowedChoice(parsed.priority, ["balanced", "speed", "quality"]) ? parsed.priority : "balanced"
+      priority: isAllowedChoice(parsed.priority, ["balanced", "speed", "quality"]) ? parsed.priority : "balanced",
+      keyword: typeof parsed.keyword === "string" ? parsed.keyword.slice(0, 40) : "",
+      localOnly: parsed.localOnly !== false,
+      permissiveOnly: parsed.permissiveOnly === true
     };
   } catch {
     return {
       goal: "chat",
+      targetSize: "auto",
+      fileFormat: "auto",
+      quantisation: "auto",
       route: "beginner",
-      priority: "balanced"
+      priority: "balanced",
+      keyword: "",
+      localOnly: true,
+      permissiveOnly: false
     };
   }
 }
@@ -311,6 +395,56 @@ function setSelectValue(selectElement, value) {
   if ([...selectElement.options].some((option) => option.value === value)) {
     selectElement.value = value;
   }
+}
+
+function initStaticTooltipText() {
+  for (const element of document.querySelectorAll("[data-tooltip-copy]")) {
+    renderTooltipText(element, element.textContent);
+  }
+}
+
+function renderModelFinderLoading() {
+  modelFinderRecommendationElement.className = "finder-recommendation finder-recommendation-loading";
+  renderTooltipText(modelFinderRecommendationElement, "Looking for a starting candidate on Hugging Face...");
+}
+
+function renderModelFinderRecommendation(recommendation) {
+  modelFinderRecommendationElement.replaceChildren();
+  modelFinderRecommendationElement.className = `finder-recommendation finder-recommendation-${recommendation.status}`;
+
+  const title = document.createElement("p");
+  title.className = "finder-recommendation-title";
+
+  if (recommendation.status !== "found" || !recommendation.model) {
+    title.textContent = recommendation.status === "empty" ? "No starting candidate found" : "Candidate search unavailable";
+    const detail = document.createElement("p");
+    renderTooltipText(detail, recommendation.justification);
+    modelFinderRecommendationElement.append(title, detail);
+    return;
+  }
+
+  title.textContent = "Starting candidate";
+
+  const modelLink = document.createElement("a");
+  modelLink.className = "finder-model-link";
+  modelLink.href = `https://huggingface.co/${recommendation.model.modelId}`;
+  modelLink.target = "_blank";
+  modelLink.rel = "noreferrer";
+  modelLink.textContent = recommendation.model.modelId;
+
+  const stats = document.createElement("p");
+  stats.className = "finder-model-stats";
+  stats.textContent = [
+    recommendation.model.downloads ? `${recommendation.model.downloads.toLocaleString()} downloads` : "",
+    recommendation.model.likes ? `${recommendation.model.likes.toLocaleString()} likes` : "",
+    recommendation.model.libraryName || "",
+    recommendation.model.pipelineTag || ""
+  ].filter(Boolean).join(" | ");
+
+  const detail = document.createElement("p");
+  renderTooltipText(detail, recommendation.justification);
+
+  modelFinderRecommendationElement.append(title, modelLink, stats, detail);
 }
 
 function buildWhatItIsAnswer(model, interpreted) {
@@ -1296,7 +1430,7 @@ function trimDecimal(value) {
 function getUnsupportedMessage(reason) {
   switch (reason) {
     case "unsupported-hugging-face-section":
-      return "This Hugging Face section is outside V1 model-page support.";
+      return "This is a Hugging Face section such as models, datasets, Spaces, docs, or settings. The extension needs an individual model repository.";
     case "not-a-model-page":
       return "This Hugging Face URL does not include both an owner and a model name.";
     case "invalid-model-id":
@@ -1306,6 +1440,40 @@ function getUnsupportedMessage(reason) {
     default:
       return "This page is outside V1 support.";
   }
+}
+
+function getUnsupportedOverview(reason) {
+  if (reason === "unsupported-hugging-face-section") {
+    return "Open a result from the Hugging Face Models directory. A supported model page has an owner/model address, for example huggingface.co/Qwen/Qwen3-0.6B.";
+  }
+
+  return "Navigate to the Hugging Face Models directory, open a specific public model repository, then refresh this panel.";
+}
+
+function getUnsupportedNavigationLinks(reason) {
+  const links = [
+    {
+      label: "Browse Hugging Face Models",
+      url: "https://huggingface.co/models"
+    },
+    {
+      label: "Open text-generation models",
+      url: "https://huggingface.co/models?pipeline_tag=text-generation&sort=trending"
+    },
+    {
+      label: "Open GGUF local models",
+      url: "https://huggingface.co/models?library=gguf&sort=trending"
+    }
+  ];
+
+  if (reason === "unsupported-hugging-face-section") {
+    links.push({
+      label: "Learn from the current section, then choose a model repository",
+      url: "https://huggingface.co/models"
+    });
+  }
+
+  return links;
 }
 
 refreshButton.addEventListener("click", () => {

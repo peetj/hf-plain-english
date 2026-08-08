@@ -32,11 +32,11 @@
       </section>
 
       <section id="model-finder-section" class="panel-section model-finder-section">
-        <h2>Find a model for my machine</h2>
+        <h2>Model match</h2>
         <p id="model-finder-summary" class="model-finder-summary"></p>
         <form id="model-finder-form" class="model-finder-form">
           <fieldset class="segmented-field">
-            <legend>I want to</legend>
+            <legend data-tooltip-copy>I want to</legend>
             <label>
               <input type="radio" name="model-goal" value="chat" checked>
               <span>Chat</span>
@@ -56,7 +56,41 @@
           </fieldset>
 
           <label class="finder-field">
-            <span>Run with</span>
+            <span data-tooltip-copy>Best target</span>
+            <select id="model-finder-target">
+              <option value="auto">Auto for my machine</option>
+              <option value="small">Smallest practical</option>
+              <option value="comfort">Comfort target</option>
+              <option value="stretch">Stretch target</option>
+              <option value="tiny">1B-2B</option>
+              <option value="compact">3B-4B</option>
+              <option value="sevenB">7B</option>
+              <option value="thirteenB">13B</option>
+            </select>
+          </label>
+
+          <label class="finder-field">
+            <span data-tooltip-copy>File format</span>
+            <select id="model-finder-format">
+              <option value="auto">Auto</option>
+              <option value="gguf">GGUF</option>
+              <option value="safetensors">safetensors</option>
+              <option value="diffusers">Diffusers</option>
+            </select>
+          </label>
+
+          <label class="finder-field">
+            <span data-tooltip-copy>Quantisation</span>
+            <select id="model-finder-quantisation">
+              <option value="auto">Auto</option>
+              <option value="q4">Q4_K_M</option>
+              <option value="q5">Q5_K_M</option>
+              <option value="fp16">FP16</option>
+            </select>
+          </label>
+
+          <label class="finder-field">
+            <span data-tooltip-copy>Run with</span>
             <select id="model-finder-route">
               <option value="beginner">Beginner app</option>
               <option value="ollama">Ollama</option>
@@ -66,14 +100,31 @@
           </label>
 
           <label class="finder-field">
-            <span>Priority</span>
+            <span data-tooltip-copy>Priority</span>
             <select id="model-finder-priority">
               <option value="balanced">Balanced</option>
               <option value="speed">Speed</option>
               <option value="quality">Quality</option>
             </select>
           </label>
+
+          <label class="finder-field">
+            <span data-tooltip-copy>Search phrase</span>
+            <input id="model-finder-keyword" type="search" placeholder="Optional, e.g. Qwen, Llama, coder">
+          </label>
+
+          <div class="finder-checks">
+            <label>
+              <input id="model-finder-local-only" type="checkbox" checked>
+              <span data-tooltip-copy>Local only</span>
+            </label>
+            <label>
+              <input id="model-finder-permissive-only" type="checkbox">
+              <span data-tooltip-copy>Prefer permissive licence</span>
+            </label>
+          </div>
         </form>
+        <section id="model-finder-recommendation" class="finder-recommendation" aria-live="polite"></section>
         <dl id="model-finder-list" class="facts-list"></dl>
         <div id="model-finder-links" class="finder-links"></div>
       </section>
