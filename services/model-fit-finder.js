@@ -294,7 +294,7 @@ export function rankModelCandidates(candidates, finder, choices = {}) {
   return {
     status: "found",
     model: best,
-    summary: buildCandidateSummary(best, finder, choices),
+    ...buildCandidateSummary(best, finder, choices),
     justification: buildCandidateJustification(best, finder, choices)
   };
 }
@@ -883,7 +883,10 @@ function buildCandidateSummary(candidate, finder, choices) {
 
   summaryParts.push("Treat this as a starting candidate: open the model page and check the model card, licence, and files before downloading.");
 
-  return summaryParts.join(" ");
+  return {
+    summary: summaryParts.join(" "),
+    summaryPoints: summaryParts
+  };
 }
 
 function describeCandidatePurpose(candidate, choices) {

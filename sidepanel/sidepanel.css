@@ -805,7 +805,41 @@ main {
 }
 
 .finder-candidate-summary {
+  max-height: 190px;
+  padding: 8px 9px 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
   color: var(--text);
+  overflow-y: auto;
+  scrollbar-color: var(--accent) var(--surface-muted);
+  scrollbar-width: thin;
+}
+
+.finder-candidate-summary::-webkit-scrollbar {
+  width: 9px;
+}
+
+.finder-candidate-summary::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.finder-candidate-summary::-webkit-scrollbar-thumb {
+  border: 2px solid var(--surface-muted);
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.finder-candidate-summary-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.finder-candidate-summary-list li::marker {
+  color: var(--accent);
 }
 
 .finder-candidate-reason {

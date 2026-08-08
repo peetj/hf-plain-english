@@ -733,9 +733,7 @@ function renderModelFinderRecommendation(recommendation) {
     recommendation.model.pipelineTag || ""
   ].filter(Boolean).join(" | ");
 
-  const summary = document.createElement("p");
-  summary.className = "finder-candidate-summary";
-  renderTooltipText(summary, recommendation.summary || recommendation.justification);
+  const summary = createCandidateSummary(recommendation);
 
   const detail = document.createElement("p");
   detail.className = "finder-candidate-reason";
@@ -743,6 +741,30 @@ function renderModelFinderRecommendation(recommendation) {
 
   modelFinderRecommendationElement.append(title, modelLink, stats, summary, detail);
   revealUpdatedElement(modelFinderRecommendationElement, { show: false });
+}
+
+function createCandidateSummary(recommendation) {
+  const summary = document.createElement("div");
+  summary.className = "finder-candidate-summary";
+
+  if (!Array.isArray(recommendation.summaryPoints) || recommendation.summaryPoints.length === 0) {
+    const paragraph = document.createElement("p");
+    renderTooltipText(paragraph, recommendation.summary || recommendation.justification);
+    summary.append(paragraph);
+    return summary;
+  }
+
+  const list = document.createElement("ul");
+  list.className = "finder-candidate-summary-list";
+
+  for (const point of recommendation.summaryPoints) {
+    const item = document.createElement("li");
+    renderTooltipText(item, point);
+    list.append(item);
+  }
+
+  summary.append(list);
+  return summary;
 }
 
 function initAskHelper() {
