@@ -14,6 +14,11 @@
           <p id="active-url" class="model-id">Checking active tab...</p>
         </div>
         <p id="model-owner" class="model-owner" hidden></p>
+        <div class="theme-switcher" aria-label="Theme">
+          <button class="theme-button" type="button" data-theme-value="nord">Nord</button>
+          <button class="theme-button" type="button" data-theme-value="solarized">Solarized</button>
+          <button class="theme-button" type="button" data-theme-value="gruvbox">Gruvbox</button>
+        </div>
       </div>
       <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh active tab status" title="Refresh">
         Refresh
@@ -26,13 +31,60 @@
         <p id="status-message">Preparing the extension shell.</p>
       </section>
 
+      <section id="model-finder-section" class="panel-section model-finder-section">
+        <h2>Find a model for my machine</h2>
+        <p id="model-finder-summary" class="model-finder-summary"></p>
+        <form id="model-finder-form" class="model-finder-form">
+          <fieldset class="segmented-field">
+            <legend>I want to</legend>
+            <label>
+              <input type="radio" name="model-goal" value="chat" checked>
+              <span>Chat</span>
+            </label>
+            <label>
+              <input type="radio" name="model-goal" value="code">
+              <span>Code</span>
+            </label>
+            <label>
+              <input type="radio" name="model-goal" value="embedding">
+              <span>Search</span>
+            </label>
+            <label>
+              <input type="radio" name="model-goal" value="image">
+              <span>Images</span>
+            </label>
+          </fieldset>
+
+          <label class="finder-field">
+            <span>Run with</span>
+            <select id="model-finder-route">
+              <option value="beginner">Beginner app</option>
+              <option value="ollama">Ollama</option>
+              <option value="python">Python</option>
+              <option value="unsure">Not sure</option>
+            </select>
+          </label>
+
+          <label class="finder-field">
+            <span>Priority</span>
+            <select id="model-finder-priority">
+              <option value="balanced">Balanced</option>
+              <option value="speed">Speed</option>
+              <option value="quality">Quality</option>
+            </select>
+          </label>
+        </form>
+        <dl id="model-finder-list" class="facts-list"></dl>
+        <div id="model-finder-links" class="finder-links"></div>
+      </section>
+
       <section id="learner-answer-section" class="panel-section learner-answer-section" hidden>
         <h2>Quick answer</h2>
         <p id="answer-summary" class="answer-summary"></p>
         <dl id="answer-list" class="answer-list"></dl>
       </section>
 
-      <section class="panel-section">
+      <section id="first-read-section" class="panel-section">
         <h2>First read</h2>
         <p id="overview-text">
           Open a public Hugging Face model page to get a plain-English guide.

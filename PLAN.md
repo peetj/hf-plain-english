@@ -42,16 +42,19 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] The Technical Terms (glossary section) is really using the wrong UX paradigm. An expandable section is not good here. Rather a table with "Term" and "Explanation" would be way better
 - [✅] Make all the major sections collapsible with a dropdown arrow
 - [✅] Invert the theme colors. I think that will look better
-- [❌] Add multiple switchable color themes
+- [✅] Add multiple switchable color themes
+- [✅] Replace the first theme colors with well-known palettes and make the header the darkest part of the extension.
 - [👍] The table of tech terms is very good
-- [❌] Start the extension with all sections closed except for Quick Answer/First Read
-- [❌] Icon still not great at small dimension. Make it look more like hugging face with glasses but have eyes as well. Change color to slightly darker
-- [❌] "Best next step" should be intelligent, ie. it won't necessarily be the same for me as for somebody else. Can we do this?
-- [❌] "How to Read this Model" section: 
+- [✅] Start the extension with all sections closed except for Quick Answer/First Read
+- [✅] Icon still not great at small dimension. Make it look more like hugging face with glasses but have eyes as well. Change color to slightly darker
+- [✅] "Best next step" should be intelligent, ie. it won't necessarily be the same for me as for somebody else. Can we do this?
+- [✅] "How to Read this Model" section:
           - Put badges inline with same row but right aligned
           - What is the point of the "Hugging Face Data" badge? I don't see any value in it??
           - Pointless having a badge of "Unknown" for a value of "Unknown"
           - Saying "No GGUF file was detected in this repository." in this section seems misplaced
+- [✅] Add a feature that helps the user find the ideal model to fit on their machine. Make this a primary feature as what is the point of using the site otherwise. May involve recommending models based on some quick questions and their h/w profile?
+- [✅] Improve model finder search links by removing weak terms like instruct, lm studio, and raw size-number searches.
 - [❌] Ignore.
 
 ## Current Foundation
