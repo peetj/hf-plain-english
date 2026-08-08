@@ -118,6 +118,18 @@ const RANK_CONFIG = {
   }
 };
 
+const FIELD_PRIORITY_LABELS = {
+  target: "Best target",
+  format: "File format",
+  quantisation: "Quantisation",
+  route: "Run with",
+  priority: "Size preference",
+  rank: "Rank by",
+  keyword: "Search phrase"
+};
+
+const DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
+
 const TARGET_CONFIG = {
   auto: {
     label: "Auto for my machine",
@@ -235,6 +247,7 @@ export function buildModelFitFinder(hardwareProfile = {}, choices = {}) {
       ["Quantisation", effectiveQuantisation],
       ["Route", `${route.routeText} ${priority.text}`],
       ["Rank by", `${rank.label}. ${rank.text}`],
+      ["Search priority", formatFieldPriority(choices.fieldOrder)],
       ["Search filter", goal.searchFilter],
       ["Scan results for", sizing.scanAdvice],
       ["Avoid", buildAvoidText(goal, choices)]
@@ -286,38 +299,29 @@ export function rankModelCandidates(candidates, finder, choices = {}) {
 }
 
 function rankEligibleCandidates(candidates, finder, choices) {
-  if (choices.rankBy === "downloads") {
-    return candidates
-      .map((candidate) => ({
-        candidate,
-        score: candidate.downloads,
-        tieBreak: candidate.likes
-      }))
-      .sort(compareRankedCandidateScores);
-  }
-
-  if (choices.rankBy === "likes") {
-    return candidates
-      .map((candidate) => ({
-        candidate,
-        score: candidate.likes,
-        tieBreak: candidate.downloads
-      }))
-      .sort(compareRankedCandidateScores);
-  }
+  const fieldOrder = normalizeFieldOrder(choices.fieldOrder);
 
   return candidates
     .map((candidate) => ({
       candidate,
-      score: scoreCandidate(candidate, finder, choices),
-      tieBreak: candidate.downloads + candidate.likes
+      fieldScores: scoreCandidateFields(candidate, finder, choices),
+      tieBreak: scoreCandidate(candidate, finder, choices)
     }))
-    .sort(compareRankedCandidateScores);
+    .sort((a, b) => compareRankedCandidateScores(a, b, fieldOrder));
 }
 
-function compareRankedCandidateScores(a, b) {
-  return (b.score - a.score)
-    || (b.tieBreak - a.tieBreak)
+function compareRankedCandidateScores(a, b, fieldOrder) {
+  for (const fieldKey of fieldOrder) {
+    const difference = (b.fieldScores[fieldKey] || 0) - (a.fieldScores[fieldKey] || 0);
+
+    if (Math.abs(difference) > 0.0001) {
+      return difference;
+    }
+  }
+
+  return (b.tieBreak - a.tieBreak)
+    || (b.candidate.downloads - a.candidate.downloads)
+    || (b.candidate.likes - a.candidate.likes)
     || String(a.candidate.modelId).localeCompare(String(b.candidate.modelId));
 }
 
@@ -617,6 +621,155 @@ function scoreCandidate(candidate, finder, choices) {
   return score;
 }
 
+function scoreCandidateFields(candidate, finder, choices) {
+  return {
+    target: scoreTargetField(candidate, finder),
+    format: scoreFormatField(candidate, choices),
+    quantisation: scoreQuantisationField(candidate, choices),
+    route: scoreRouteField(candidate, choices),
+    priority: scorePriorityField(candidate, finder, choices),
+    rank: scoreRankField(candidate, choices),
+    keyword: scoreKeywordField(candidate, choices)
+  };
+}
+
+function scoreTargetField(candidate, finder) {
+  const searchable = `${candidate.modelId} ${candidate.tags.join(" ")}`.toLowerCase();
+  const sizeHints = finder?.candidateRequest?.sizeHints || [];
+  const hintBonus = sizeHints.some((hint) => searchable.includes(String(hint).toLowerCase())) ? 4 : 0;
+
+  return hintBonus + scoreSizeFit(candidate.modelId, sizeHints);
+}
+
+function scoreFormatField(candidate, choices) {
+  const searchable = `${candidate.modelId} ${candidate.libraryName} ${candidate.tags.join(" ")}`.toLowerCase();
+  const selectedFormat = choices.fileFormat || "auto";
+
+  if (selectedFormat === "gguf") {
+    return searchable.includes("gguf") ? 10 : 0;
+  }
+
+  if (selectedFormat === "safetensors") {
+    return searchable.includes("safetensors") || searchable.includes("transformers") || searchable.includes("pytorch") ? 10 : 0;
+  }
+
+  if (selectedFormat === "diffusers") {
+    return searchable.includes("diffusers") ? 10 : 0;
+  }
+
+  if ((choices.goal === "chat" || choices.goal === "code") && choices.localOnly !== false) {
+    return searchable.includes("gguf") ? 8 : 0;
+  }
+
+  if (choices.goal === "embedding") {
+    return searchable.includes("sentence-transformers") || searchable.includes("safetensors") ? 8 : 0;
+  }
+
+  if (choices.goal === "image") {
+    return searchable.includes("diffusers") ? 8 : 0;
+  }
+
+  return 0;
+}
+
+function scoreQuantisationField(candidate, choices) {
+  const searchable = `${candidate.modelId} ${candidate.tags.join(" ")}`.toLowerCase();
+  const selectedQuantisation = choices.quantisation || "auto";
+
+  if (selectedQuantisation === "q4") {
+    return searchable.includes("q4_k_m") ? 10 : searchable.includes("q4") ? 8 : 0;
+  }
+
+  if (selectedQuantisation === "q5") {
+    return searchable.includes("q5_k_m") ? 10 : searchable.includes("q5") ? 8 : 0;
+  }
+
+  if (selectedQuantisation === "fp16") {
+    return searchable.includes("fp16") || searchable.includes("float16") ? 10 : 0;
+  }
+
+  if (searchable.includes("q4_k_m")) {
+    return 8;
+  }
+
+  if (/\bq[234568]\b|q[234568]_/i.test(searchable)) {
+    return 6;
+  }
+
+  return 0;
+}
+
+function scoreRouteField(candidate, choices) {
+  const searchable = `${candidate.modelId} ${candidate.libraryName} ${candidate.tags.join(" ")}`.toLowerCase();
+
+  if (choices.route === "beginner" || choices.route === "unsure") {
+    return searchable.includes("gguf") ? 10 : searchable.includes("diffusers") ? 5 : 0;
+  }
+
+  if (choices.route === "ollama") {
+    return searchable.includes("ollama") ? 10 : searchable.includes("gguf") ? 7 : 0;
+  }
+
+  if (choices.route === "python") {
+    return searchable.includes("transformers") || searchable.includes("safetensors") || searchable.includes("pytorch") || searchable.includes("diffusers") ? 10 : 0;
+  }
+
+  return 0;
+}
+
+function scorePriorityField(candidate, finder, choices) {
+  const sizes = extractBillionParameterSizes(candidate.modelId);
+  const largestSize = sizes.length ? Math.max(...sizes) : null;
+
+  if (!Number.isFinite(largestSize)) {
+    return scoreTargetField(candidate, finder);
+  }
+
+  if (choices.priority === "speed") {
+    return Math.max(0, 20 - largestSize);
+  }
+
+  if (choices.priority === "quality") {
+    return scoreTargetField(candidate, finder) + Math.min(largestSize, 30) / 3;
+  }
+
+  return scoreTargetField(candidate, finder);
+}
+
+function scoreRankField(candidate, choices) {
+  const downloadsScore = Math.log10((candidate.downloads || 0) + 1);
+  const likesScore = Math.log10((candidate.likes || 0) + 1);
+
+  if (choices.rankBy === "downloads") {
+    return downloadsScore;
+  }
+
+  if (choices.rankBy === "likes") {
+    return likesScore;
+  }
+
+  return downloadsScore + likesScore;
+}
+
+function scoreKeywordField(candidate, choices) {
+  const keyword = typeof choices.keyword === "string" ? choices.keyword.trim().toLowerCase() : "";
+
+  if (!keyword) {
+    return 0;
+  }
+
+  const searchable = `${candidate.modelId} ${candidate.tags.join(" ")}`.toLowerCase();
+  const terms = keyword.split(/\s+/).filter(Boolean);
+
+  if (terms.length === 0) {
+    return 0;
+  }
+
+  const matches = terms.filter((term) => searchable.includes(term)).length;
+
+  return matches === terms.length ? 10 : matches * 4;
+}
+
 function scoreSizeFit(modelId, sizeHints) {
   const targetSizes = sizeHints
     .map((hint) => Number.parseFloat(String(hint).toLowerCase().replace("b", "")))
@@ -663,13 +816,14 @@ function buildCandidateJustification(candidate, finder, choices) {
   const reasons = [];
 
   reasons.push(`It appeared in a current Hugging Face search for ${finder.rows.find(([label]) => label === "Search filter")?.[1] || "the selected filters"}.`);
+  reasons.push(`The fields higher in Model Match had more influence: ${formatFieldPriority(choices.fieldOrder)}.`);
 
   if (choices.rankBy === "downloads") {
-    reasons.push("You asked for downloads, so this is the highest-download eligible candidate returned by the current search filters.");
+    reasons.push("You asked for downloads; that signal is strongest when Rank by is higher in the field order.");
   } else if (choices.rankBy === "likes") {
-    reasons.push("You asked for likes, so this is the highest-liked eligible candidate returned by the current search filters.");
+    reasons.push("You asked for likes; that signal is strongest when Rank by is higher in the field order.");
   } else {
-    reasons.push("The ranking balances downloads, likes, and fit for your target size.");
+    reasons.push("The ranking uses downloads and likes as a popularity signal, then follows the visible field order.");
   }
 
   if (normalized.tags.some((tag) => tag.toLowerCase() === "gguf")) {
@@ -693,6 +847,23 @@ function buildCandidateJustification(candidate, finder, choices) {
 
 function hasPermissiveLicense(tags) {
   return tags.some((tag) => /^license:(apache-2\.0|mit|bsd|cc-by|cc-by-sa)/i.test(tag));
+}
+
+function normalizeFieldOrder(order) {
+  const uniqueOrder = Array.isArray(order)
+    ? order.filter((key, index) => DEFAULT_FIELD_ORDER.includes(key) && order.indexOf(key) === index)
+    : [];
+
+  return [
+    ...uniqueOrder,
+    ...DEFAULT_FIELD_ORDER.filter((key) => !uniqueOrder.includes(key))
+  ];
+}
+
+function formatFieldPriority(order) {
+  return normalizeFieldOrder(order)
+    .map((key, index) => `${index + 1}. ${FIELD_PRIORITY_LABELS[key]}`)
+    .join("; ");
 }
 
 function buildSummaryGuidance(goal, sizing) {

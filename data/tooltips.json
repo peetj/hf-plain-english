@@ -280,6 +280,20 @@
     "category": "hugging-face"
   },
   {
+    "id": "size-preference",
+    "terms": ["Size preference"],
+    "title": "Size preference",
+    "text": "Whether the search should lean toward faster smaller models, stronger larger models, or a balance between the two.",
+    "category": "hardware"
+  },
+  {
+    "id": "search-priority",
+    "terms": ["Search priority"],
+    "title": "Search priority",
+    "text": "Fields higher in Model Match matter more when the extension chooses between candidate models. Use the arrows to move a field higher or lower.",
+    "category": "hugging-face"
+  },
+  {
     "id": "downloads-likes",
     "terms": ["downloads", "download count", "likes"],
     "title": "Downloads and likes",

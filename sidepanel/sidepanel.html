@@ -104,9 +104,21 @@
             </label>
           </fieldset>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>Best target</span>
-            <select id="model-finder-target">
+          <div class="finder-priority-note">
+            <span data-tooltip-copy>Search priority</span>
+            <button id="model-finder-reset-order" class="small-button secondary-button" type="button">Reset order</button>
+          </div>
+
+          <div class="finder-field" data-priority-field="target">
+            <div class="finder-field-header">
+              <label id="model-finder-target-label" for="model-finder-target" data-tooltip-copy>Best target</label>
+              <div class="finder-priority-controls" aria-label="Best target priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">1</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move Best target higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move Best target lower">▼</button>
+              </div>
+            </div>
+            <select id="model-finder-target" aria-labelledby="model-finder-target-label">
               <option value="auto">Auto for my machine</option>
               <option value="small">Smallest practical</option>
               <option value="comfort">Comfort target</option>
@@ -116,62 +128,104 @@
               <option value="sevenB">7B</option>
               <option value="thirteenB">13B</option>
             </select>
-          </label>
+          </div>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>File format</span>
-            <select id="model-finder-format">
+          <div class="finder-field" data-priority-field="format">
+            <div class="finder-field-header">
+              <label id="model-finder-format-label" for="model-finder-format" data-tooltip-copy>File format</label>
+              <div class="finder-priority-controls" aria-label="File format priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">2</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move File format higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move File format lower">▼</button>
+              </div>
+            </div>
+            <select id="model-finder-format" aria-labelledby="model-finder-format-label">
               <option value="auto">Auto</option>
               <option value="gguf">GGUF</option>
               <option value="safetensors">safetensors</option>
               <option value="diffusers">Diffusers</option>
             </select>
-          </label>
+          </div>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>Quantisation</span>
-            <select id="model-finder-quantisation">
+          <div class="finder-field" data-priority-field="quantisation">
+            <div class="finder-field-header">
+              <label id="model-finder-quantisation-label" for="model-finder-quantisation" data-tooltip-copy>Quantisation</label>
+              <div class="finder-priority-controls" aria-label="Quantisation priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">3</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move Quantisation higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move Quantisation lower">▼</button>
+              </div>
+            </div>
+            <select id="model-finder-quantisation" aria-labelledby="model-finder-quantisation-label">
               <option value="auto">Auto</option>
               <option value="q4">Q4_K_M</option>
               <option value="q5">Q5_K_M</option>
               <option value="fp16">FP16</option>
             </select>
-          </label>
+          </div>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>Run with</span>
-            <select id="model-finder-route">
+          <div class="finder-field" data-priority-field="route">
+            <div class="finder-field-header">
+              <label id="model-finder-route-label" for="model-finder-route" data-tooltip-copy>Run with</label>
+              <div class="finder-priority-controls" aria-label="Run with priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">4</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move Run with higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move Run with lower">▼</button>
+              </div>
+            </div>
+            <select id="model-finder-route" aria-labelledby="model-finder-route-label">
               <option value="beginner">Beginner app</option>
               <option value="ollama">Ollama</option>
               <option value="python">Python</option>
               <option value="unsure">Not sure</option>
             </select>
-          </label>
+          </div>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>Priority</span>
-            <select id="model-finder-priority">
+          <div class="finder-field" data-priority-field="priority">
+            <div class="finder-field-header">
+              <label id="model-finder-priority-label" for="model-finder-priority" data-tooltip-copy>Size preference</label>
+              <div class="finder-priority-controls" aria-label="Size preference priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">5</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move Size preference higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move Size preference lower">▼</button>
+              </div>
+            </div>
+            <select id="model-finder-priority" aria-labelledby="model-finder-priority-label">
               <option value="balanced">Balanced</option>
               <option value="speed">Speed</option>
               <option value="quality">Quality</option>
             </select>
-          </label>
+          </div>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>Rank by</span>
-            <select id="model-finder-rank">
+          <div class="finder-field" data-priority-field="rank">
+            <div class="finder-field-header">
+              <label id="model-finder-rank-label" for="model-finder-rank" data-tooltip-copy>Rank by</label>
+              <div class="finder-priority-controls" aria-label="Rank by priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">6</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move Rank by higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move Rank by lower">▼</button>
+              </div>
+            </div>
+            <select id="model-finder-rank" aria-labelledby="model-finder-rank-label">
               <option value="popular">Downloads + likes</option>
               <option value="downloads">Most downloads</option>
               <option value="likes">Most liked</option>
             </select>
-          </label>
+          </div>
 
-          <label class="finder-field">
-            <span data-tooltip-copy>Search phrase</span>
-            <input id="model-finder-keyword" type="search" placeholder="Optional, e.g. Qwen, Llama, coder">
-          </label>
+          <div class="finder-field" data-priority-field="keyword">
+            <div class="finder-field-header">
+              <label id="model-finder-keyword-label" for="model-finder-keyword" data-tooltip-copy>Search phrase</label>
+              <div class="finder-priority-controls" aria-label="Search phrase priority">
+                <span class="finder-priority-rank" aria-label="Priority rank">7</span>
+                <button class="priority-button" type="button" data-priority-action="up" aria-label="Move Search phrase higher">▲</button>
+                <button class="priority-button" type="button" data-priority-action="down" aria-label="Move Search phrase lower">▼</button>
+              </div>
+            </div>
+            <input id="model-finder-keyword" type="search" placeholder="Optional, e.g. Qwen, Llama, coder" aria-labelledby="model-finder-keyword-label">
+          </div>
 
-          <div class="finder-checks">
+          <div id="model-finder-checks" class="finder-checks">
             <label>
               <input id="model-finder-local-only" type="checkbox" checked>
               <span data-tooltip-copy>Local only</span>

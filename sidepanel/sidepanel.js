@@ -22,6 +22,9 @@ const modelFinderRankElement = document.querySelector("#model-finder-rank");
 const modelFinderKeywordElement = document.querySelector("#model-finder-keyword");
 const modelFinderLocalOnlyElement = document.querySelector("#model-finder-local-only");
 const modelFinderPermissiveOnlyElement = document.querySelector("#model-finder-permissive-only");
+const modelFinderPriorityResetButton = document.querySelector("#model-finder-reset-order");
+const modelFinderChecksElement = document.querySelector("#model-finder-checks");
+const modelFinderPriorityFieldElements = Array.from(document.querySelectorAll("[data-priority-field]"));
 const modelFinderSummaryElement = document.querySelector("#model-finder-summary");
 const modelFinderRecommendationElement = document.querySelector("#model-finder-recommendation");
 const modelFinderList = document.querySelector("#model-finder-list");
@@ -72,6 +75,7 @@ let activeModelFinderRequestId = 0;
 let modelFinderRenderTimeout = 0;
 let refreshActiveTabStatusTimeout = 0;
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
+const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -290,11 +294,45 @@ async function initModelFinder() {
   });
   modelFinderForm.addEventListener("input", handleModelFinderChange);
   modelFinderForm.addEventListener("change", handleModelFinderChange);
+  modelFinderForm.addEventListener("click", handleModelFinderPriorityClick);
+  modelFinderPriorityResetButton.addEventListener("click", () => {
+    renderModelFinderFieldOrder(MODEL_FINDER_DEFAULT_FIELD_ORDER);
+    handleModelFinderChange();
+  });
 }
 
 function handleModelFinderChange() {
-    saveModelFinderChoices();
-    scheduleModelFinderRender();
+  saveModelFinderChoices();
+  scheduleModelFinderRender();
+}
+
+function handleModelFinderPriorityClick(event) {
+  const button = event.target.closest("[data-priority-action]");
+
+  if (!button || !modelFinderForm.contains(button)) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const fieldElement = button.closest("[data-priority-field]");
+  const action = button.dataset.priorityAction;
+
+  if (!fieldElement || !["up", "down"].includes(action)) {
+    return;
+  }
+
+  const order = getModelFinderFieldOrder();
+  const currentIndex = order.indexOf(fieldElement.dataset.priorityField);
+  const targetIndex = action === "up" ? currentIndex - 1 : currentIndex + 1;
+
+  if (currentIndex < 0 || targetIndex < 0 || targetIndex >= order.length) {
+    return;
+  }
+
+  [order[currentIndex], order[targetIndex]] = [order[targetIndex], order[currentIndex]];
+  renderModelFinderFieldOrder(order);
+  handleModelFinderChange();
 }
 
 function initHardwareProfileEditor() {
@@ -428,7 +466,8 @@ function getModelFinderChoices() {
     rankBy: modelFinderRankElement.value,
     keyword: modelFinderKeywordElement.value.trim(),
     localOnly: modelFinderLocalOnlyElement.checked,
-    permissiveOnly: modelFinderPermissiveOnlyElement.checked
+    permissiveOnly: modelFinderPermissiveOnlyElement.checked,
+    fieldOrder: getModelFinderFieldOrder()
   };
 }
 
@@ -449,6 +488,7 @@ function restoreModelFinderChoices() {
   modelFinderKeywordElement.value = storedChoices.keyword;
   modelFinderLocalOnlyElement.checked = storedChoices.localOnly;
   modelFinderPermissiveOnlyElement.checked = storedChoices.permissiveOnly;
+  renderModelFinderFieldOrder(storedChoices.fieldOrder);
 }
 
 function saveModelFinderChoices() {
@@ -468,7 +508,8 @@ function readStoredModelFinderChoices() {
       rankBy: isAllowedChoice(parsed.rankBy, ["popular", "downloads", "likes"]) ? parsed.rankBy : "popular",
       keyword: typeof parsed.keyword === "string" ? parsed.keyword.slice(0, 40) : "",
       localOnly: parsed.localOnly !== false,
-      permissiveOnly: parsed.permissiveOnly === true
+      permissiveOnly: parsed.permissiveOnly === true,
+      fieldOrder: normalizeModelFinderFieldOrder(parsed.fieldOrder)
     };
   } catch {
     return {
@@ -481,9 +522,61 @@ function readStoredModelFinderChoices() {
       rankBy: "popular",
       keyword: "",
       localOnly: true,
-      permissiveOnly: false
+      permissiveOnly: false,
+      fieldOrder: MODEL_FINDER_DEFAULT_FIELD_ORDER
     };
   }
+}
+
+function getModelFinderFieldOrder() {
+  return normalizeModelFinderFieldOrder(
+    Array.from(modelFinderForm.querySelectorAll("[data-priority-field]"))
+      .map((fieldElement) => fieldElement.dataset.priorityField)
+  );
+}
+
+function normalizeModelFinderFieldOrder(order) {
+  const uniqueOrder = Array.isArray(order)
+    ? order.filter((key, index) => MODEL_FINDER_DEFAULT_FIELD_ORDER.includes(key) && order.indexOf(key) === index)
+    : [];
+
+  return [
+    ...uniqueOrder,
+    ...MODEL_FINDER_DEFAULT_FIELD_ORDER.filter((key) => !uniqueOrder.includes(key))
+  ];
+}
+
+function renderModelFinderFieldOrder(order) {
+  const normalizedOrder = normalizeModelFinderFieldOrder(order);
+  const fieldsByKey = new Map(modelFinderPriorityFieldElements.map((fieldElement) => [fieldElement.dataset.priorityField, fieldElement]));
+
+  for (const key of normalizedOrder) {
+    const fieldElement = fieldsByKey.get(key);
+
+    if (fieldElement) {
+      modelFinderForm.insertBefore(fieldElement, modelFinderChecksElement);
+    }
+  }
+
+  normalizedOrder.forEach((key, index) => {
+    const fieldElement = fieldsByKey.get(key);
+    const rankElement = fieldElement?.querySelector(".finder-priority-rank");
+    const upButton = fieldElement?.querySelector('[data-priority-action="up"]');
+    const downButton = fieldElement?.querySelector('[data-priority-action="down"]');
+
+    if (rankElement) {
+      rankElement.textContent = String(index + 1);
+      rankElement.setAttribute("aria-label", `Priority ${index + 1}`);
+    }
+
+    if (upButton) {
+      upButton.disabled = index === 0;
+    }
+
+    if (downButton) {
+      downButton.disabled = index === normalizedOrder.length - 1;
+    }
+  });
 }
 
 function isAllowedChoice(value, allowedValues) {
