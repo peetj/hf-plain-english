@@ -70,6 +70,13 @@ const termsSection = document.querySelector("#terms-section");
 const termsList = document.querySelector("#terms-list");
 const sourceSection = document.querySelector("#source-section");
 const sourceTextElement = document.querySelector("#source-text");
+const customizableSectionsContainer = document.querySelector("#customizable-sections");
+const sectionLayoutButton = document.querySelector("#section-layout-button");
+const sectionLayoutDialog = document.querySelector("#section-layout-dialog");
+const sectionLayoutForm = document.querySelector("#section-layout-form");
+const sectionLayoutOptions = document.querySelector("#section-layout-options");
+const sectionLayoutCloseButton = document.querySelector("#section-layout-close-button");
+const sectionLayoutResetButton = document.querySelector("#section-layout-reset-button");
 const tooltipLayerElement = document.querySelector("#tooltip-layer");
 const tooltipTitleElement = document.querySelector("#tooltip-title");
 const tooltipTextElement = document.querySelector("#tooltip-text");
@@ -85,9 +92,23 @@ let uiRevealTokenCounter = 0;
 let currentLearnerContext = createLearnerContext();
 let currentModelFinderRecommendation = null;
 let currentModelFinderSearchLinks = [];
+let sectionLayoutSettings = null;
+let draggingSectionId = "";
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
+const SECTION_LAYOUT_STORAGE_KEY = "hfNewbies.sectionLayout";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
 const EXAMPLE_MODEL_URL = "https://huggingface.co/Qwen/Qwen3-0.6B";
+const CUSTOMIZABLE_SECTION_CONFIG = [
+  { id: "interpretation-section", label: "How to read this model" },
+  { id: "model-card-section", label: "Model card notes" },
+  { id: "hardware-section", label: "Size and hardware" },
+  { id: "run-section", label: "How to run it" },
+  { id: "files-section", label: "Relevant files" },
+  { id: "terms-section", label: "Technical terms" },
+  { id: "facts-section", label: "Original page facts" },
+  { id: "source-section", label: "Where this came from" }
+];
+const CUSTOMIZABLE_SECTION_IDS = CUSTOMIZABLE_SECTION_CONFIG.map((section) => section.id);
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -1678,6 +1699,217 @@ function resetFetchedDetails() {
   sourceSection.hidden = true;
 }
 
+async function initSectionLayoutSettings() {
+  sectionLayoutSettings = await loadSectionLayoutSettings();
+  applySectionLayoutSettings();
+}
+
+function initSectionLayoutControls() {
+  renderSectionLayoutOptions();
+  initSectionDragHandles();
+
+  sectionLayoutButton.addEventListener("click", () => {
+    renderSectionLayoutOptions();
+
+    if (typeof sectionLayoutDialog.showModal === "function") {
+      sectionLayoutDialog.showModal();
+    } else {
+      sectionLayoutDialog.hidden = false;
+    }
+  });
+
+  sectionLayoutForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    closeSectionLayoutDialog();
+  });
+
+  sectionLayoutCloseButton.addEventListener("click", closeSectionLayoutDialog);
+
+  sectionLayoutResetButton.addEventListener("click", () => {
+    sectionLayoutSettings = createDefaultSectionLayoutSettings();
+    applySectionLayoutSettings();
+    renderSectionLayoutOptions();
+    persistSectionLayoutSettings();
+  });
+
+  sectionLayoutOptions.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-section-layout-checkbox]");
+
+    if (!checkbox) {
+      return;
+    }
+
+    const hiddenSectionIds = new Set(sectionLayoutSettings.hiddenSectionIds);
+
+    if (checkbox.checked) {
+      hiddenSectionIds.delete(checkbox.dataset.sectionId);
+    } else {
+      hiddenSectionIds.add(checkbox.dataset.sectionId);
+    }
+
+    sectionLayoutSettings = normalizeSectionLayoutSettings({
+      ...sectionLayoutSettings,
+      hiddenSectionIds: Array.from(hiddenSectionIds)
+    });
+    applySectionLayoutSettings();
+    persistSectionLayoutSettings();
+  });
+}
+
+function closeSectionLayoutDialog() {
+  if (typeof sectionLayoutDialog.close === "function" && sectionLayoutDialog.open) {
+    sectionLayoutDialog.close();
+    return;
+  }
+
+  sectionLayoutDialog.hidden = true;
+}
+
+function renderSectionLayoutOptions() {
+  const hiddenSectionIds = new Set(sectionLayoutSettings.hiddenSectionIds);
+  sectionLayoutOptions.replaceChildren();
+
+  for (const sectionId of normalizeSectionOrder(getCurrentCustomizableSectionOrder())) {
+    const config = getCustomizableSectionConfig(sectionId);
+
+    if (!config) {
+      continue;
+    }
+
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    const text = document.createElement("span");
+
+    label.className = "layout-option";
+    checkbox.type = "checkbox";
+    checkbox.checked = !hiddenSectionIds.has(sectionId);
+    checkbox.dataset.sectionLayoutCheckbox = "true";
+    checkbox.dataset.sectionId = sectionId;
+    text.textContent = config.label;
+    label.append(checkbox, text);
+    sectionLayoutOptions.append(label);
+  }
+}
+
+function applySectionLayoutSettings() {
+  const settings = sectionLayoutSettings || createDefaultSectionLayoutSettings();
+  const hiddenSectionIds = new Set(settings.hiddenSectionIds);
+
+  for (const sectionId of settings.order) {
+    const section = document.getElementById(sectionId);
+
+    if (section && customizableSectionsContainer.contains(section)) {
+      customizableSectionsContainer.append(section);
+    }
+  }
+
+  for (const sectionId of CUSTOMIZABLE_SECTION_IDS) {
+    const section = document.getElementById(sectionId);
+
+    if (!section) {
+      continue;
+    }
+
+    section.dataset.customizableSection = "true";
+    section.classList.toggle("section-user-hidden", hiddenSectionIds.has(sectionId));
+  }
+}
+
+function initSectionDragHandles() {
+  for (const sectionId of CUSTOMIZABLE_SECTION_IDS) {
+    const section = document.getElementById(sectionId);
+    const header = section?.querySelector(".section-header-row");
+
+    if (!section || !header || header.querySelector(".section-drag-handle")) {
+      continue;
+    }
+
+    const handle = document.createElement("span");
+    handle.className = "section-drag-handle";
+    handle.draggable = true;
+    handle.title = "Drag to reorder this detail section";
+    handle.setAttribute("aria-hidden", "true");
+    handle.textContent = "↕";
+    header.append(handle);
+
+    handle.addEventListener("dragstart", (event) => {
+      draggingSectionId = section.id;
+      section.classList.add("is-dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", section.id);
+    });
+
+    handle.addEventListener("dragend", cleanupSectionDragState);
+    section.addEventListener("dragover", handleSectionDragOver);
+    section.addEventListener("dragleave", () => {
+      section.classList.remove("drop-before", "drop-after");
+    });
+    section.addEventListener("drop", handleSectionDrop);
+  }
+}
+
+function handleSectionDragOver(event) {
+  const targetSection = event.currentTarget;
+
+  if (!draggingSectionId || targetSection.id === draggingSectionId || targetSection.classList.contains("section-user-hidden")) {
+    return;
+  }
+
+  event.preventDefault();
+  const rect = targetSection.getBoundingClientRect();
+  const placeAfter = event.clientY > rect.top + rect.height / 2;
+  targetSection.classList.toggle("drop-before", !placeAfter);
+  targetSection.classList.toggle("drop-after", placeAfter);
+}
+
+function handleSectionDrop(event) {
+  const targetSection = event.currentTarget;
+  const draggedSection = document.getElementById(draggingSectionId || event.dataTransfer.getData("text/plain"));
+
+  if (!draggedSection || !targetSection || draggedSection === targetSection) {
+    cleanupSectionDragState();
+    return;
+  }
+
+  event.preventDefault();
+  const placeAfter = targetSection.classList.contains("drop-after");
+  customizableSectionsContainer.insertBefore(
+    draggedSection,
+    placeAfter ? targetSection.nextSibling : targetSection
+  );
+  sectionLayoutSettings = normalizeSectionLayoutSettings({
+    ...sectionLayoutSettings,
+    order: getCurrentCustomizableSectionOrder()
+  });
+  persistSectionLayoutSettings();
+  renderSectionLayoutOptions();
+  cleanupSectionDragState();
+}
+
+function persistSectionLayoutSettings() {
+  saveSectionLayoutSettings(sectionLayoutSettings).catch((error) => {
+    console.warn("Hugging Face for Newbies could not save section layout.", error);
+  });
+}
+
+function cleanupSectionDragState() {
+  draggingSectionId = "";
+
+  for (const section of customizableSectionsContainer.querySelectorAll(".panel-section")) {
+    section.classList.remove("is-dragging", "drop-before", "drop-after");
+  }
+}
+
+function getCurrentCustomizableSectionOrder() {
+  return Array.from(customizableSectionsContainer.children)
+    .map((section) => section.id)
+    .filter((sectionId) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId));
+}
+
+function getCustomizableSectionConfig(sectionId) {
+  return CUSTOMIZABLE_SECTION_CONFIG.find((section) => section.id === sectionId) || null;
+}
+
 function initCollapsibleSections() {
   for (const section of document.querySelectorAll(".panel-section")) {
     const heading = section.querySelector("h2");
@@ -1707,6 +1939,7 @@ function initCollapsibleSections() {
     arrow.textContent = "▾";
     label.textContent = heading.textContent;
     button.append(arrow, label);
+    heading.classList.add("section-header-row");
     heading.replaceChildren(button);
     section.append(body);
     section.classList.toggle("is-collapsed", !expanded);
@@ -2115,6 +2348,66 @@ async function saveHardwareProfile(profile) {
   localStorage.setItem(HARDWARE_PROFILE_STORAGE_KEY, JSON.stringify(profile));
 }
 
+async function loadSectionLayoutSettings() {
+  if (globalThis.chrome?.storage?.local) {
+    try {
+      const result = await chrome.storage.local.get(SECTION_LAYOUT_STORAGE_KEY);
+      return normalizeSectionLayoutSettings(result?.[SECTION_LAYOUT_STORAGE_KEY]);
+    } catch (error) {
+      console.warn("Hugging Face for Newbies could not load saved section layout.", error);
+    }
+  }
+
+  try {
+    return normalizeSectionLayoutSettings(JSON.parse(localStorage.getItem(SECTION_LAYOUT_STORAGE_KEY) || "null"));
+  } catch {
+    return createDefaultSectionLayoutSettings();
+  }
+}
+
+async function saveSectionLayoutSettings(settings) {
+  const normalized = normalizeSectionLayoutSettings(settings);
+
+  if (globalThis.chrome?.storage?.local) {
+    await chrome.storage.local.set({
+      [SECTION_LAYOUT_STORAGE_KEY]: normalized
+    });
+    return;
+  }
+
+  localStorage.setItem(SECTION_LAYOUT_STORAGE_KEY, JSON.stringify(normalized));
+}
+
+function normalizeSectionLayoutSettings(settings) {
+  const source = settings && typeof settings === "object" ? settings : {};
+  const hiddenSectionIds = Array.isArray(source.hiddenSectionIds)
+    ? source.hiddenSectionIds.filter((sectionId, index, all) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId) && all.indexOf(sectionId) === index)
+    : [];
+
+  return {
+    order: normalizeSectionOrder(source.order),
+    hiddenSectionIds
+  };
+}
+
+function normalizeSectionOrder(order) {
+  const requestedOrder = Array.isArray(order)
+    ? order.filter((sectionId, index) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId) && order.indexOf(sectionId) === index)
+    : [];
+
+  return [
+    ...requestedOrder,
+    ...CUSTOMIZABLE_SECTION_IDS.filter((sectionId) => !requestedOrder.includes(sectionId))
+  ];
+}
+
+function createDefaultSectionLayoutSettings() {
+  return {
+    order: [...CUSTOMIZABLE_SECTION_IDS],
+    hiddenSectionIds: []
+  };
+}
+
 function normalizeHardwareProfile(profile, fallback = {}) {
   const source = profile && typeof profile === "object" ? profile : {};
   const fallbackSource = fallback && typeof fallback === "object" ? fallback : {};
@@ -2379,9 +2672,15 @@ if (globalThis.chrome?.tabs?.onUpdated) {
   });
 }
 
-initThemeControls();
-initTooltipEvents();
-initCollapsibleSections();
-initAskHelper();
-initModelFinder();
-refreshActiveTabStatus();
+initSidePanel();
+
+async function initSidePanel() {
+  initThemeControls();
+  initTooltipEvents();
+  await initSectionLayoutSettings();
+  initCollapsibleSections();
+  initSectionLayoutControls();
+  initAskHelper();
+  initModelFinder();
+  refreshActiveTabStatus();
+}

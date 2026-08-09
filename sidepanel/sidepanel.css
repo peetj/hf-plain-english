@@ -482,6 +482,12 @@ main {
   border-top: 2px solid rgb(245 158 47 / 28%);
 }
 
+.section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .section-toggle {
   display: flex;
   width: 100%;
@@ -503,6 +509,60 @@ main {
   color: var(--accent-strong);
 }
 
+.section-drag-handle {
+  display: inline-flex;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  cursor: grab;
+  font-size: 15px;
+  font-weight: 850;
+  user-select: none;
+}
+
+.section-drag-handle:active {
+  cursor: grabbing;
+}
+
+.panel-section.is-dragging {
+  border-color: var(--accent);
+  opacity: 0.55;
+}
+
+.panel-section.drop-before,
+.panel-section.drop-after {
+  position: relative;
+}
+
+.panel-section.drop-before::before,
+.panel-section.drop-after::after {
+  position: absolute;
+  right: 12px;
+  left: 12px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent-warm);
+  content: "";
+}
+
+.panel-section.drop-before::before {
+  top: -2px;
+}
+
+.panel-section.drop-after::after {
+  bottom: -2px;
+}
+
+.section-user-hidden {
+  display: none !important;
+}
+
 .section-arrow {
   display: inline-block;
   width: 1em;
@@ -522,6 +582,106 @@ main {
 
 .learner-answer-section {
   border-left: 5px solid var(--accent);
+}
+
+.layout-controls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.layout-title {
+  margin-bottom: 2px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.layout-subtitle {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.layout-dialog {
+  width: min(360px, calc(100vw - 28px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.layout-dialog::backdrop {
+  background: rgb(15 23 42 / 45%);
+}
+
+.layout-dialog-form {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.layout-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.layout-dialog-header h2 {
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.layout-dialog-header p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.icon-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.layout-options {
+  display: grid;
+  gap: 7px;
+}
+
+.layout-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.layout-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
 }
 
 .ask-helper-section {

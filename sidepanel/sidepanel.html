@@ -271,52 +271,62 @@
         <section id="ask-helper-answer" class="ask-helper-answer" aria-live="polite" hidden></section>
       </section>
 
-      <section id="facts-section" class="panel-section" hidden>
-        <h2>Original page facts</h2>
-        <dl id="facts-list" class="facts-list"></dl>
+      <section id="section-layout-controls" class="layout-controls" aria-labelledby="section-layout-title">
+        <div>
+          <p id="section-layout-title" class="layout-title">Detail sections</p>
+          <p class="layout-subtitle">The summary, model finder, question box, privacy, and footer stay fixed. You can reorder or hide the detail sections below.</p>
+        </div>
+        <button id="section-layout-button" class="small-button" type="button">Customise</button>
       </section>
 
-      <section id="interpretation-section" class="panel-section" hidden>
-        <h2>How to read this model</h2>
-        <dl id="interpretation-list" class="facts-list"></dl>
-        <div id="warning-list" class="warning-list"></div>
-      </section>
+      <div id="customizable-sections" class="customizable-sections">
+        <section id="facts-section" class="panel-section" hidden>
+          <h2>Original page facts</h2>
+          <dl id="facts-list" class="facts-list"></dl>
+        </section>
 
-      <section id="model-card-section" class="panel-section" hidden>
-        <h2>Model card notes</h2>
-        <p id="model-card-summary" class="model-card-summary"></p>
-        <div id="model-card-list" class="model-card-list"></div>
-        <p id="model-card-missing" class="model-card-missing"></p>
-      </section>
+        <section id="interpretation-section" class="panel-section" hidden>
+          <h2>How to read this model</h2>
+          <dl id="interpretation-list" class="facts-list"></dl>
+          <div id="warning-list" class="warning-list"></div>
+        </section>
 
-      <section id="hardware-section" class="panel-section" hidden>
-        <h2>Size and hardware</h2>
-        <p id="hardware-summary" class="hardware-summary"></p>
-        <dl id="hardware-list" class="facts-list"></dl>
-        <div id="assumptions-list" class="warning-list"></div>
-      </section>
+        <section id="model-card-section" class="panel-section" hidden>
+          <h2>Model card notes</h2>
+          <p id="model-card-summary" class="model-card-summary"></p>
+          <div id="model-card-list" class="model-card-list"></div>
+          <p id="model-card-missing" class="model-card-missing"></p>
+        </section>
 
-      <section id="run-section" class="panel-section" hidden>
-        <h2>How to run it</h2>
-        <p id="run-summary"></p>
-        <dl id="run-list" class="facts-list"></dl>
-        <div id="run-warning-list" class="warning-list"></div>
-      </section>
+        <section id="hardware-section" class="panel-section" hidden>
+          <h2>Size and hardware</h2>
+          <p id="hardware-summary" class="hardware-summary"></p>
+          <dl id="hardware-list" class="facts-list"></dl>
+          <div id="assumptions-list" class="warning-list"></div>
+        </section>
 
-      <section id="files-section" class="panel-section" hidden>
-        <h2>Relevant files</h2>
-        <div id="files-list" class="file-list"></div>
-      </section>
+        <section id="run-section" class="panel-section" hidden>
+          <h2>How to run it</h2>
+          <p id="run-summary"></p>
+          <dl id="run-list" class="facts-list"></dl>
+          <div id="run-warning-list" class="warning-list"></div>
+        </section>
 
-      <section id="terms-section" class="panel-section" hidden>
-        <h2>Technical terms</h2>
-        <div id="terms-list" class="terms-list"></div>
-      </section>
+        <section id="files-section" class="panel-section" hidden>
+          <h2>Relevant files</h2>
+          <div id="files-list" class="file-list"></div>
+        </section>
 
-      <section id="source-section" class="panel-section" hidden>
-        <h2>Where this came from</h2>
-        <p id="source-text" class="source-text"></p>
-      </section>
+        <section id="terms-section" class="panel-section" hidden>
+          <h2>Technical terms</h2>
+          <div id="terms-list" class="terms-list"></div>
+        </section>
+
+        <section id="source-section" class="panel-section" hidden>
+          <h2>Where this came from</h2>
+          <p id="source-text" class="source-text"></p>
+        </section>
+      </div>
 
       <section class="panel-section">
         <h2>Privacy and network use</h2>
@@ -325,7 +335,7 @@
           <li>When a model page is open, it sends the model address to Hugging Face's public API to fetch public metadata, file names, and the model card.</li>
           <li>Find a Model for Me searches Hugging Face using the filters you choose, then reads the suggested model's public page data and model card so the summary is grounded in the actual page.</li>
           <li>The Ask a Question helper runs locally from extension data and the current page facts. It does not contact a chatbot service in V1.</li>
-          <li>Your hardware profile and Find a Model for Me choices are stored in Chrome storage on this browser. No analytics are included.</li>
+          <li>Your hardware profile, Find a Model for Me choices, and detail-section layout are stored in Chrome storage on this browser. No analytics are included.</li>
         </ul>
       </section>
     </main>
@@ -339,6 +349,23 @@
       <p id="tooltip-title" class="tooltip-title"></p>
       <p id="tooltip-text" class="tooltip-text"></p>
     </div>
+
+    <dialog id="section-layout-dialog" class="layout-dialog" aria-labelledby="section-layout-dialog-title">
+      <form id="section-layout-form" class="layout-dialog-form" method="dialog">
+        <div class="layout-dialog-header">
+          <div>
+            <h2 id="section-layout-dialog-title">Customise detail sections</h2>
+            <p>Choose which detail sections appear. Drag section headers in the panel to change their order.</p>
+          </div>
+          <button id="section-layout-close-button" class="icon-button" type="button" aria-label="Close section customisation">×</button>
+        </div>
+        <div id="section-layout-options" class="layout-options"></div>
+        <div class="layout-dialog-actions">
+          <button id="section-layout-reset-button" class="small-button secondary-button" type="button">Reset layout</button>
+          <button class="small-button" type="submit">Done</button>
+        </div>
+      </form>
+    </dialog>
 
     <script src="sidepanel.js" type="module"></script>
   </body>
