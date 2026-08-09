@@ -243,18 +243,19 @@ h2:has(.section-toggle) {
 }
 
 .theme-select {
-  min-height: 27px;
+  min-height: 22px;
   width: fit-content;
   max-width: 132px;
-  padding: 2px 28px 2px 8px;
+  padding: 0 24px 0 6px;
   border: 1px solid var(--header-control-border);
   border-radius: 6px;
   background: var(--header-control-background);
   color: var(--header-text);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.1;
 }
 
 .theme-select:focus-visible {

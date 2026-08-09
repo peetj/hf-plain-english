@@ -64,6 +64,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Add a dark branded footer with the NexGen logo and 2026 copyright.
 - [✅] Refine the header layout: remove the side-panel document title text, rename the in-panel title to "Hugging Face Guide for You", place the theme dropdown under it, make Recheck a compact accented top-right action, and update the footer company name to Nexgen STEM School.
 - [✅] Tune the header controls: make Recheck lighter-weight with a brighter orange accent and darker border, reduce dropdown vertical padding, and remove the unsupported-page "Choose a model" header placeholder.
+- [✅] Make the header theme dropdown less prominent with a shorter height, smaller text, and minimal vertical padding.
 - [❌] Ignore.
 
 ## Current Foundation
