@@ -686,6 +686,18 @@ main {
   gap: 10px;
 }
 
+.hardware-runtime-field {
+  display: grid;
+  gap: 6px;
+}
+
+.hardware-runtime-title {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .hardware-profile-actions {
   display: flex;
   flex-wrap: wrap;

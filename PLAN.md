@@ -66,6 +66,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Tune the header controls: make Recheck lighter-weight with a brighter orange accent and darker border, reduce dropdown vertical padding, and remove the unsupported-page "Choose a model" header placeholder.
 - [✅] Make the header theme dropdown less prominent with a shorter height, smaller text, and minimal vertical padding.
 - [✅] Add explicit Ask a Question copy saying the local helper is not an AI response.
+- [✅] Add a "My preferred runtime is:" label above the saved hardware runtime checkboxes.
 - [❌] Ignore.
 
 ## Current Foundation
