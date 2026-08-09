@@ -306,7 +306,7 @@ async function loadModelFacts(modelId, refreshId) {
 }
 
 function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation, hardwareProfile) {
-  learnerAnswerHeadingElement.textContent = "Plain Summary";
+  setSectionHeadingText(learnerAnswerSection, "Plain Summary");
   renderTooltipText(answerSummaryElement, explanation.summary);
   renderDefinitionList(answerList, [
     ["What it is", buildWhatItIsAnswer(model, interpreted)],
@@ -321,7 +321,7 @@ function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendatio
 }
 
 function renderLearnerState(summary, rows) {
-  learnerAnswerHeadingElement.textContent = "Plain Summary";
+  setSectionHeadingText(learnerAnswerSection, "Plain Summary");
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
   setSectionExpandedState(learnerAnswerSection, true, { persist: false });
@@ -1958,6 +1958,7 @@ function initCollapsibleSections() {
     arrow.className = "section-arrow";
     arrow.setAttribute("aria-hidden", "true");
     arrow.textContent = "▾";
+    label.className = "section-label";
     label.textContent = heading.textContent;
     button.append(arrow, label);
     heading.classList.add("section-header-row");
@@ -1970,6 +1971,21 @@ function initCollapsibleSections() {
       const expanded = button.getAttribute("aria-expanded") === "true";
       setSectionExpandedState(section, !expanded, { persist: true });
     });
+  }
+}
+
+function setSectionHeadingText(section, text) {
+  const label = section?.querySelector(".section-label");
+
+  if (label) {
+    label.textContent = text;
+    return;
+  }
+
+  const heading = section?.querySelector("h2");
+
+  if (heading) {
+    heading.textContent = text;
   }
 }
 
