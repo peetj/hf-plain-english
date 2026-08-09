@@ -67,6 +67,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Make the header theme dropdown less prominent with a shorter height, smaller text, and minimal vertical padding.
 - [✅] Add explicit Ask a Question copy saying the local helper is not an AI response.
 - [✅] Add a "My preferred runtime is:" label above the saved hardware runtime checkboxes.
+- [✅] Rename Model Match search links to "Filtered Search" and "Browse Small Local Models", add custom tooltips, and show a current-model return cue so search links feel safe to open.
 - [❌] Ignore.
 
 ## Current Foundation

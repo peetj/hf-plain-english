@@ -989,6 +989,18 @@ main {
   margin-top: 12px;
 }
 
+.finder-navigation-note {
+  flex: 0 0 100%;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.finder-navigation-note a {
+  color: var(--accent-strong);
+  font-weight: 750;
+}
+
 .finder-link {
   display: inline-flex;
   min-height: 30px;
@@ -998,6 +1010,7 @@ main {
   border-radius: 6px;
   background: var(--button-background);
   color: var(--accent-strong);
+  cursor: pointer;
   font-size: 12px;
   font-weight: 800;
   text-decoration: none;

@@ -453,5 +453,19 @@
     "title": "API",
     "text": "A way for software to request data from another service. This extension uses the public Hugging Face API for model metadata.",
     "category": "hugging-face"
+  },
+  {
+    "id": "filtered-search-link",
+    "terms": ["Filtered Search"],
+    "title": "Filtered Search",
+    "text": "Opens Hugging Face model search in a new tab using the goal and filters selected here. Use it when you want to browse beyond the suggested starting candidate.",
+    "category": "model-match"
+  },
+  {
+    "id": "small-local-models-link",
+    "terms": ["Browse Small Local Models"],
+    "title": "Browse Small Local Models",
+    "text": "Opens a narrower Hugging Face search in a new tab for smaller or compressed model variants that are more likely to suit local beginner tools.",
+    "category": "model-match"
   }
 ]

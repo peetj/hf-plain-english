@@ -10,7 +10,6 @@ const GOAL_CONFIG = {
       pipelineTag: "text-generation"
     },
     apiFilters: ["gguf", "text-generation"],
-    secondaryLabel: "Q4_K_M variants",
     secondarySearch: "Q4_K_M",
     candidateSearch: "Q4_K_M",
     avoid: "Avoid base-only models, FP16/BF16 weights, and 13B+ models unless you expect slow RAM offloading."
@@ -27,7 +26,6 @@ const GOAL_CONFIG = {
       search: "code"
     },
     apiFilters: ["gguf", "text-generation"],
-    secondaryLabel: "Coder variants",
     secondarySearch: "coder",
     candidateSearch: "coder",
     avoid: "Avoid large FP16 coding models and repositories without a chat or instruct variant."
@@ -43,7 +41,6 @@ const GOAL_CONFIG = {
       pipelineTag: "feature-extraction"
     },
     apiFilters: ["sentence-transformers", "feature-extraction"],
-    secondaryLabel: "Embedding name search",
     secondarySearch: "embedding",
     candidateSearch: "embedding",
     avoid: "Avoid chat models; embeddings are for search, matching, retrieval, or clustering."
@@ -59,7 +56,6 @@ const GOAL_CONFIG = {
       pipelineTag: "text-to-image"
     },
     apiFilters: ["diffusers", "text-to-image"],
-    secondaryLabel: "Fast image variants",
     secondarySearch: "turbo",
     candidateSearch: "turbo",
     avoid: "Avoid large diffusion checkpoints until the extension can estimate image-model memory more precisely."
@@ -507,11 +503,13 @@ function getSelectedLibraryFilter(format) {
 function buildSearchLinks(goal, choices) {
   return [
     {
-      label: `${goal.label} filtered search`,
+      label: "Filtered Search",
+      tooltipId: "filtered-search-link",
       url: buildHuggingFaceModelsUrl(goal.filters, choices)
     },
     {
-      label: goal.secondaryLabel,
+      label: "Browse Small Local Models",
+      tooltipId: "small-local-models-link",
       url: buildHuggingFaceModelsUrl({
         ...goal.filters,
         search: goal.secondarySearch

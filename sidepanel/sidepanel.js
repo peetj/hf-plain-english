@@ -81,6 +81,7 @@ let refreshActiveTabStatusTimeout = 0;
 let uiRevealTokenCounter = 0;
 let currentLearnerContext = createLearnerContext();
 let currentModelFinderRecommendation = null;
+let currentModelFinderSearchLinks = [];
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
 const EXAMPLE_MODEL_URL = "https://huggingface.co/Qwen/Qwen3-0.6B";
@@ -268,6 +269,7 @@ async function loadModelFacts(modelId, refreshId) {
     hardwareProfile,
     glossary
   });
+  renderModelFinderLinks(currentModelFinderSearchLinks);
 
   const warningText = result.warnings.length > 0
     ? ` Partial information: ${result.warnings.map((warning) => warning.message).join(" ")}`
@@ -501,6 +503,7 @@ async function renderModelFinder(hardwareProfile) {
   activeModelFinderRequestId = requestId;
   const choices = getModelFinderChoices();
   const finder = buildModelFitFinder(hardwareProfile, choices);
+  currentModelFinderSearchLinks = finder.searchLinks;
   renderModelFinderSummary(finder);
   renderDefinitionList(modelFinderList, finder.rows);
   renderModelFinderLinks(finder.searchLinks);
@@ -539,6 +542,11 @@ function renderModelFinderSummary(finder) {
 
 function renderModelFinderLinks(links) {
   modelFinderLinks.replaceChildren();
+  const returnNote = createCurrentModelReturnNote();
+
+  if (returnNote) {
+    modelFinderLinks.append(returnNote);
+  }
 
   for (const link of links) {
     const anchor = document.createElement("a");
@@ -547,8 +555,36 @@ function renderModelFinderLinks(links) {
     anchor.target = "_blank";
     anchor.rel = "noreferrer";
     anchor.textContent = link.label;
+
+    if (link.tooltipId) {
+      anchor.classList.add("tooltip-term");
+      anchor.dataset.tooltipId = link.tooltipId;
+      anchor.setAttribute("aria-describedby", "tooltip-layer");
+    }
+
     modelFinderLinks.append(anchor);
   }
+}
+
+function createCurrentModelReturnNote() {
+  const modelId = currentLearnerContext?.modelId;
+
+  if (!modelId) {
+    const note = document.createElement("p");
+    note.className = "finder-navigation-note";
+    note.textContent = "Search opens in a new tab, so this guide stays where it is.";
+    return note;
+  }
+
+  const note = document.createElement("p");
+  const anchor = document.createElement("a");
+  note.className = "finder-navigation-note";
+  anchor.href = `https://huggingface.co/${modelId}`;
+  anchor.target = "_blank";
+  anchor.rel = "noreferrer";
+  anchor.textContent = String(modelId).split("/").pop() || modelId;
+  note.append("Search opens in a new tab. Current model: ", anchor);
+  return note;
 }
 
 function getModelFinderChoices() {
