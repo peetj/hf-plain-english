@@ -410,8 +410,14 @@ h2:has(.section-toggle) {
 main {
   display: grid;
   gap: 12px;
+  align-content: start;
   flex: 1 0 auto;
+  grid-auto-rows: max-content;
   padding: 14px;
+}
+
+main > * {
+  align-self: start;
 }
 
 .status-card,

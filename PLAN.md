@@ -74,6 +74,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Start collapsible sections closed by default, save the user's last open/closed section state, and reduce the detail customisation control to a compact utility row.
 - [✅] Remove the Details banner, use a compact theme-coloured cog for section customisation, pin the footer on short screens, and update the footer copyright notice.
 - [✅] Hide the side panel on non-Hugging Face pages while keeping helpful guidance for Hugging Face pages that are not model pages.
+- [✅] Fix footer pinning so main content keeps its normal compact spacing instead of stretching cards and suggestion tags.
 - [❌] Ignore.
 
 ## Current Foundation
