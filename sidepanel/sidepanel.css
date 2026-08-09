@@ -1131,6 +1131,54 @@ main {
   color: var(--text);
 }
 
+.model-card-summary,
+.model-card-missing {
+  color: var(--muted);
+}
+
+.model-card-list {
+  display: grid;
+  gap: 9px;
+  margin: 10px 0;
+}
+
+.model-card-note {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--surface-muted);
+}
+
+.model-card-note h3,
+.model-card-note p,
+.model-card-note ul {
+  margin: 0;
+}
+
+.model-card-note h3 {
+  color: var(--accent-strong);
+  font-size: 13px;
+}
+
+.model-card-note-explanation,
+.model-card-note-source,
+.model-card-missing {
+  font-size: 12px;
+}
+
+.model-card-note-source {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.model-card-note ul {
+  display: grid;
+  gap: 5px;
+  padding-left: 18px;
+}
+
 .hardware-summary {
   margin-bottom: 12px;
 }

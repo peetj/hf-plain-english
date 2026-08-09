@@ -1,3 +1,5 @@
+import { parseModelCardInsights } from "./model-card-parser.js";
+
 const FORMAT_RULES = [
   {
     id: "gguf",
@@ -74,6 +76,7 @@ const QUANTISATION_PATTERNS = [
  *   formats: Array<object>,
  *   quantisations: Array<object>,
  *   relevantFiles: Array<object>,
+ *   modelCardInsights: object,
  *   glossaryTermIds: Array<string>,
  *   facts: Array<object>,
  *   estimates: Array<object>,
@@ -94,6 +97,7 @@ export function parseModelFacts(model) {
   const modelKind = detectModelKind(safeModel, tags, modelCardMarkdown);
   const primaryTask = detectPrimaryTask(safeModel, tags);
   const contextLength = detectContextLength(rawMetadata, modelCardMarkdown);
+  const modelCardInsights = parseModelCardInsights(modelCardMarkdown);
   const architecture = createKnownFact(safeModel.architecture, "metadata", "high");
   const languages = createKnownFact(safeModel.languages || [], "metadata", safeModel.languages?.length ? "high" : "low");
   const licence = createKnownFact(safeModel.license, "metadata", safeModel.license ? "high" : "low");
@@ -119,6 +123,7 @@ export function parseModelFacts(model) {
     architecture,
     licence,
     contextLength,
+    modelCardInsights,
     formats,
     quantisations,
     relevantFiles,

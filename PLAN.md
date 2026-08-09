@@ -68,6 +68,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Add explicit Ask a Question copy saying the local helper is not an AI response.
 - [✅] Add a "My preferred runtime is:" label above the saved hardware runtime checkboxes.
 - [✅] Rename Model Match search links to "Filtered Search" and "Browse Small Local Models", add custom tooltips, and show a current-model return cue so search links feel safe to open.
+- [✅] Lock in the Phase 2 completion order: 2.5 safe model-card parsing first, then richer suggested-candidate data, focused model type detection, missing glossary concepts, and multi-candidate comparison.
 - [❌] Ignore.
 
 ## Current Foundation
@@ -223,21 +224,21 @@ Acceptance criteria:
 - [❌] Fetch the suggested candidate's full Hugging Face metadata and model card for a richer page-aware summary.
 - [✅] Persist editable hardware settings in Chrome storage.
 
-### ❌ 2.5 Parse Model Card Content Safely
+### ✅ 2.5 Parse Model Card Content Safely
 
-- [❌] Extract intended use from README/model card markdown.
-- [❌] Extract limitations from README/model card markdown.
-- [❌] Extract licence notes from README/model card markdown.
-- [❌] Extract hardware or inference examples from README/model card markdown.
-- [❌] Extract training data notes from README/model card markdown.
-- [❌] Extract safety warnings from README/model card markdown.
-- [❌] Keep extraction conservative and source-aware.
-- [❌] Avoid hallucinating missing details.
+- [✅] Extract intended use from README/model card markdown.
+- [✅] Extract limitations from README/model card markdown.
+- [✅] Extract licence notes from README/model card markdown.
+- [✅] Extract hardware or inference examples from README/model card markdown.
+- [✅] Extract training data notes from README/model card markdown.
+- [✅] Extract safety warnings from README/model card markdown.
+- [✅] Keep extraction conservative and source-aware.
+- [✅] Avoid hallucinating missing details.
 
 Acceptance criteria:
 
-- [❌] Model card statements are summarized only when present.
-- [❌] Missing sections are reported as missing, not guessed.
+- [✅] Model card statements are summarized only when present.
+- [✅] Missing sections are reported as missing, not guessed.
 
 ## Phase 3: Running Guidance
 

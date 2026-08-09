@@ -53,6 +53,10 @@ const factsList = document.querySelector("#facts-list");
 const interpretationSection = document.querySelector("#interpretation-section");
 const interpretationList = document.querySelector("#interpretation-list");
 const warningList = document.querySelector("#warning-list");
+const modelCardSection = document.querySelector("#model-card-section");
+const modelCardSummaryElement = document.querySelector("#model-card-summary");
+const modelCardListElement = document.querySelector("#model-card-list");
+const modelCardMissingElement = document.querySelector("#model-card-missing");
 const hardwareSection = document.querySelector("#hardware-section");
 const hardwareSummaryElement = document.querySelector("#hardware-summary");
 const hardwareList = document.querySelector("#hardware-list");
@@ -254,6 +258,7 @@ async function loadModelFacts(modelId, refreshId) {
     ["Last modified", data.lastModified]
   ]);
   renderInterpretation(interpreted, result.warnings);
+  renderModelCardInsights(interpreted.modelCardInsights);
   renderHardwareEstimate(hardwareEstimate, hardwareProfile);
   renderRunRecommendation(recommendation, explanation);
   renderRelevantFiles(interpreted.relevantFiles);
@@ -1183,6 +1188,46 @@ function isRunRouteWarning(warning) {
   return /No GGUF file was detected/i.test(warning);
 }
 
+function renderModelCardInsights(insights) {
+  modelCardSummaryElement.textContent = "";
+  modelCardListElement.replaceChildren();
+  modelCardMissingElement.textContent = "";
+
+  if (!insights || !Array.isArray(insights.sections)) {
+    modelCardSection.hidden = true;
+    return;
+  }
+
+  renderTooltipText(modelCardSummaryElement, insights.summary);
+
+  for (const section of insights.sections.filter((item) => item.status === "found" && item.points.length > 0)) {
+    const article = document.createElement("article");
+    const heading = document.createElement("h3");
+    const explanation = document.createElement("p");
+    const source = document.createElement("p");
+    const list = document.createElement("ul");
+
+    article.className = "model-card-note";
+    heading.textContent = section.label;
+    explanation.className = "model-card-note-explanation";
+    explanation.textContent = section.explanation;
+    source.className = "model-card-note-source";
+    source.textContent = `Found under: ${section.sourceHeading}`;
+
+    for (const point of section.points) {
+      const item = document.createElement("li");
+      renderTooltipText(item, point);
+      list.append(item);
+    }
+
+    article.append(heading, explanation, source, list);
+    modelCardListElement.append(article);
+  }
+
+  modelCardMissingElement.textContent = insights.missingSummary;
+  modelCardSection.hidden = false;
+}
+
 function formatApiWarning(warning) {
   switch (warning?.type) {
     case "missing-model-card":
@@ -1403,6 +1448,10 @@ function resetFetchedDetails() {
   interpretationList.replaceChildren();
   warningList.replaceChildren();
   interpretationSection.hidden = true;
+  modelCardSummaryElement.textContent = "";
+  modelCardListElement.replaceChildren();
+  modelCardMissingElement.textContent = "";
+  modelCardSection.hidden = true;
   hardwareSummaryElement.textContent = "";
   hardwareList.replaceChildren();
   assumptionsList.replaceChildren();
