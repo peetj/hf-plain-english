@@ -69,6 +69,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Add a "My preferred runtime is:" label above the saved hardware runtime checkboxes.
 - [✅] Rename Model Match search links to "Filtered Search" and "Browse Small Local Models", add custom tooltips, and show a current-model return cue so search links feel safe to open.
 - [✅] Lock in the Phase 2 completion order: 2.5 safe model-card parsing first, then richer suggested-candidate data, focused model type detection, missing glossary concepts, and multi-candidate comparison.
+- [✅] Consolidate the first screen order so the learner reads a single Plain English Summary first, followed by Find a Model for Me and Ask a Question. Drag/drop section customisation is intentionally deferred.
 - [❌] Ignore.
 
 ## Current Foundation

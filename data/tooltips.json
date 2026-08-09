@@ -274,8 +274,8 @@
   },
   {
     "id": "model-match",
-    "terms": ["Model match"],
-    "title": "Model match",
+    "terms": ["Find a Model for Me", "Model match"],
+    "title": "Find a Model for Me",
     "text": "A guided search helper that turns your goal, hardware profile, and preferences into a safer starting point on Hugging Face.",
     "category": "hugging-face"
   },
@@ -297,7 +297,7 @@
     "id": "search-priority",
     "terms": ["Search priority"],
     "title": "Search priority",
-    "text": "Fields higher in Model Match matter more when the extension chooses between candidate models. Use the arrows to move a field higher or lower.",
+    "text": "Fields higher in Find a Model for Me matter more when the extension chooses between candidate models. Use the arrows to move a field higher or lower.",
     "category": "hugging-face"
   },
   {

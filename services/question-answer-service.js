@@ -181,7 +181,7 @@ function answerHardwareQuestion(normalizedQuestion, context) {
     return {
       status: "partial",
       title: "Hardware fit",
-      answer: "I do not have a current model-page hardware estimate yet. Use the saved hardware box in Model Match, then open a specific Hugging Face model page.",
+      answer: "I do not have a current model-page hardware estimate yet. Use the saved hardware box in Find a Model for Me, then open a specific Hugging Face model page.",
       sourceLabel: "Hardware profile",
       followUps: ["What is VRAM?", "What does Q4_K_M mean?"]
     };

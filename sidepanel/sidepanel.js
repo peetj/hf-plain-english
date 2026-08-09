@@ -46,7 +46,6 @@ const learnerAnswerSection = document.querySelector("#learner-answer-section");
 const learnerAnswerHeadingElement = document.querySelector("#learner-answer-heading");
 const answerSummaryElement = document.querySelector("#answer-summary");
 const answerList = document.querySelector("#answer-list");
-const overviewTextElement = document.querySelector("#overview-text");
 const refreshButton = document.querySelector("#refresh-button");
 const factsSection = document.querySelector("#facts-section");
 const factsList = document.querySelector("#facts-list");
@@ -155,7 +154,6 @@ async function refreshActiveTabStatus() {
       });
       renderModelIdentity(parsedUrl.modelId);
       setStatus("Loading model facts", `Resolved model ID: ${parsedUrl.modelId}. Fetching public Hugging Face metadata.`);
-      renderTooltipText(overviewTextElement, "This is a supported public Hugging Face model-page URL.");
       await loadModelFacts(parsedUrl.modelId, refreshId);
       return;
     }
@@ -169,10 +167,6 @@ async function refreshActiveTabStatus() {
       resetModelIdentity("");
       setStatus("Open a specific model", createUnsupportedStatusMessage(parsedUrl.reason));
       renderUnsupportedHuggingFaceState(parsedUrl.reason);
-      renderTooltipText(
-        overviewTextElement,
-        getUnsupportedOverview(parsedUrl.reason)
-      );
       return;
     }
 
@@ -187,10 +181,6 @@ async function refreshActiveTabStatus() {
       ["What happened", "This browser tab is not a public Hugging Face model page."],
       ["Next step", "Open a model page on huggingface.co, then use Recheck if this panel does not update automatically."]
     ]);
-    renderTooltipText(
-      overviewTextElement,
-      "Open a public Hugging Face model page, then use Recheck if this panel does not update automatically."
-    );
   } catch (error) {
     currentLearnerContext = createLearnerContext({
       pageState: "tab-error",
@@ -290,12 +280,10 @@ async function loadModelFacts(modelId, refreshId) {
       `Estimated against your saved hardware profile: ${formatHardwareProfile(hardwareProfile)}.`
     );
   }
-
-  renderTooltipText(overviewTextElement, explanation.overview);
 }
 
 function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation, hardwareProfile) {
-  learnerAnswerHeadingElement.textContent = "Model at a glance";
+  learnerAnswerHeadingElement.textContent = "Plain English Summary";
   renderTooltipText(answerSummaryElement, explanation.summary);
   renderDefinitionList(answerList, [
     ["What it is", buildWhatItIsAnswer(model, interpreted)],
@@ -309,7 +297,7 @@ function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendatio
 }
 
 function renderLearnerState(summary, rows) {
-  learnerAnswerHeadingElement.textContent = "Current page";
+  learnerAnswerHeadingElement.textContent = "Plain English Summary";
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
   revealUpdatedElement(learnerAnswerSection);
@@ -841,7 +829,7 @@ function buildEnrichedCandidateSummary(model, interpreted, hardwareEstimate, api
 }
 
 function buildEnrichedCandidateJustification(recommendation, model, interpreted, choices, finder) {
-  const parts = ["Why suggested: it matched the current Model Match search and the extension then checked its public model page."];
+  const parts = ["Why suggested: it matched the current Find a Model for Me search and the extension then checked its public model page."];
 
   if (choices.rankBy === "downloads") {
     parts.push("Downloads had the strongest influence because Rank by is set to Most downloads.");
@@ -1314,7 +1302,6 @@ function showFetchError(result) {
         ["What happened", "The model ID may be wrong, deleted, renamed, or not public."],
         ["Next step", "Check the page address and try opening the main model page again."]
       ]);
-      renderTooltipText(overviewTextElement, "Hugging Face did not return public metadata for this model ID.");
       break;
     case "rate-limited":
       setStatus("Rate limited", result.error.message);
@@ -1322,12 +1309,6 @@ function showFetchError(result) {
         ["What happened", "The public API returned a rate-limit response."],
         ["Next step", result.error.retryAfter ? `Wait until ${result.error.retryAfter}, then use Recheck.` : "Wait a few minutes, then use Recheck."]
       ]);
-      renderTooltipText(
-        overviewTextElement,
-        result.error.retryAfter
-          ? `Try again after ${result.error.retryAfter}.`
-          : "Try again later. The extension did not make any further requests."
-      );
       break;
     case "gated-or-private":
       setStatus("Gated or private model", result.error.message);
@@ -1335,7 +1316,6 @@ function showFetchError(result) {
         ["What happened", "The model appears gated, private, or unavailable through public access."],
         ["Next step", "Open the original model page, sign in if needed, and check whether you must accept access terms."]
       ]);
-      renderTooltipText(overviewTextElement, "The model may require a Hugging Face account or accepted access terms.");
       break;
     case "invalid-response":
       setStatus("Unexpected API response", result.error.message);
@@ -1343,7 +1323,6 @@ function showFetchError(result) {
         ["What happened", "The API response was missing or not in the expected format."],
         ["Next step", "Use Recheck. If it keeps happening, use the original model page directly."]
       ]);
-      renderTooltipText(overviewTextElement, "The extension could not safely read the Hugging Face API response.");
       break;
     default:
       setStatus("Network error", result.error.message);
@@ -1351,7 +1330,6 @@ function showFetchError(result) {
         ["What happened", "The network request failed before public model data could be loaded."],
         ["Next step", "Check your connection, then use Recheck."]
       ]);
-      renderTooltipText(overviewTextElement, "Check the network connection and use Recheck.");
   }
 }
 
