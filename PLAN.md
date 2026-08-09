@@ -75,6 +75,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Remove the Details banner, use a compact theme-coloured cog for section customisation, pin the footer on short screens, and update the footer copyright notice.
 - [✅] Hide the side panel on non-Hugging Face pages while keeping helpful guidance for Hugging Face pages that are not model pages.
 - [✅] Fix footer pinning so main content keeps its normal compact spacing instead of stretching cards and suggestion tags.
+- [✅] Make non-Hugging Face navigation close reliably by using the new navigation URL, removing the global side-panel default, and explicitly closing the tab panel when supported.
 - [❌] Ignore.
 
 ## Current Foundation

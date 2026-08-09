@@ -38,9 +38,6 @@
       ]
     }
   ],
-  "side_panel": {
-    "default_path": "sidepanel/sidepanel.html"
-  },
   "icons": {
     "16": "assets/icons/icon-16.png",
     "32": "assets/icons/icon-32.png",

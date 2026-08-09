@@ -2,6 +2,19 @@ import { parseHuggingFaceModelUrl } from "./services/huggingface-url-parser.js";
 
 const SIDE_PANEL_PATH = "sidepanel/sidepanel.html";
 
+async function closeSidePanelForTab(tabId) {
+  if (typeof tabId !== "number" || typeof chrome.sidePanel.close !== "function") {
+    return;
+  }
+
+  try {
+    await chrome.sidePanel.close({ tabId });
+  } catch {
+    // Older Chrome versions may not support closing tab-specific panels reliably.
+    // Disabling the panel remains the compatibility path.
+  }
+}
+
 async function setSidePanelForTab(tabId, url) {
   if (typeof tabId !== "number") {
     return null;
@@ -14,6 +27,8 @@ async function setSidePanelForTab(tabId, url) {
       tabId,
       enabled: false
     });
+
+    await closeSidePanelForTab(tabId);
 
     await chrome.action.setTitle({
       tabId,
@@ -90,7 +105,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     return;
   }
 
-  setSidePanelForTab(tabId, tab.url || changeInfo.url).catch((error) => {
+  setSidePanelForTab(tabId, changeInfo.url || tab.url).catch((error) => {
     console.warn("Unable to update Hugging Face for Newbies side panel state.", error);
   });
 });
