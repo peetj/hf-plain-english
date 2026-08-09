@@ -109,6 +109,8 @@ const CUSTOMIZABLE_SECTION_CONFIG = [
   { id: "source-section", label: "Where this came from" }
 ];
 const CUSTOMIZABLE_SECTION_IDS = CUSTOMIZABLE_SECTION_CONFIG.map((section) => section.id);
+const FIXED_COLLAPSIBLE_SECTION_IDS = ["learner-answer-section", "model-finder-section", "privacy-section"];
+const COLLAPSIBLE_SECTION_IDS = [...FIXED_COLLAPSIBLE_SECTION_IDS, ...CUSTOMIZABLE_SECTION_IDS];
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -1728,6 +1730,7 @@ function initSectionLayoutControls() {
   sectionLayoutResetButton.addEventListener("click", () => {
     sectionLayoutSettings = createDefaultSectionLayoutSettings();
     applySectionLayoutSettings();
+    applyExpandedSectionLayout();
     renderSectionLayoutOptions();
     persistSectionLayoutSettings();
   });
@@ -1812,6 +1815,18 @@ function applySectionLayoutSettings() {
 
     section.dataset.customizableSection = "true";
     section.classList.toggle("section-user-hidden", hiddenSectionIds.has(sectionId));
+  }
+}
+
+function applyExpandedSectionLayout() {
+  const expandedSectionIds = new Set(sectionLayoutSettings?.expandedSectionIds || []);
+
+  for (const sectionId of COLLAPSIBLE_SECTION_IDS) {
+    const section = document.getElementById(sectionId);
+
+    if (section) {
+      setSectionExpandedState(section, expandedSectionIds.has(sectionId), { persist: false });
+    }
   }
 }
 
@@ -1947,15 +1962,44 @@ function initCollapsibleSections() {
 
     button.addEventListener("click", () => {
       const expanded = button.getAttribute("aria-expanded") === "true";
-      button.setAttribute("aria-expanded", String(!expanded));
-      section.classList.toggle("is-collapsed", expanded);
-      body.hidden = expanded;
+      setSectionExpandedState(section, !expanded, { persist: true });
     });
   }
 }
 
 function isSectionInitiallyExpanded(section) {
-  return section.id === "model-finder-section" || section.id === "learner-answer-section" || section.id === "terms-section";
+  return sectionLayoutSettings?.expandedSectionIds?.includes(section.id) === true;
+}
+
+function setSectionExpandedState(section, expanded, options = {}) {
+  const button = section.querySelector(".section-toggle");
+  const body = section.querySelector(".section-body");
+
+  if (!button || !body) {
+    return;
+  }
+
+  button.setAttribute("aria-expanded", String(expanded));
+  section.classList.toggle("is-collapsed", !expanded);
+  body.hidden = !expanded;
+
+  if (options.persist && COLLAPSIBLE_SECTION_IDS.includes(section.id)) {
+    saveCurrentExpandedSections();
+  }
+}
+
+function saveCurrentExpandedSections() {
+  const expandedSectionIds = COLLAPSIBLE_SECTION_IDS.filter((sectionId) => {
+    const section = document.getElementById(sectionId);
+    const button = section?.querySelector(".section-toggle");
+    return button?.getAttribute("aria-expanded") === "true";
+  });
+
+  sectionLayoutSettings = normalizeSectionLayoutSettings({
+    ...sectionLayoutSettings,
+    expandedSectionIds
+  });
+  persistSectionLayoutSettings();
 }
 
 function initThemeControls() {
@@ -2383,10 +2427,14 @@ function normalizeSectionLayoutSettings(settings) {
   const hiddenSectionIds = Array.isArray(source.hiddenSectionIds)
     ? source.hiddenSectionIds.filter((sectionId, index, all) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId) && all.indexOf(sectionId) === index)
     : [];
+  const expandedSectionIds = Array.isArray(source.expandedSectionIds)
+    ? source.expandedSectionIds.filter((sectionId, index, all) => COLLAPSIBLE_SECTION_IDS.includes(sectionId) && all.indexOf(sectionId) === index)
+    : [];
 
   return {
     order: normalizeSectionOrder(source.order),
-    hiddenSectionIds
+    hiddenSectionIds,
+    expandedSectionIds
   };
 }
 
@@ -2404,7 +2452,8 @@ function normalizeSectionOrder(order) {
 function createDefaultSectionLayoutSettings() {
   return {
     order: [...CUSTOMIZABLE_SECTION_IDS],
-    hiddenSectionIds: []
+    hiddenSectionIds: [],
+    expandedSectionIds: []
   };
 }
 

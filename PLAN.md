@@ -71,6 +71,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Lock in the Phase 2 completion order: 2.5 safe model-card parsing first, then richer suggested-candidate data, focused model type detection, missing glossary concepts, and multi-candidate comparison.
 - [✅] Consolidate the first screen order so the learner reads a single Plain English Summary first, followed by Find a Model for Me and Ask a Question. Drag/drop section customisation is intentionally deferred.
 - [✅] Add detail-section customisation: fixed summary/finder/question/privacy sections, drag/drop ordering for detail sections, a checkbox dialog for show/hide, reset layout, and automatic local saving.
+- [✅] Start collapsible sections closed by default, save the user's last open/closed section state, and reduce the detail customisation control to a compact utility row.
 - [❌] Ignore.
 
 ## Current Foundation
