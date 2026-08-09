@@ -23,9 +23,14 @@
         </div>
         <p id="model-owner" class="model-owner" hidden></p>
       </div>
-      <button id="refresh-button" class="header-recheck-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
-        Recheck
-      </button>
+      <div class="app-header-actions">
+        <button id="section-layout-button" class="section-layout-icon-button tooltip-term" type="button" aria-label="Customise detail sections" aria-describedby="tooltip-layer" data-tooltip-id="detail-sections">
+          <span aria-hidden="true">⚙</span>
+        </button>
+        <button id="refresh-button" class="header-recheck-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
+          Recheck
+        </button>
+      </div>
     </header>
 
     <main>
@@ -270,12 +275,6 @@
         </div>
         <section id="ask-helper-answer" class="ask-helper-answer" aria-live="polite" hidden></section>
       </section>
-
-      <div class="section-layout-action">
-        <button id="section-layout-button" class="section-layout-icon-button tooltip-term" type="button" aria-label="Customise detail sections" aria-describedby="tooltip-layer" data-tooltip-id="detail-sections">
-          <span aria-hidden="true">⚙</span>
-        </button>
-      </div>
 
       <div id="customizable-sections" class="customizable-sections">
         <section id="facts-section" class="panel-section" hidden>

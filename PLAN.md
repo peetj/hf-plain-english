@@ -79,6 +79,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Rename "Plain English Summary" to "Plain Summary" and force the top summary section open whenever model guidance is rendered.
 - [✅] Make the privacy section always open and non-expandable, and correct the footer copyright to Nexgen STEM School.
 - [✅] Fix the Plain Summary empty-body bug by preserving the collapsible heading structure when renaming the summary heading.
+- [✅] Move the detail-section settings cog into the header and remove its separate main-content row to reclaim vertical space.
 - [❌] Ignore.
 
 ## Current Foundation
