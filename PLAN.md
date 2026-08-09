@@ -72,6 +72,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Consolidate the first screen order so the learner reads a single Plain English Summary first, followed by Find a Model for Me and Ask a Question. Drag/drop section customisation is intentionally deferred.
 - [✅] Add detail-section customisation: fixed summary/finder/question/privacy sections, drag/drop ordering for detail sections, a checkbox dialog for show/hide, reset layout, and automatic local saving.
 - [✅] Start collapsible sections closed by default, save the user's last open/closed section state, and reduce the detail customisation control to a compact utility row.
+- [✅] Remove the Details banner, use a compact theme-coloured cog for section customisation, pin the footer on short screens, and update the footer copyright notice.
 - [❌] Ignore.
 
 ## Current Foundation

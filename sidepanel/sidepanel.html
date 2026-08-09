@@ -271,10 +271,11 @@
         <section id="ask-helper-answer" class="ask-helper-answer" aria-live="polite" hidden></section>
       </section>
 
-      <section id="section-layout-controls" class="layout-controls" aria-labelledby="section-layout-title">
-        <p id="section-layout-title" class="layout-title">Details</p>
-        <button id="section-layout-button" class="small-button secondary-button" type="button" title="Show, hide, or reorder detail sections">Customise</button>
-      </section>
+      <div class="section-layout-action">
+        <button id="section-layout-button" class="section-layout-icon-button tooltip-term" type="button" aria-label="Customise detail sections" aria-describedby="tooltip-layer" data-tooltip-id="detail-sections">
+          <span aria-hidden="true">⚙</span>
+        </button>
+      </div>
 
       <div id="customizable-sections" class="customizable-sections">
         <section id="facts-section" class="panel-section" hidden>
@@ -339,7 +340,7 @@
 
     <footer class="app-footer">
       <img class="footer-logo" src="../assets/images/nexgen_logo_round_simple_2026.png" alt="NexGen logo">
-      <p>&copy; 2026 Nexgen STEM School</p>
+      <p>&copy; 2026 Company Name. All rights reserved</p>
     </footer>
 
     <div id="tooltip-layer" class="tooltip-layer" role="tooltip" hidden>

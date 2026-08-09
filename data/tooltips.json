@@ -1,5 +1,12 @@
 [
   {
+    "id": "detail-sections",
+    "terms": ["detail sections"],
+    "title": "Detail sections",
+    "text": "Choose which deeper explanation sections appear below the main summary. You can hide sections you do not need or reorder them for the way you read.",
+    "category": "interface"
+  },
+  {
     "id": "owner-model",
     "terms": ["owner/model", "model ID"],
     "title": "Owner/model",
