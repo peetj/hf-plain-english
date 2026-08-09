@@ -3,20 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hugging Face for Newbies</title>
+    <title></title>
     <link rel="stylesheet" href="sidepanel.css">
   </head>
   <body>
     <header class="app-header">
       <div class="app-header-main">
-        <h1>AI model guide</h1>
-        <div class="model-heading">
-          <p id="active-url" class="model-id">Checking active tab...</p>
-        </div>
-        <p id="model-owner" class="model-owner" hidden></p>
-      </div>
-      <div class="app-header-controls">
-        <label class="theme-select-label" for="theme-select">Theme</label>
+        <h1>Hugging Face Guide for You</h1>
         <select id="theme-select" class="theme-select" aria-label="Theme">
           <option value="nord">Nord</option>
           <option value="solarized">Solarized</option>
@@ -25,10 +18,14 @@
           <option value="everforest">Everforest</option>
           <option value="tokyo">Tokyo Night</option>
         </select>
-        <button id="refresh-button" class="icon-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
-          Recheck
-        </button>
+        <div class="model-heading">
+          <p id="active-url" class="model-id">Checking active tab...</p>
+        </div>
+        <p id="model-owner" class="model-owner" hidden></p>
       </div>
+      <button id="refresh-button" class="header-recheck-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
+        Recheck
+      </button>
     </header>
 
     <main>
@@ -332,7 +329,7 @@
 
     <footer class="app-footer">
       <img class="footer-logo" src="../assets/images/nexgen_logo_round_simple_2026.png" alt="NexGen logo">
-      <p>&copy; 2026 NexGen</p>
+      <p>&copy; 2026 Nexgen STEM School</p>
     </footer>
 
     <div id="tooltip-layer" class="tooltip-layer" role="tooltip" hidden>

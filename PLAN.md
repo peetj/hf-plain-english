@@ -59,9 +59,10 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Keep the manual page check as "Recheck" for retrying the active tab when Chrome or Hugging Face data does not update automatically.
 - [✅] Replace theme buttons with a compact dropdown and add Catppuccin, Everforest, and Tokyo Night palettes.
 - [✅] Replace blunt unsupported-page headings with friendlier, action-oriented guidance.
-- [✅] Remove the duplicate product-name header inside the side panel and use a functional "AI model guide" title instead.
+- [✅] Remove the duplicate product-name header inside the side panel and use a more welcoming guide title instead.
 - [✅] Expand side-panel privacy text so it clearly explains Hugging Face API use, local Ask a Question behavior, Chrome storage, and no analytics.
 - [✅] Add a dark branded footer with the NexGen logo and 2026 copyright.
+- [✅] Refine the header layout: remove the side-panel document title text, rename the in-panel title to "Hugging Face Guide for You", place the theme dropdown under it, make Recheck a compact accented top-right action, and update the footer company name to Nexgen STEM School.
 - [❌] Ignore.
 
 ## Current Foundation

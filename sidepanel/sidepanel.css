@@ -177,7 +177,7 @@ a:focus-visible {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   padding: 18px 16px 14px;
   border-bottom: 3px solid var(--header-border);
   background: var(--header-background);
@@ -185,6 +185,8 @@ a:focus-visible {
 }
 
 .app-header-main {
+  display: grid;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -195,7 +197,7 @@ p {
 }
 
 h1 {
-  margin-bottom: 4px;
+  margin-bottom: 0;
   font-size: 20px;
   line-height: 1.2;
 }
@@ -240,23 +242,9 @@ h2:has(.section-toggle) {
   color: var(--header-muted);
 }
 
-.app-header-controls {
-  display: grid;
-  flex: 0 0 auto;
-  grid-template-columns: auto;
-  gap: 6px;
-  min-width: 106px;
-}
-
-.theme-select-label {
-  color: var(--header-muted);
-  font-size: 11px;
-  font-weight: 750;
-  line-height: 1;
-}
-
 .theme-select {
   min-height: 32px;
+  width: fit-content;
   max-width: 132px;
   padding: 5px 28px 5px 8px;
   border: 1px solid var(--header-control-border);
@@ -341,6 +329,32 @@ h2:has(.section-toggle) {
 
 .app-header .icon-button:hover {
   border-color: var(--header-border);
+}
+
+.header-recheck-button {
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--header-border);
+  border-radius: 0;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.header-recheck-button:hover {
+  background: var(--accent-strong);
+}
+
+.header-recheck-button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .app-footer {
