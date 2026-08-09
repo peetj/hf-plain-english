@@ -4,10 +4,24 @@ const SIDE_PANEL_PATH = "sidepanel/sidepanel.html";
 
 async function setSidePanelForTab(tabId, url) {
   if (typeof tabId !== "number") {
-    return;
+    return null;
   }
 
   const parsedUrl = parseHuggingFaceModelUrl(url || "");
+
+  if (!parsedUrl.isHuggingFace) {
+    await chrome.sidePanel.setOptions({
+      tabId,
+      enabled: false
+    });
+
+    await chrome.action.setTitle({
+      tabId,
+      title: "Open Hugging Face for Newbies on a Hugging Face page"
+    });
+
+    return parsedUrl;
+  }
 
   await chrome.sidePanel.setOptions({
     tabId,
@@ -21,6 +35,8 @@ async function setSidePanelForTab(tabId, url) {
       ? "Open Hugging Face for Newbies"
       : "Hugging Face for Newbies works on public Hugging Face model pages"
   });
+
+  return parsedUrl;
 }
 
 async function configureSidePanelBehavior() {
@@ -32,7 +48,11 @@ async function openSidePanel(tab) {
     return;
   }
 
-  await setSidePanelForTab(tab.id, tab.url);
+  const parsedUrl = await setSidePanelForTab(tab.id, tab.url);
+
+  if (!parsedUrl?.isHuggingFace) {
+    return;
+  }
 
   try {
     await chrome.sidePanel.open({ tabId: tab.id });
