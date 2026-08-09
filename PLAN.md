@@ -253,22 +253,22 @@ Acceptance criteria:
 
 ## Phase 3: Running Guidance
 
-### ⚠️ 3.1 Improve File Relevance Ranking
+### ✅ 3.1 Improve File Relevance Ranking
 
-- [⚠️] Group model weights.
-- [⚠️] Group quantised local files.
-- [⚠️] Group tokenizer files.
-- [⚠️] Group config files.
-- [❌] Group adapter files.
-- [❌] Group example or metadata files.
-- [⚠️] Highlight the files a beginner most likely needs.
-- [❌] Hide noise by default while allowing expansion.
+- [✅] Group model weights.
+- [✅] Group quantised local files.
+- [✅] Group tokenizer files.
+- [✅] Group config files.
+- [✅] Group adapter files.
+- [✅] Group example or metadata files.
+- [✅] Highlight the files a beginner most likely needs.
+- [✅] Hide noise by default while allowing expansion.
 
 Acceptance criteria:
 
-- [⚠️] A learner can identify whether a repository has a runnable file and which file likely matters.
-- [⚠️] GGUF, safetensors, PyTorch, ONNX, and MLX files are explained distinctly.
-- [❌] LoRA and adapter files are explained distinctly.
+- [✅] A learner can identify whether a repository has a runnable file and which file likely matters.
+- [✅] GGUF, safetensors, PyTorch, ONNX, and MLX files are explained distinctly.
+- [✅] LoRA and adapter files are explained distinctly.
 
 ### ⚠️ 3.2 Strengthen Tool Recommendations
 

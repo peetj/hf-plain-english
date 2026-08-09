@@ -159,4 +159,26 @@ const datasetTerms = parseModelFacts(fixture({
 
 assert.ok(datasetTerms.includes("dataset"), "dataset term is shown for training-data clues");
 
+const fileGroups = parseModelFacts(fixture({
+  modelId: "example/file-heavy-model",
+  files: [
+    { path: "model.Q4_K_M.gguf" },
+    { path: "model.safetensors" },
+    { path: "tokenizer.json" },
+    { path: "config.json" },
+    { path: "adapter_model.safetensors" },
+    { path: "README.md" }
+  ]
+})).relevantFiles;
+
+const fileByPath = new Map(fileGroups.map((file) => [file.path, file]));
+
+assert.equal(fileByPath.get("model.Q4_K_M.gguf")?.category, "quantised-local", "quantised GGUF is grouped as a local model file");
+assert.equal(fileByPath.get("model.safetensors")?.category, "runnable-model", "safetensors weights are grouped as model weights");
+assert.equal(fileByPath.get("tokenizer.json")?.category, "tokenizer", "tokenizer files are grouped separately");
+assert.equal(fileByPath.get("config.json")?.category, "config", "config files are grouped separately");
+assert.equal(fileByPath.get("adapter_model.safetensors")?.category, "adapter", "adapter files are grouped separately from base weights");
+assert.equal(fileByPath.get("README.md")?.category, "example", "readme metadata is grouped as lower-priority context");
+assert.equal(fileGroups[0].path, "model.Q4_K_M.gguf", "most useful beginner file appears first");
+
 console.log(`model-parser fixtures passed: ${cases.length}`);
