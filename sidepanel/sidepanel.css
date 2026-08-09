@@ -1420,13 +1420,45 @@ main > * {
   gap: 10px;
 }
 
+.file-group {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.file-group-quantised-local {
+  border-left-color: var(--accent-warm);
+}
+
+.file-group-title {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.file-group-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.file-group-list {
+  display: grid;
+  gap: 7px;
+}
+
 .file-item {
   display: grid;
   gap: 4px;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--surface-muted);
+  background: var(--surface);
 }
 
 .file-name {
@@ -1438,6 +1470,23 @@ main > * {
 .file-meta {
   color: var(--muted);
   font-size: 12px;
+}
+
+.file-extra-details {
+  display: grid;
+  gap: 7px;
+}
+
+.file-extra-details summary {
+  width: fit-content;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.file-extra-details[open] summary {
+  margin-bottom: 7px;
 }
 
 .terms-table {

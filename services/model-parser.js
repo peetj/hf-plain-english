@@ -49,6 +49,22 @@ const FORMAT_RULES = [
     source: "filename",
     confidence: "high",
     test: (file) => /(^|\/)(config|generation_config|preprocessor_config|model_index)\.json$/i.test(file.path)
+  },
+  {
+    id: "adapter",
+    label: "adapter files",
+    source: "filename",
+    confidence: "high",
+    test: (file) => /(^|\/|[-_])(adapter|lora|qlora|peft)([-_.\/]|$)/i.test(file.path)
+      || /adapter_(?:model|config)\.(?:safetensors|bin|json)$/i.test(file.path)
+  },
+  {
+    id: "example",
+    label: "example or metadata files",
+    source: "filename",
+    confidence: "high",
+    test: (file) => /(^|\/)(readme|license|notice|citation|requirements|app|demo|example|examples|metadata|params)\.(?:md|txt|json|py|yaml|yml)$/i.test(file.path)
+      || /(^|\/)(assets|images|examples|demo)\//i.test(file.path)
   }
 ];
 
@@ -317,30 +333,44 @@ function detectQuantisations(files, tags, modelCardMarkdown, safetensorsParamete
 
 function detectRelevantFiles(files, formats, quantisations) {
   const formatByFile = new Map();
+  const formatIdsByFile = new Map();
 
   for (const format of formats) {
     for (const filePath of format.files) {
       const current = formatByFile.get(filePath) || [];
       current.push(format.label);
       formatByFile.set(filePath, current);
+
+      const currentIds = formatIdsByFile.get(filePath) || [];
+      currentIds.push(format.id);
+      formatIdsByFile.set(filePath, currentIds);
     }
   }
 
   return files
     .filter((file) => formatByFile.has(file.path))
     .map((file) => {
+      const formatIds = formatIdsByFile.get(file.path) || [];
       const fileQuantisations = quantisations
         .filter((quantisation) => file.path.toUpperCase().includes(quantisation.value.toUpperCase()))
         .map((quantisation) => quantisation.value);
+      const category = categorizeRelevantFile(file.path, formatIds, fileQuantisations);
 
       return {
         path: file.path,
         name: file.name || file.path.split("/").pop() || file.path,
+        category: category.id,
+        categoryLabel: category.label,
+        priority: category.priority,
+        beginnerAction: category.beginnerAction,
+        showByDefault: category.showByDefault,
         formats: formatByFile.get(file.path),
+        formatIds,
         quantisations: fileQuantisations,
-        explanation: explainFile(file.path, formatByFile.get(file.path), fileQuantisations)
+        explanation: explainFile(file.path, formatByFile.get(file.path), fileQuantisations, category)
       };
-    });
+    })
+    .sort(compareRelevantFiles);
 }
 
 function detectModelKind(model, tags, modelCardMarkdown) {
@@ -729,20 +759,116 @@ function buildWarnings(model, parameterCount, formats) {
   return warnings;
 }
 
-function explainFile(filePath, formats, quantisations) {
+function categorizeRelevantFile(filePath, formatIds, quantisations) {
+  const hasQuantisation = quantisations.length > 0 || /\b(?:q[2-8]|iq[1-4]|int8|4-bit|8-bit)\b/i.test(filePath);
+
+  if (formatIds.includes("gguf")) {
+    return {
+      id: hasQuantisation ? "quantised-local" : "runnable-model",
+      label: hasQuantisation ? "Quantised local model" : "Runnable local model",
+      priority: hasQuantisation ? 1 : 2,
+      beginnerAction: "This is usually the file a beginner local app needs.",
+      showByDefault: true
+    };
+  }
+
+  if (formatIds.includes("adapter") || /\b(?:lora|qlora|adapter|peft)\b/i.test(filePath)) {
+    return {
+      id: "adapter",
+      label: "Adapter or LoRA add-on",
+      priority: 5,
+      beginnerAction: "This usually modifies another base model; it is not normally the one file to download first.",
+      showByDefault: true
+    };
+  }
+
+  if (formatIds.includes("safetensors") || formatIds.includes("pytorch") || formatIds.includes("onnx") || formatIds.includes("mlx")) {
+    return {
+      id: "runnable-model",
+      label: "Model weight file",
+      priority: 2,
+      beginnerAction: "This may be a main model file, but it normally needs the matching tool route.",
+      showByDefault: true
+    };
+  }
+
+  if (formatIds.includes("tokenizer")) {
+    return {
+      id: "tokenizer",
+      label: "Tokenizer support file",
+      priority: 3,
+      beginnerAction: "Needed by software, but usually downloaded automatically with the model.",
+      showByDefault: true
+    };
+  }
+
+  if (formatIds.includes("config")) {
+    return {
+      id: "config",
+      label: "Configuration file",
+      priority: 4,
+      beginnerAction: "Helpful for software loading the model, but not usually something to choose manually.",
+      showByDefault: true
+    };
+  }
+
+  if (formatIds.includes("example")) {
+    return {
+      id: "example",
+      label: "Example or metadata file",
+      priority: 6,
+      beginnerAction: "Useful context, but not the model file to run.",
+      showByDefault: false
+    };
+  }
+
+  return {
+    id: "other",
+    label: "Other repository file",
+    priority: 7,
+    beginnerAction: "Probably not the first file a beginner needs.",
+    showByDefault: false
+  };
+}
+
+function compareRelevantFiles(a, b) {
+  if (a.priority !== b.priority) {
+    return a.priority - b.priority;
+  }
+
+  return a.path.localeCompare(b.path);
+}
+
+function explainFile(filePath, formats, quantisations, category) {
   const lowerPath = filePath.toLowerCase();
+
+  if (category?.id === "adapter") {
+    return `${category.beginnerAction} Adapters and LoRA files are add-ons that usually need the original model as well.`;
+  }
+
+  if (category?.id === "example") {
+    return `${category.beginnerAction} It may contain instructions, licence notes, or examples rather than model weights.`;
+  }
 
   if (lowerPath.endsWith(".gguf")) {
     const quantText = quantisations.length > 0 ? `${quantisations.join(", ")} quantised ` : "";
-    return `A ${quantText}GGUF model file, commonly used by llama.cpp-based local model tools.`;
+    return `A ${quantText}GGUF model file, commonly used by llama.cpp-based local model tools. ${category?.beginnerAction || ""}`.trim();
   }
 
   if (lowerPath.endsWith(".safetensors")) {
-    return "A safetensors model weights file, commonly used with Python Transformers.";
+    return `A safetensors model weights file, commonly used with Python Transformers. ${category?.beginnerAction || ""}`.trim();
   }
 
   if (lowerPath.endsWith(".onnx")) {
-    return "An ONNX model file for ONNX Runtime or compatible tooling.";
+    return `An ONNX model file for ONNX Runtime or compatible tooling. ${category?.beginnerAction || ""}`.trim();
+  }
+
+  if (formats.includes("PyTorch binary")) {
+    return `A PyTorch model weights file, usually for developer-oriented Python workflows. ${category?.beginnerAction || ""}`.trim();
+  }
+
+  if (formats.includes("MLX")) {
+    return `An MLX-related file, usually intended for Apple silicon MLX workflows. ${category?.beginnerAction || ""}`.trim();
   }
 
   if (formats.includes("tokenizer files")) {

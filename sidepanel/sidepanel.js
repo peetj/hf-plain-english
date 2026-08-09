@@ -1541,34 +1541,116 @@ function renderRunRecommendation(recommendation, explanation) {
 function renderRelevantFiles(files) {
   filesList.replaceChildren();
 
-  const visibleFiles = files.filter((file) => !file.formats.includes("configuration files")).slice(0, 12);
+  const groupedFiles = groupRelevantFiles(files);
+  const visibleGroups = groupedFiles.filter((group) => group.files.length > 0);
 
-  if (visibleFiles.length === 0) {
+  if (visibleGroups.length === 0) {
     filesSection.hidden = true;
     return;
   }
 
-  for (const file of visibleFiles) {
-    const item = document.createElement("article");
-    const name = document.createElement("div");
-    const meta = document.createElement("div");
-    const explanation = document.createElement("p");
-
-    item.className = "file-item";
-    name.className = "file-name";
-    meta.className = "file-meta";
-    name.textContent = file.path;
-    meta.textContent = [
-      file.formats.join(", "),
-      file.quantisations.length ? `Quantisation: ${file.quantisations.join(", ")}` : ""
-    ].filter(Boolean).join(" | ");
-    renderTooltipText(explanation, file.explanation);
-
-    item.append(name, meta, explanation);
-    filesList.append(item);
+  for (const group of visibleGroups) {
+    filesList.append(createFileGroup(group));
   }
 
   filesSection.hidden = false;
+}
+
+function groupRelevantFiles(files) {
+  const groups = new Map();
+
+  for (const file of files) {
+    const category = file.category || "other";
+    const group = groups.get(category) || {
+      id: category,
+      label: file.categoryLabel || "Other repository files",
+      priority: Number.isFinite(file.priority) ? file.priority : 99,
+      beginnerAction: file.beginnerAction || "Probably not the first file a beginner needs.",
+      showByDefault: file.showByDefault !== false,
+      files: []
+    };
+
+    group.files.push(file);
+    groups.set(category, group);
+  }
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      files: group.files.sort((a, b) => (a.priority || 99) - (b.priority || 99) || a.path.localeCompare(b.path))
+    }))
+    .sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label));
+}
+
+function createFileGroup(group) {
+  const section = document.createElement("section");
+  const heading = document.createElement("h3");
+  const summary = document.createElement("p");
+  const visibleList = document.createElement("div");
+  const visibleFiles = group.showByDefault ? group.files.slice(0, 5) : [];
+  const hiddenFiles = group.showByDefault ? group.files.slice(5) : group.files;
+
+  section.className = `file-group file-group-${group.id}`;
+  heading.className = "file-group-title";
+  summary.className = "file-group-summary";
+  visibleList.className = "file-group-list";
+  heading.textContent = `${group.label} (${group.files.length})`;
+  renderTooltipText(summary, group.beginnerAction);
+
+  for (const file of visibleFiles) {
+    visibleList.append(createFileItem(file));
+  }
+
+  section.append(heading, summary);
+
+  if (visibleFiles.length > 0) {
+    section.append(visibleList);
+  }
+
+  if (hiddenFiles.length > 0) {
+    section.append(createHiddenFileDetails(hiddenFiles, group.showByDefault));
+  }
+
+  return section;
+}
+
+function createHiddenFileDetails(files, showExtra) {
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  const list = document.createElement("div");
+
+  details.className = "file-extra-details";
+  summary.textContent = showExtra
+    ? `Show ${files.length} more`
+    : `Show ${files.length} lower-priority file${files.length === 1 ? "" : "s"}`;
+  list.className = "file-group-list";
+
+  for (const file of files) {
+    list.append(createFileItem(file));
+  }
+
+  details.append(summary, list);
+  return details;
+}
+
+function createFileItem(file) {
+  const item = document.createElement("article");
+  const name = document.createElement("div");
+  const meta = document.createElement("div");
+  const explanation = document.createElement("p");
+
+  item.className = "file-item";
+  name.className = "file-name";
+  meta.className = "file-meta";
+  name.textContent = file.path;
+  meta.textContent = [
+    file.formats.join(", "),
+    file.quantisations.length ? `Quantisation: ${file.quantisations.join(", ")}` : ""
+  ].filter(Boolean).join(" | ");
+  renderTooltipText(explanation, file.explanation);
+
+  item.append(name, meta, explanation);
+  return item;
 }
 
 function renderTechnicalTerms(glossary, termIds) {
