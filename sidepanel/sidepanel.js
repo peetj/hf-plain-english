@@ -306,7 +306,7 @@ async function loadModelFacts(modelId, refreshId) {
 }
 
 function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation, hardwareProfile) {
-  learnerAnswerHeadingElement.textContent = "Plain English Summary";
+  learnerAnswerHeadingElement.textContent = "Plain Summary";
   renderTooltipText(answerSummaryElement, explanation.summary);
   renderDefinitionList(answerList, [
     ["What it is", buildWhatItIsAnswer(model, interpreted)],
@@ -316,13 +316,15 @@ function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendatio
     ["Check before downloading", buildDownloadCautionAnswer(model, recommendation, hardwareEstimate)],
     ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
   ]);
+  setSectionExpandedState(learnerAnswerSection, true, { persist: false });
   revealUpdatedElement(learnerAnswerSection);
 }
 
 function renderLearnerState(summary, rows) {
-  learnerAnswerHeadingElement.textContent = "Plain English Summary";
+  learnerAnswerHeadingElement.textContent = "Plain Summary";
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
+  setSectionExpandedState(learnerAnswerSection, true, { persist: false });
   revealUpdatedElement(learnerAnswerSection);
 }
 
