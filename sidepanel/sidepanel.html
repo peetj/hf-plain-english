@@ -8,21 +8,27 @@
   </head>
   <body>
     <header class="app-header">
-      <div>
-        <h1>Hugging Face for Newbies</h1>
+      <div class="app-header-main">
+        <h1>AI model guide</h1>
         <div class="model-heading">
           <p id="active-url" class="model-id">Checking active tab...</p>
         </div>
         <p id="model-owner" class="model-owner" hidden></p>
-        <div class="theme-switcher" aria-label="Theme">
-          <button class="theme-button" type="button" data-theme-value="nord">Nord</button>
-          <button class="theme-button" type="button" data-theme-value="solarized">Solarized</button>
-          <button class="theme-button" type="button" data-theme-value="gruvbox">Gruvbox</button>
-        </div>
       </div>
-      <button id="refresh-button" class="icon-button" type="button" aria-label="Check the active tab now" title="Check the active tab now">
-        Check page
-      </button>
+      <div class="app-header-controls">
+        <label class="theme-select-label" for="theme-select">Theme</label>
+        <select id="theme-select" class="theme-select" aria-label="Theme">
+          <option value="nord">Nord</option>
+          <option value="solarized">Solarized</option>
+          <option value="gruvbox">Gruvbox</option>
+          <option value="catppuccin">Catppuccin</option>
+          <option value="everforest">Everforest</option>
+          <option value="tokyo">Tokyo Night</option>
+        </select>
+        <button id="refresh-button" class="icon-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
+          Recheck
+        </button>
+      </div>
     </header>
 
     <main>
@@ -313,12 +319,21 @@
       </section>
 
       <section class="panel-section">
-        <h2>Privacy</h2>
-        <p>
-          V1 will use the active Hugging Face model ID to request public model information from Hugging Face. No analytics are included.
-        </p>
+        <h2>Privacy and network use</h2>
+        <p>This extension is designed to explain public Hugging Face model pages without tracking you.</p>
+        <ul class="privacy-list">
+          <li>When a model page is open, it sends the model address to Hugging Face's public API to fetch public metadata, file names, and the model card.</li>
+          <li>Model Match searches Hugging Face using the filters you choose, such as task, format, quantisation, downloads, or likes.</li>
+          <li>The Ask a Question helper runs locally from extension data and the current page facts. It does not contact a chatbot service in V1.</li>
+          <li>Your hardware profile and Model Match choices are stored in Chrome storage on this browser. No analytics are included.</li>
+        </ul>
       </section>
     </main>
+
+    <footer class="app-footer">
+      <img class="footer-logo" src="../assets/images/nexgen_logo_round_simple_2026.png" alt="NexGen logo">
+      <p>&copy; 2026 NexGen</p>
+    </footer>
 
     <div id="tooltip-layer" class="tooltip-layer" role="tooltip" hidden>
       <p id="tooltip-title" class="tooltip-title"></p>

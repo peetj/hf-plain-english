@@ -10,7 +10,7 @@ import { answerLearnerQuestion } from "../services/question-answer-service.js";
 
 const activeUrlElement = document.querySelector("#active-url");
 const modelOwnerElement = document.querySelector("#model-owner");
-const themeButtons = Array.from(document.querySelectorAll(".theme-button"));
+const themeSelect = document.querySelector("#theme-select");
 const statusCard = document.querySelector("#status-card");
 const statusMessageElement = document.querySelector("#status-message");
 const askHelperForm = document.querySelector("#ask-helper-form");
@@ -132,7 +132,7 @@ async function refreshActiveTabStatus() {
       setStatus("No active tab", "Open a public Hugging Face model page and try again.");
       renderLearnerState("Nothing to explain yet.", [
         ["What happened", "Chrome did not report an active page to inspect."],
-        ["Next step", "Open a public Hugging Face model page, then refresh this panel."]
+        ["Next step", "Open a public Hugging Face model page, then use Recheck if this panel does not update automatically."]
       ]);
       return;
     }
@@ -161,8 +161,8 @@ async function refreshActiveTabStatus() {
         currentUrl: tab.url,
         parsedUrl
       });
-      resetModelIdentity("Unsupported Hugging Face page");
-      setStatus("Unsupported Hugging Face page", createUnsupportedStatusMessage(parsedUrl.reason));
+      resetModelIdentity("Choose a model page");
+      setStatus("Open a specific model", createUnsupportedStatusMessage(parsedUrl.reason));
       renderUnsupportedHuggingFaceState(parsedUrl.reason);
       renderTooltipText(
         overviewTextElement,
@@ -176,15 +176,15 @@ async function refreshActiveTabStatus() {
       currentUrl: tab.url,
       parsedUrl
     });
-    resetModelIdentity("Unsupported page");
-    setStatus("Unsupported page", "This is not a Hugging Face model page.");
-    renderLearnerState("This page is not a Hugging Face model page.", [
-      ["What happened", "The extension only explains public Hugging Face model pages."],
-      ["Next step", "Open a model page on huggingface.co, then refresh this panel."]
+    resetModelIdentity("No model page selected");
+    setStatus("Open a Hugging Face model", "Open a public model page on Hugging Face and this guide will explain it in plain English.");
+    renderLearnerState("Open a Hugging Face model page to begin.", [
+      ["What happened", "This browser tab is not a public Hugging Face model page."],
+      ["Next step", "Open a model page on huggingface.co, then use Recheck if this panel does not update automatically."]
     ]);
     renderTooltipText(
       overviewTextElement,
-      "Open a public Hugging Face model page, then click the Hugging Face for Newbies extension icon again."
+      "Open a public Hugging Face model page, then use Recheck if this panel does not update automatically."
     );
   } catch (error) {
     currentLearnerContext = createLearnerContext({
@@ -309,7 +309,7 @@ function renderLearnerState(summary, rows) {
 }
 
 function renderUnsupportedHuggingFaceState(reason) {
-  renderLearnerState("This is a useful Hugging Face page, but it is not a model page the extension can explain yet.", [
+  renderLearnerState("Open an individual model page to get a plain-English read.", [
     ["What happened", getUnsupportedMessage(reason)],
     ["Where to go", createUnsupportedNavigation(reason)],
     ["What to look for", createExampleModelUrlGuidance()]
@@ -1046,7 +1046,7 @@ function showFetchError(result) {
       setStatus("Rate limited", result.error.message);
       renderLearnerState("Hugging Face is temporarily limiting requests.", [
         ["What happened", "The public API returned a rate-limit response."],
-        ["Next step", result.error.retryAfter ? `Wait until ${result.error.retryAfter}, then refresh this panel.` : "Wait a few minutes, then refresh this panel."]
+        ["Next step", result.error.retryAfter ? `Wait until ${result.error.retryAfter}, then use Recheck.` : "Wait a few minutes, then use Recheck."]
       ]);
       renderTooltipText(
         overviewTextElement,
@@ -1067,7 +1067,7 @@ function showFetchError(result) {
       setStatus("Unexpected API response", result.error.message);
       renderLearnerState("Hugging Face returned data the extension could not safely read.", [
         ["What happened", "The API response was missing or not in the expected format."],
-        ["Next step", "Refresh this panel. If it keeps happening, use the original model page directly."]
+        ["Next step", "Use Recheck. If it keeps happening, use the original model page directly."]
       ]);
       renderTooltipText(overviewTextElement, "The extension could not safely read the Hugging Face API response.");
       break;
@@ -1075,9 +1075,9 @@ function showFetchError(result) {
       setStatus("Network error", result.error.message);
       renderLearnerState("The extension could not reach Hugging Face.", [
         ["What happened", "The network request failed before public model data could be loaded."],
-        ["Next step", "Check your connection, then refresh this panel."]
+        ["Next step", "Check your connection, then use Recheck."]
       ]);
-      renderTooltipText(overviewTextElement, "Check the network connection and refresh the side panel.");
+      renderTooltipText(overviewTextElement, "Check the network connection and use Recheck.");
   }
 }
 
@@ -1157,11 +1157,11 @@ function formatApiWarning(warning) {
       };
     case "model-card-rate-limited":
       return {
-        message: "The model card request was rate-limited. Next step: wait a few minutes and refresh this panel."
+        message: "The model card request was rate-limited. Next step: wait a few minutes and use Recheck."
       };
     case "model-card-network-error":
       return {
-        message: "The model card could not be fetched because of a network problem. Next step: check your connection and refresh this panel."
+        message: "The model card could not be fetched because of a network problem. Next step: check your connection and use Recheck."
       };
     default:
       return {
@@ -1432,30 +1432,28 @@ function initThemeControls() {
   const initialTheme = isKnownTheme(storedTheme) ? storedTheme : "nord";
   applyTheme(initialTheme);
 
-  for (const button of themeButtons) {
-    button.addEventListener("click", () => {
-      const theme = button.dataset.themeValue;
+  themeSelect.addEventListener("change", () => {
+    const theme = themeSelect.value;
 
-      if (!isKnownTheme(theme)) {
-        return;
-      }
+    if (!isKnownTheme(theme)) {
+      return;
+    }
 
-      localStorage.setItem("hfNewbies.theme", theme);
-      applyTheme(theme);
-    });
-  }
+    localStorage.setItem("hfNewbies.theme", theme);
+    applyTheme(theme);
+  });
 }
 
 function applyTheme(theme) {
   document.body.dataset.theme = theme;
 
-  for (const button of themeButtons) {
-    button.setAttribute("aria-pressed", String(button.dataset.themeValue === theme));
+  if (themeSelect && themeSelect.value !== theme) {
+    themeSelect.value = theme;
   }
 }
 
 function isKnownTheme(theme) {
-  return ["nord", "solarized", "gruvbox"].includes(theme);
+  return ["nord", "solarized", "gruvbox", "catppuccin", "everforest", "tokyo"].includes(theme);
 }
 
 function formatFactValue(value) {
@@ -2012,15 +2010,15 @@ function trimDecimal(value) {
 function getUnsupportedMessage(reason) {
   switch (reason) {
     case "unsupported-hugging-face-section":
-      return "This is a Hugging Face section such as models, datasets, Spaces, docs, or settings. The extension needs an individual model repository.";
+      return "This looks like a Hugging Face section, such as Models, Datasets, Spaces, docs, or settings. Open one individual model result so the guide can explain it.";
     case "not-a-model-page":
-      return `This Hugging Face URL is not an individual model page. Open a page like ${EXAMPLE_MODEL_URL}, where Qwen is the publisher and Qwen3-0.6B is the model.`;
+      return `This page is not an individual model repository. Open a page like ${EXAMPLE_MODEL_URL}, where Qwen is the publisher and Qwen3-0.6B is the model.`;
     case "invalid-model-id":
-      return `This URL does not contain a valid model address. A valid example is ${EXAMPLE_MODEL_URL}.`;
+      return `This address does not look like a model page. A valid example is ${EXAMPLE_MODEL_URL}.`;
     case "malformed-url":
       return "Chrome returned a malformed URL for the active tab.";
     default:
-      return "This page is outside V1 support.";
+      return "This page is outside the current guide.";
   }
 }
 
@@ -2029,7 +2027,7 @@ function getUnsupportedOverview(reason) {
     return `Open a result from the Hugging Face Models directory. A supported model page has an owner/model address, for example ${EXAMPLE_MODEL_URL}.`;
   }
 
-  return "Navigate to the Hugging Face Models directory, open a specific public model repository, then refresh this panel.";
+  return "Navigate to the Hugging Face Models directory, open a specific public model repository, then use Recheck if this panel does not update automatically.";
 }
 
 function getUnsupportedNavigationLinks(reason) {

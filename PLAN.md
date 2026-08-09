@@ -56,6 +56,12 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Add a feature that helps the user find the ideal model to fit on their machine. Make this a primary feature as what is the point of using the site otherwise. May involve recommending models based on some quick questions and their h/w profile?
 - [✅] Improve model finder search links by removing weak terms like instruct, lm studio, and raw size-number searches.
 - [✅] Add a reusable reveal animation hook for important UI updates, with reduced-motion support.
+- [✅] Keep the manual page check as "Recheck" for retrying the active tab when Chrome or Hugging Face data does not update automatically.
+- [✅] Replace theme buttons with a compact dropdown and add Catppuccin, Everforest, and Tokyo Night palettes.
+- [✅] Replace blunt unsupported-page headings with friendlier, action-oriented guidance.
+- [✅] Remove the duplicate product-name header inside the side panel and use a functional "AI model guide" title instead.
+- [✅] Expand side-panel privacy text so it clearly explains Hugging Face API use, local Ask a Question behavior, Chrome storage, and no analytics.
+- [✅] Add a dark branded footer with the NexGen logo and 2026 copyright.
 - [❌] Ignore.
 
 ## Current Foundation
@@ -198,7 +204,7 @@ Acceptance criteria:
 - [✅] Add ranking controls for downloads, likes, and balanced popularity.
 - [✅] Keep a compact glossary table visible for Model Match terms before a model page is loaded.
 - [✅] Make the top current-page/model summary more practical and collapse the generic plain-English read by default.
-- [✅] Make active-tab checking automatic and rename the refresh button to "Check page".
+- [✅] Make active-tab checking automatic and keep a manual "Recheck" action for retrying the current browser tab.
 - [✅] Add an inline saved hardware profile editor for Model Match.
 - [✅] Bold only the saved hardware profile in the Model Match summary, not the whole recommendation sentence.
 - [✅] Fix Model Match ranking so Downloads and Likes select the top eligible live search result for that metric, and select changes trigger a fresh search.
