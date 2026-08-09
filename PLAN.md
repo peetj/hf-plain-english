@@ -77,6 +77,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Fix footer pinning so main content keeps its normal compact spacing instead of stretching cards and suggestion tags.
 - [✅] Make non-Hugging Face navigation close reliably by using the new navigation URL, removing the global side-panel default, and explicitly closing the tab panel when supported.
 - [✅] Rename "Plain English Summary" to "Plain Summary" and force the top summary section open whenever model guidance is rendered.
+- [✅] Make the privacy section always open and non-expandable, and correct the footer copyright to Nexgen STEM School.
 - [❌] Ignore.
 
 ## Current Foundation

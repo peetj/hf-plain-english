@@ -109,7 +109,7 @@ const CUSTOMIZABLE_SECTION_CONFIG = [
   { id: "source-section", label: "Where this came from" }
 ];
 const CUSTOMIZABLE_SECTION_IDS = CUSTOMIZABLE_SECTION_CONFIG.map((section) => section.id);
-const FIXED_COLLAPSIBLE_SECTION_IDS = ["learner-answer-section", "model-finder-section", "privacy-section"];
+const FIXED_COLLAPSIBLE_SECTION_IDS = ["learner-answer-section", "model-finder-section"];
 const COLLAPSIBLE_SECTION_IDS = [...FIXED_COLLAPSIBLE_SECTION_IDS, ...CUSTOMIZABLE_SECTION_IDS];
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
@@ -1929,6 +1929,10 @@ function getCustomizableSectionConfig(sectionId) {
 
 function initCollapsibleSections() {
   for (const section of document.querySelectorAll(".panel-section")) {
+    if (section.id === "privacy-section") {
+      continue;
+    }
+
     const heading = section.querySelector("h2");
 
     if (!heading || heading.querySelector(".section-toggle")) {
