@@ -2,12 +2,41 @@ import { parseHuggingFaceModelUrl } from "./services/huggingface-url-parser.js";
 
 const SIDE_PANEL_PATH = "sidepanel/sidepanel.html";
 
-async function setSidePanelForTab(tabId, url) {
-  if (typeof tabId !== "number") {
+async function closeSidePanelForTab(tabId) {
+  if (typeof tabId !== "number" || typeof chrome.sidePanel.close !== "function") {
     return;
   }
 
+  try {
+    await chrome.sidePanel.close({ tabId });
+  } catch {
+    // Older Chrome versions may not support closing tab-specific panels reliably.
+    // Disabling the panel remains the compatibility path.
+  }
+}
+
+async function setSidePanelForTab(tabId, url) {
+  if (typeof tabId !== "number") {
+    return null;
+  }
+
   const parsedUrl = parseHuggingFaceModelUrl(url || "");
+
+  if (!parsedUrl.isHuggingFace) {
+    await chrome.sidePanel.setOptions({
+      tabId,
+      enabled: false
+    });
+
+    await closeSidePanelForTab(tabId);
+
+    await chrome.action.setTitle({
+      tabId,
+      title: "Open Hugging Face for Newbies on a Hugging Face page"
+    });
+
+    return parsedUrl;
+  }
 
   await chrome.sidePanel.setOptions({
     tabId,
@@ -21,6 +50,8 @@ async function setSidePanelForTab(tabId, url) {
       ? "Open Hugging Face for Newbies"
       : "Hugging Face for Newbies works on public Hugging Face model pages"
   });
+
+  return parsedUrl;
 }
 
 async function configureSidePanelBehavior() {
@@ -32,7 +63,11 @@ async function openSidePanel(tab) {
     return;
   }
 
-  await setSidePanelForTab(tab.id, tab.url);
+  const parsedUrl = await setSidePanelForTab(tab.id, tab.url);
+
+  if (!parsedUrl?.isHuggingFace) {
+    return;
+  }
 
   try {
     await chrome.sidePanel.open({ tabId: tab.id });
@@ -70,7 +105,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     return;
   }
 
-  setSidePanelForTab(tabId, tab.url || changeInfo.url).catch((error) => {
+  setSidePanelForTab(tabId, changeInfo.url || tab.url).catch((error) => {
     console.warn("Unable to update Hugging Face for Newbies side panel state.", error);
   });
 });

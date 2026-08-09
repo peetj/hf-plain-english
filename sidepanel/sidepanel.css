@@ -135,6 +135,10 @@ body[data-theme="tokyo"] {
   --shadow: 0 7px 22px rgb(26 27 38 / 16%);
 }
 
+html {
+  min-height: 100%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -145,10 +149,13 @@ body[data-theme="tokyo"] {
 
 body {
   min-width: 280px;
+  min-height: 100vh;
   margin: 0;
   background: var(--background);
   color: var(--text);
   font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 button {
@@ -188,6 +195,13 @@ a:focus-visible {
   display: grid;
   gap: 7px;
   min-width: 0;
+}
+
+.app-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 7px;
 }
 
 h1,
@@ -361,18 +375,23 @@ h2:has(.section-toggle) {
 .app-footer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 9px;
+  flex: 0 0 auto;
+  margin-top: auto;
   padding: 12px 14px;
   border-top: 3px solid var(--header-border);
   background: var(--header-background);
   color: var(--header-muted);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 400;
+  text-align: left;
 }
 
 .app-footer p {
   margin: 0;
+  font-weight: 400;
+  text-align: left;
 }
 
 .footer-logo {
@@ -398,7 +417,14 @@ h2:has(.section-toggle) {
 main {
   display: grid;
   gap: 12px;
+  align-content: start;
+  flex: 1 0 auto;
+  grid-auto-rows: max-content;
   padding: 14px;
+}
+
+main > * {
+  align-self: start;
 }
 
 .status-card,
@@ -482,6 +508,12 @@ main {
   border-top: 2px solid rgb(245 158 47 / 28%);
 }
 
+.section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .section-toggle {
   display: flex;
   width: 100%;
@@ -503,6 +535,60 @@ main {
   color: var(--accent-strong);
 }
 
+.section-drag-handle {
+  display: inline-flex;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  cursor: grab;
+  font-size: 15px;
+  font-weight: 850;
+  user-select: none;
+}
+
+.section-drag-handle:active {
+  cursor: grabbing;
+}
+
+.panel-section.is-dragging {
+  border-color: var(--accent);
+  opacity: 0.55;
+}
+
+.panel-section.drop-before,
+.panel-section.drop-after {
+  position: relative;
+}
+
+.panel-section.drop-before::before,
+.panel-section.drop-after::after {
+  position: absolute;
+  right: 12px;
+  left: 12px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent-warm);
+  content: "";
+}
+
+.panel-section.drop-before::before {
+  top: -2px;
+}
+
+.panel-section.drop-after::after {
+  bottom: -2px;
+}
+
+.section-user-hidden {
+  display: none !important;
+}
+
 .section-arrow {
   display: inline-block;
   width: 1em;
@@ -522,6 +608,104 @@ main {
 
 .learner-answer-section {
   border-left: 5px solid var(--accent);
+}
+
+.section-layout-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--header-border);
+  border-radius: 0;
+  background: var(--header-control-background);
+  color: var(--header-text);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.section-layout-icon-button:hover {
+  background: var(--header-control-selected);
+  color: var(--header-text);
+}
+
+.section-layout-icon-button:active {
+  transform: translateY(1px);
+}
+
+.layout-dialog {
+  width: min(360px, calc(100vw - 28px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.layout-dialog::backdrop {
+  background: rgb(15 23 42 / 45%);
+}
+
+.layout-dialog-form {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.layout-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.layout-dialog-header h2 {
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.layout-dialog-header p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.icon-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.layout-options {
+  display: grid;
+  gap: 7px;
+}
+
+.layout-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.layout-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
 }
 
 .ask-helper-section {

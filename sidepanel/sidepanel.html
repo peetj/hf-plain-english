@@ -23,9 +23,14 @@
         </div>
         <p id="model-owner" class="model-owner" hidden></p>
       </div>
-      <button id="refresh-button" class="header-recheck-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
-        Recheck
-      </button>
+      <div class="app-header-actions">
+        <button id="section-layout-button" class="section-layout-icon-button tooltip-term" type="button" aria-label="Customise detail sections" aria-describedby="tooltip-layer" data-tooltip-id="detail-sections">
+          <span aria-hidden="true">⚙</span>
+        </button>
+        <button id="refresh-button" class="header-recheck-button" type="button" aria-label="Re-read the current browser tab" title="Re-read the current browser tab">
+          Recheck
+        </button>
+      </div>
     </header>
 
     <main>
@@ -34,26 +39,14 @@
         <p id="status-message">Preparing the extension shell.</p>
       </section>
 
-      <section id="ask-helper-section" class="ask-helper-section" aria-labelledby="ask-helper-title">
-        <div class="ask-helper-heading">
-          <h2 id="ask-helper-title">Ask a question</h2>
-          <p class="ask-helper-subtitle">Ask about the current model, a suggested model, or a confusing term. (This is NOT an AI response)</p>
-        </div>
-        <form id="ask-helper-form" class="ask-helper-form">
-          <label class="sr-only" for="ask-helper-input">Question</label>
-          <input id="ask-helper-input" type="search" autocomplete="off" placeholder="What does Instruct mean?">
-          <button class="ask-helper-button" type="submit">Ask</button>
-        </form>
-        <div class="ask-suggestions" aria-label="Suggested questions">
-          <button type="button" data-ask-suggestion="What does this model name mean?">Model name</button>
-          <button type="button" data-ask-suggestion="Will this run on my computer?">Run locally?</button>
-          <button type="button" data-ask-suggestion="Which file should I download?">Which file?</button>
-        </div>
-        <section id="ask-helper-answer" class="ask-helper-answer" aria-live="polite" hidden></section>
+      <section id="learner-answer-section" class="panel-section learner-answer-section" hidden>
+        <h2 id="learner-answer-heading">Plain Summary</h2>
+        <p id="answer-summary" class="answer-summary"></p>
+        <dl id="answer-list" class="answer-list"></dl>
       </section>
 
       <section id="model-finder-section" class="panel-section model-finder-section">
-        <h2>Model match</h2>
+        <h2>Find a Model for Me</h2>
         <p id="model-finder-summary" class="model-finder-summary"></p>
         <section class="hardware-profile-box" aria-labelledby="hardware-profile-title">
           <div class="hardware-profile-header">
@@ -265,87 +258,111 @@
         <div id="model-finder-links" class="finder-links"></div>
       </section>
 
-      <section id="learner-answer-section" class="panel-section learner-answer-section" hidden>
-        <h2 id="learner-answer-heading">Current page</h2>
-        <p id="answer-summary" class="answer-summary"></p>
-        <dl id="answer-list" class="answer-list"></dl>
+      <section id="ask-helper-section" class="ask-helper-section" aria-labelledby="ask-helper-title">
+        <div class="ask-helper-heading">
+          <h2 id="ask-helper-title">Ask a question</h2>
+          <p class="ask-helper-subtitle">Ask about the current model, a suggested model, or a confusing term. (This is NOT an AI response)</p>
+        </div>
+        <form id="ask-helper-form" class="ask-helper-form">
+          <label class="sr-only" for="ask-helper-input">Question</label>
+          <input id="ask-helper-input" type="search" autocomplete="off" placeholder="What does Instruct mean?">
+          <button class="ask-helper-button" type="submit">Ask</button>
+        </form>
+        <div class="ask-suggestions" aria-label="Suggested questions">
+          <button type="button" data-ask-suggestion="What does this model name mean?">Model name</button>
+          <button type="button" data-ask-suggestion="Will this run on my computer?">Run locally?</button>
+          <button type="button" data-ask-suggestion="Which file should I download?">Which file?</button>
+        </div>
+        <section id="ask-helper-answer" class="ask-helper-answer" aria-live="polite" hidden></section>
       </section>
 
-      <section id="first-read-section" class="panel-section">
-        <h2>Plain English read</h2>
-        <p id="overview-text">
-          Use Model match to find a model, or open a specific Hugging Face model page to get a plain-English read.
-        </p>
-      </section>
+      <div id="customizable-sections" class="customizable-sections">
+        <section id="facts-section" class="panel-section" hidden>
+          <h2>Original page facts</h2>
+          <dl id="facts-list" class="facts-list"></dl>
+        </section>
 
-      <section id="facts-section" class="panel-section" hidden>
-        <h2>Original page facts</h2>
-        <dl id="facts-list" class="facts-list"></dl>
-      </section>
+        <section id="interpretation-section" class="panel-section" hidden>
+          <h2>How to read this model</h2>
+          <dl id="interpretation-list" class="facts-list"></dl>
+          <div id="warning-list" class="warning-list"></div>
+        </section>
 
-      <section id="interpretation-section" class="panel-section" hidden>
-        <h2>How to read this model</h2>
-        <dl id="interpretation-list" class="facts-list"></dl>
-        <div id="warning-list" class="warning-list"></div>
-      </section>
+        <section id="model-card-section" class="panel-section" hidden>
+          <h2>Model card notes</h2>
+          <p id="model-card-summary" class="model-card-summary"></p>
+          <div id="model-card-list" class="model-card-list"></div>
+          <p id="model-card-missing" class="model-card-missing"></p>
+        </section>
 
-      <section id="model-card-section" class="panel-section" hidden>
-        <h2>Model card notes</h2>
-        <p id="model-card-summary" class="model-card-summary"></p>
-        <div id="model-card-list" class="model-card-list"></div>
-        <p id="model-card-missing" class="model-card-missing"></p>
-      </section>
+        <section id="hardware-section" class="panel-section" hidden>
+          <h2>Size and hardware</h2>
+          <p id="hardware-summary" class="hardware-summary"></p>
+          <dl id="hardware-list" class="facts-list"></dl>
+          <div id="assumptions-list" class="warning-list"></div>
+        </section>
 
-      <section id="hardware-section" class="panel-section" hidden>
-        <h2>Size and hardware</h2>
-        <p id="hardware-summary" class="hardware-summary"></p>
-        <dl id="hardware-list" class="facts-list"></dl>
-        <div id="assumptions-list" class="warning-list"></div>
-      </section>
+        <section id="run-section" class="panel-section" hidden>
+          <h2>How to run it</h2>
+          <p id="run-summary"></p>
+          <dl id="run-list" class="facts-list"></dl>
+          <div id="run-warning-list" class="warning-list"></div>
+        </section>
 
-      <section id="run-section" class="panel-section" hidden>
-        <h2>How to run it</h2>
-        <p id="run-summary"></p>
-        <dl id="run-list" class="facts-list"></dl>
-        <div id="run-warning-list" class="warning-list"></div>
-      </section>
+        <section id="files-section" class="panel-section" hidden>
+          <h2>Relevant files</h2>
+          <div id="files-list" class="file-list"></div>
+        </section>
 
-      <section id="files-section" class="panel-section" hidden>
-        <h2>Relevant files</h2>
-        <div id="files-list" class="file-list"></div>
-      </section>
+        <section id="terms-section" class="panel-section" hidden>
+          <h2>Technical terms</h2>
+          <div id="terms-list" class="terms-list"></div>
+        </section>
 
-      <section id="terms-section" class="panel-section" hidden>
-        <h2>Technical terms</h2>
-        <div id="terms-list" class="terms-list"></div>
-      </section>
+        <section id="source-section" class="panel-section" hidden>
+          <h2>Where this came from</h2>
+          <p id="source-text" class="source-text"></p>
+        </section>
+      </div>
 
-      <section id="source-section" class="panel-section" hidden>
-        <h2>Where this came from</h2>
-        <p id="source-text" class="source-text"></p>
-      </section>
-
-      <section class="panel-section">
+      <section id="privacy-section" class="panel-section">
         <h2>Privacy and network use</h2>
         <p>This extension is designed to explain public Hugging Face model pages without tracking you.</p>
         <ul class="privacy-list">
           <li>When a model page is open, it sends the model address to Hugging Face's public API to fetch public metadata, file names, and the model card.</li>
-          <li>Model Match searches Hugging Face using the filters you choose, then reads the suggested model's public page data and model card so the summary is grounded in the actual page.</li>
+          <li>Find a Model for Me searches Hugging Face using the filters you choose, then reads the suggested model's public page data and model card so the summary is grounded in the actual page.</li>
           <li>The Ask a Question helper runs locally from extension data and the current page facts. It does not contact a chatbot service in V1.</li>
-          <li>Your hardware profile and Model Match choices are stored in Chrome storage on this browser. No analytics are included.</li>
+          <li>Your hardware profile, Find a Model for Me choices, and detail-section layout are stored in Chrome storage on this browser. No analytics are included.</li>
         </ul>
       </section>
     </main>
 
     <footer class="app-footer">
       <img class="footer-logo" src="../assets/images/nexgen_logo_round_simple_2026.png" alt="NexGen logo">
-      <p>&copy; 2026 Nexgen STEM School</p>
+      <p>&copy; 2026 Nexgen STEM School. All rights reserved</p>
     </footer>
 
     <div id="tooltip-layer" class="tooltip-layer" role="tooltip" hidden>
       <p id="tooltip-title" class="tooltip-title"></p>
       <p id="tooltip-text" class="tooltip-text"></p>
     </div>
+
+    <dialog id="section-layout-dialog" class="layout-dialog" aria-labelledby="section-layout-dialog-title">
+      <form id="section-layout-form" class="layout-dialog-form" method="dialog">
+        <div class="layout-dialog-header">
+          <div>
+            <h2 id="section-layout-dialog-title">Customise detail sections</h2>
+            <p>Choose which detail sections appear. Drag section headers in the panel to change their order.</p>
+          </div>
+          <button id="section-layout-close-button" class="icon-button" type="button" aria-label="Close section customisation">×</button>
+        </div>
+        <div id="section-layout-options" class="layout-options"></div>
+        <div class="layout-dialog-actions">
+          <button id="section-layout-reset-button" class="small-button secondary-button" type="button">Reset layout</button>
+          <button class="small-button" type="submit">Done</button>
+        </div>
+      </form>
+    </dialog>
 
     <script src="sidepanel.js" type="module"></script>
   </body>

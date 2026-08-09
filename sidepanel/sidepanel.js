@@ -46,7 +46,6 @@ const learnerAnswerSection = document.querySelector("#learner-answer-section");
 const learnerAnswerHeadingElement = document.querySelector("#learner-answer-heading");
 const answerSummaryElement = document.querySelector("#answer-summary");
 const answerList = document.querySelector("#answer-list");
-const overviewTextElement = document.querySelector("#overview-text");
 const refreshButton = document.querySelector("#refresh-button");
 const factsSection = document.querySelector("#facts-section");
 const factsList = document.querySelector("#facts-list");
@@ -71,6 +70,13 @@ const termsSection = document.querySelector("#terms-section");
 const termsList = document.querySelector("#terms-list");
 const sourceSection = document.querySelector("#source-section");
 const sourceTextElement = document.querySelector("#source-text");
+const customizableSectionsContainer = document.querySelector("#customizable-sections");
+const sectionLayoutButton = document.querySelector("#section-layout-button");
+const sectionLayoutDialog = document.querySelector("#section-layout-dialog");
+const sectionLayoutForm = document.querySelector("#section-layout-form");
+const sectionLayoutOptions = document.querySelector("#section-layout-options");
+const sectionLayoutCloseButton = document.querySelector("#section-layout-close-button");
+const sectionLayoutResetButton = document.querySelector("#section-layout-reset-button");
 const tooltipLayerElement = document.querySelector("#tooltip-layer");
 const tooltipTitleElement = document.querySelector("#tooltip-title");
 const tooltipTextElement = document.querySelector("#tooltip-text");
@@ -86,9 +92,25 @@ let uiRevealTokenCounter = 0;
 let currentLearnerContext = createLearnerContext();
 let currentModelFinderRecommendation = null;
 let currentModelFinderSearchLinks = [];
+let sectionLayoutSettings = null;
+let draggingSectionId = "";
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
+const SECTION_LAYOUT_STORAGE_KEY = "hfNewbies.sectionLayout";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
 const EXAMPLE_MODEL_URL = "https://huggingface.co/Qwen/Qwen3-0.6B";
+const CUSTOMIZABLE_SECTION_CONFIG = [
+  { id: "interpretation-section", label: "How to read this model" },
+  { id: "model-card-section", label: "Model card notes" },
+  { id: "hardware-section", label: "Size and hardware" },
+  { id: "run-section", label: "How to run it" },
+  { id: "files-section", label: "Relevant files" },
+  { id: "terms-section", label: "Technical terms" },
+  { id: "facts-section", label: "Original page facts" },
+  { id: "source-section", label: "Where this came from" }
+];
+const CUSTOMIZABLE_SECTION_IDS = CUSTOMIZABLE_SECTION_CONFIG.map((section) => section.id);
+const FIXED_COLLAPSIBLE_SECTION_IDS = ["learner-answer-section", "model-finder-section"];
+const COLLAPSIBLE_SECTION_IDS = [...FIXED_COLLAPSIBLE_SECTION_IDS, ...CUSTOMIZABLE_SECTION_IDS];
 const hardwareProfilePromise = loadHardwareProfile().then((profile) => {
   savedHardwareProfile = profile;
   return profile;
@@ -155,7 +177,6 @@ async function refreshActiveTabStatus() {
       });
       renderModelIdentity(parsedUrl.modelId);
       setStatus("Loading model facts", `Resolved model ID: ${parsedUrl.modelId}. Fetching public Hugging Face metadata.`);
-      renderTooltipText(overviewTextElement, "This is a supported public Hugging Face model-page URL.");
       await loadModelFacts(parsedUrl.modelId, refreshId);
       return;
     }
@@ -169,10 +190,6 @@ async function refreshActiveTabStatus() {
       resetModelIdentity("");
       setStatus("Open a specific model", createUnsupportedStatusMessage(parsedUrl.reason));
       renderUnsupportedHuggingFaceState(parsedUrl.reason);
-      renderTooltipText(
-        overviewTextElement,
-        getUnsupportedOverview(parsedUrl.reason)
-      );
       return;
     }
 
@@ -187,10 +204,6 @@ async function refreshActiveTabStatus() {
       ["What happened", "This browser tab is not a public Hugging Face model page."],
       ["Next step", "Open a model page on huggingface.co, then use Recheck if this panel does not update automatically."]
     ]);
-    renderTooltipText(
-      overviewTextElement,
-      "Open a public Hugging Face model page, then use Recheck if this panel does not update automatically."
-    );
   } catch (error) {
     currentLearnerContext = createLearnerContext({
       pageState: "tab-error",
@@ -290,12 +303,10 @@ async function loadModelFacts(modelId, refreshId) {
       `Estimated against your saved hardware profile: ${formatHardwareProfile(hardwareProfile)}.`
     );
   }
-
-  renderTooltipText(overviewTextElement, explanation.overview);
 }
 
 function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendation, explanation, hardwareProfile) {
-  learnerAnswerHeadingElement.textContent = "Model at a glance";
+  setSectionHeadingText(learnerAnswerSection, "Plain Summary");
   renderTooltipText(answerSummaryElement, explanation.summary);
   renderDefinitionList(answerList, [
     ["What it is", buildWhatItIsAnswer(model, interpreted)],
@@ -305,13 +316,15 @@ function renderLearnerAnswer(model, interpreted, hardwareEstimate, recommendatio
     ["Check before downloading", buildDownloadCautionAnswer(model, recommendation, hardwareEstimate)],
     ["Confidence", buildOverallConfidenceAnswer(interpreted, recommendation, hardwareEstimate)]
   ]);
+  setSectionExpandedState(learnerAnswerSection, true, { persist: false });
   revealUpdatedElement(learnerAnswerSection);
 }
 
 function renderLearnerState(summary, rows) {
-  learnerAnswerHeadingElement.textContent = "Current page";
+  setSectionHeadingText(learnerAnswerSection, "Plain Summary");
   renderTooltipText(answerSummaryElement, summary);
   renderDefinitionList(answerList, rows);
+  setSectionExpandedState(learnerAnswerSection, true, { persist: false });
   revealUpdatedElement(learnerAnswerSection);
 }
 
@@ -841,7 +854,7 @@ function buildEnrichedCandidateSummary(model, interpreted, hardwareEstimate, api
 }
 
 function buildEnrichedCandidateJustification(recommendation, model, interpreted, choices, finder) {
-  const parts = ["Why suggested: it matched the current Model Match search and the extension then checked its public model page."];
+  const parts = ["Why suggested: it matched the current Find a Model for Me search and the extension then checked its public model page."];
 
   if (choices.rankBy === "downloads") {
     parts.push("Downloads had the strongest influence because Rank by is set to Most downloads.");
@@ -1314,7 +1327,6 @@ function showFetchError(result) {
         ["What happened", "The model ID may be wrong, deleted, renamed, or not public."],
         ["Next step", "Check the page address and try opening the main model page again."]
       ]);
-      renderTooltipText(overviewTextElement, "Hugging Face did not return public metadata for this model ID.");
       break;
     case "rate-limited":
       setStatus("Rate limited", result.error.message);
@@ -1322,12 +1334,6 @@ function showFetchError(result) {
         ["What happened", "The public API returned a rate-limit response."],
         ["Next step", result.error.retryAfter ? `Wait until ${result.error.retryAfter}, then use Recheck.` : "Wait a few minutes, then use Recheck."]
       ]);
-      renderTooltipText(
-        overviewTextElement,
-        result.error.retryAfter
-          ? `Try again after ${result.error.retryAfter}.`
-          : "Try again later. The extension did not make any further requests."
-      );
       break;
     case "gated-or-private":
       setStatus("Gated or private model", result.error.message);
@@ -1335,7 +1341,6 @@ function showFetchError(result) {
         ["What happened", "The model appears gated, private, or unavailable through public access."],
         ["Next step", "Open the original model page, sign in if needed, and check whether you must accept access terms."]
       ]);
-      renderTooltipText(overviewTextElement, "The model may require a Hugging Face account or accepted access terms.");
       break;
     case "invalid-response":
       setStatus("Unexpected API response", result.error.message);
@@ -1343,7 +1348,6 @@ function showFetchError(result) {
         ["What happened", "The API response was missing or not in the expected format."],
         ["Next step", "Use Recheck. If it keeps happening, use the original model page directly."]
       ]);
-      renderTooltipText(overviewTextElement, "The extension could not safely read the Hugging Face API response.");
       break;
     default:
       setStatus("Network error", result.error.message);
@@ -1351,7 +1355,6 @@ function showFetchError(result) {
         ["What happened", "The network request failed before public model data could be loaded."],
         ["Next step", "Check your connection, then use Recheck."]
       ]);
-      renderTooltipText(overviewTextElement, "Check the network connection and use Recheck.");
   }
 }
 
@@ -1700,8 +1703,236 @@ function resetFetchedDetails() {
   sourceSection.hidden = true;
 }
 
+async function initSectionLayoutSettings() {
+  sectionLayoutSettings = await loadSectionLayoutSettings();
+  applySectionLayoutSettings();
+}
+
+function initSectionLayoutControls() {
+  renderSectionLayoutOptions();
+  initSectionDragHandles();
+
+  sectionLayoutButton.addEventListener("click", () => {
+    renderSectionLayoutOptions();
+
+    if (typeof sectionLayoutDialog.showModal === "function") {
+      sectionLayoutDialog.showModal();
+    } else {
+      sectionLayoutDialog.hidden = false;
+    }
+  });
+
+  sectionLayoutForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    closeSectionLayoutDialog();
+  });
+
+  sectionLayoutCloseButton.addEventListener("click", closeSectionLayoutDialog);
+
+  sectionLayoutResetButton.addEventListener("click", () => {
+    sectionLayoutSettings = createDefaultSectionLayoutSettings();
+    applySectionLayoutSettings();
+    applyExpandedSectionLayout();
+    renderSectionLayoutOptions();
+    persistSectionLayoutSettings();
+  });
+
+  sectionLayoutOptions.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-section-layout-checkbox]");
+
+    if (!checkbox) {
+      return;
+    }
+
+    const hiddenSectionIds = new Set(sectionLayoutSettings.hiddenSectionIds);
+
+    if (checkbox.checked) {
+      hiddenSectionIds.delete(checkbox.dataset.sectionId);
+    } else {
+      hiddenSectionIds.add(checkbox.dataset.sectionId);
+    }
+
+    sectionLayoutSettings = normalizeSectionLayoutSettings({
+      ...sectionLayoutSettings,
+      hiddenSectionIds: Array.from(hiddenSectionIds)
+    });
+    applySectionLayoutSettings();
+    persistSectionLayoutSettings();
+  });
+}
+
+function closeSectionLayoutDialog() {
+  if (typeof sectionLayoutDialog.close === "function" && sectionLayoutDialog.open) {
+    sectionLayoutDialog.close();
+    return;
+  }
+
+  sectionLayoutDialog.hidden = true;
+}
+
+function renderSectionLayoutOptions() {
+  const hiddenSectionIds = new Set(sectionLayoutSettings.hiddenSectionIds);
+  sectionLayoutOptions.replaceChildren();
+
+  for (const sectionId of normalizeSectionOrder(getCurrentCustomizableSectionOrder())) {
+    const config = getCustomizableSectionConfig(sectionId);
+
+    if (!config) {
+      continue;
+    }
+
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    const text = document.createElement("span");
+
+    label.className = "layout-option";
+    checkbox.type = "checkbox";
+    checkbox.checked = !hiddenSectionIds.has(sectionId);
+    checkbox.dataset.sectionLayoutCheckbox = "true";
+    checkbox.dataset.sectionId = sectionId;
+    text.textContent = config.label;
+    label.append(checkbox, text);
+    sectionLayoutOptions.append(label);
+  }
+}
+
+function applySectionLayoutSettings() {
+  const settings = sectionLayoutSettings || createDefaultSectionLayoutSettings();
+  const hiddenSectionIds = new Set(settings.hiddenSectionIds);
+
+  for (const sectionId of settings.order) {
+    const section = document.getElementById(sectionId);
+
+    if (section && customizableSectionsContainer.contains(section)) {
+      customizableSectionsContainer.append(section);
+    }
+  }
+
+  for (const sectionId of CUSTOMIZABLE_SECTION_IDS) {
+    const section = document.getElementById(sectionId);
+
+    if (!section) {
+      continue;
+    }
+
+    section.dataset.customizableSection = "true";
+    section.classList.toggle("section-user-hidden", hiddenSectionIds.has(sectionId));
+  }
+}
+
+function applyExpandedSectionLayout() {
+  const expandedSectionIds = new Set(sectionLayoutSettings?.expandedSectionIds || []);
+
+  for (const sectionId of COLLAPSIBLE_SECTION_IDS) {
+    const section = document.getElementById(sectionId);
+
+    if (section) {
+      setSectionExpandedState(section, expandedSectionIds.has(sectionId), { persist: false });
+    }
+  }
+}
+
+function initSectionDragHandles() {
+  for (const sectionId of CUSTOMIZABLE_SECTION_IDS) {
+    const section = document.getElementById(sectionId);
+    const header = section?.querySelector(".section-header-row");
+
+    if (!section || !header || header.querySelector(".section-drag-handle")) {
+      continue;
+    }
+
+    const handle = document.createElement("span");
+    handle.className = "section-drag-handle";
+    handle.draggable = true;
+    handle.title = "Drag to reorder this detail section";
+    handle.setAttribute("aria-hidden", "true");
+    handle.textContent = "↕";
+    header.append(handle);
+
+    handle.addEventListener("dragstart", (event) => {
+      draggingSectionId = section.id;
+      section.classList.add("is-dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", section.id);
+    });
+
+    handle.addEventListener("dragend", cleanupSectionDragState);
+    section.addEventListener("dragover", handleSectionDragOver);
+    section.addEventListener("dragleave", () => {
+      section.classList.remove("drop-before", "drop-after");
+    });
+    section.addEventListener("drop", handleSectionDrop);
+  }
+}
+
+function handleSectionDragOver(event) {
+  const targetSection = event.currentTarget;
+
+  if (!draggingSectionId || targetSection.id === draggingSectionId || targetSection.classList.contains("section-user-hidden")) {
+    return;
+  }
+
+  event.preventDefault();
+  const rect = targetSection.getBoundingClientRect();
+  const placeAfter = event.clientY > rect.top + rect.height / 2;
+  targetSection.classList.toggle("drop-before", !placeAfter);
+  targetSection.classList.toggle("drop-after", placeAfter);
+}
+
+function handleSectionDrop(event) {
+  const targetSection = event.currentTarget;
+  const draggedSection = document.getElementById(draggingSectionId || event.dataTransfer.getData("text/plain"));
+
+  if (!draggedSection || !targetSection || draggedSection === targetSection) {
+    cleanupSectionDragState();
+    return;
+  }
+
+  event.preventDefault();
+  const placeAfter = targetSection.classList.contains("drop-after");
+  customizableSectionsContainer.insertBefore(
+    draggedSection,
+    placeAfter ? targetSection.nextSibling : targetSection
+  );
+  sectionLayoutSettings = normalizeSectionLayoutSettings({
+    ...sectionLayoutSettings,
+    order: getCurrentCustomizableSectionOrder()
+  });
+  persistSectionLayoutSettings();
+  renderSectionLayoutOptions();
+  cleanupSectionDragState();
+}
+
+function persistSectionLayoutSettings() {
+  saveSectionLayoutSettings(sectionLayoutSettings).catch((error) => {
+    console.warn("Hugging Face for Newbies could not save section layout.", error);
+  });
+}
+
+function cleanupSectionDragState() {
+  draggingSectionId = "";
+
+  for (const section of customizableSectionsContainer.querySelectorAll(".panel-section")) {
+    section.classList.remove("is-dragging", "drop-before", "drop-after");
+  }
+}
+
+function getCurrentCustomizableSectionOrder() {
+  return Array.from(customizableSectionsContainer.children)
+    .map((section) => section.id)
+    .filter((sectionId) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId));
+}
+
+function getCustomizableSectionConfig(sectionId) {
+  return CUSTOMIZABLE_SECTION_CONFIG.find((section) => section.id === sectionId) || null;
+}
+
 function initCollapsibleSections() {
   for (const section of document.querySelectorAll(".panel-section")) {
+    if (section.id === "privacy-section") {
+      continue;
+    }
+
     const heading = section.querySelector("h2");
 
     if (!heading || heading.querySelector(".section-toggle")) {
@@ -1727,8 +1958,10 @@ function initCollapsibleSections() {
     arrow.className = "section-arrow";
     arrow.setAttribute("aria-hidden", "true");
     arrow.textContent = "▾";
+    label.className = "section-label";
     label.textContent = heading.textContent;
     button.append(arrow, label);
+    heading.classList.add("section-header-row");
     heading.replaceChildren(button);
     section.append(body);
     section.classList.toggle("is-collapsed", !expanded);
@@ -1736,15 +1969,59 @@ function initCollapsibleSections() {
 
     button.addEventListener("click", () => {
       const expanded = button.getAttribute("aria-expanded") === "true";
-      button.setAttribute("aria-expanded", String(!expanded));
-      section.classList.toggle("is-collapsed", expanded);
-      body.hidden = expanded;
+      setSectionExpandedState(section, !expanded, { persist: true });
     });
   }
 }
 
+function setSectionHeadingText(section, text) {
+  const label = section?.querySelector(".section-label");
+
+  if (label) {
+    label.textContent = text;
+    return;
+  }
+
+  const heading = section?.querySelector("h2");
+
+  if (heading) {
+    heading.textContent = text;
+  }
+}
+
 function isSectionInitiallyExpanded(section) {
-  return section.id === "model-finder-section" || section.id === "learner-answer-section" || section.id === "terms-section";
+  return sectionLayoutSettings?.expandedSectionIds?.includes(section.id) === true;
+}
+
+function setSectionExpandedState(section, expanded, options = {}) {
+  const button = section.querySelector(".section-toggle");
+  const body = section.querySelector(".section-body");
+
+  if (!button || !body) {
+    return;
+  }
+
+  button.setAttribute("aria-expanded", String(expanded));
+  section.classList.toggle("is-collapsed", !expanded);
+  body.hidden = !expanded;
+
+  if (options.persist && COLLAPSIBLE_SECTION_IDS.includes(section.id)) {
+    saveCurrentExpandedSections();
+  }
+}
+
+function saveCurrentExpandedSections() {
+  const expandedSectionIds = COLLAPSIBLE_SECTION_IDS.filter((sectionId) => {
+    const section = document.getElementById(sectionId);
+    const button = section?.querySelector(".section-toggle");
+    return button?.getAttribute("aria-expanded") === "true";
+  });
+
+  sectionLayoutSettings = normalizeSectionLayoutSettings({
+    ...sectionLayoutSettings,
+    expandedSectionIds
+  });
+  persistSectionLayoutSettings();
 }
 
 function initThemeControls() {
@@ -2137,6 +2414,71 @@ async function saveHardwareProfile(profile) {
   localStorage.setItem(HARDWARE_PROFILE_STORAGE_KEY, JSON.stringify(profile));
 }
 
+async function loadSectionLayoutSettings() {
+  if (globalThis.chrome?.storage?.local) {
+    try {
+      const result = await chrome.storage.local.get(SECTION_LAYOUT_STORAGE_KEY);
+      return normalizeSectionLayoutSettings(result?.[SECTION_LAYOUT_STORAGE_KEY]);
+    } catch (error) {
+      console.warn("Hugging Face for Newbies could not load saved section layout.", error);
+    }
+  }
+
+  try {
+    return normalizeSectionLayoutSettings(JSON.parse(localStorage.getItem(SECTION_LAYOUT_STORAGE_KEY) || "null"));
+  } catch {
+    return createDefaultSectionLayoutSettings();
+  }
+}
+
+async function saveSectionLayoutSettings(settings) {
+  const normalized = normalizeSectionLayoutSettings(settings);
+
+  if (globalThis.chrome?.storage?.local) {
+    await chrome.storage.local.set({
+      [SECTION_LAYOUT_STORAGE_KEY]: normalized
+    });
+    return;
+  }
+
+  localStorage.setItem(SECTION_LAYOUT_STORAGE_KEY, JSON.stringify(normalized));
+}
+
+function normalizeSectionLayoutSettings(settings) {
+  const source = settings && typeof settings === "object" ? settings : {};
+  const hiddenSectionIds = Array.isArray(source.hiddenSectionIds)
+    ? source.hiddenSectionIds.filter((sectionId, index, all) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId) && all.indexOf(sectionId) === index)
+    : [];
+  const expandedSectionIds = Array.isArray(source.expandedSectionIds)
+    ? source.expandedSectionIds.filter((sectionId, index, all) => COLLAPSIBLE_SECTION_IDS.includes(sectionId) && all.indexOf(sectionId) === index)
+    : [];
+
+  return {
+    order: normalizeSectionOrder(source.order),
+    hiddenSectionIds,
+    expandedSectionIds
+  };
+}
+
+function normalizeSectionOrder(order) {
+  const requestedOrder = Array.isArray(order)
+    ? order.filter((sectionId, index) => CUSTOMIZABLE_SECTION_IDS.includes(sectionId) && order.indexOf(sectionId) === index)
+    : [];
+
+  return [
+    ...requestedOrder,
+    ...CUSTOMIZABLE_SECTION_IDS.filter((sectionId) => !requestedOrder.includes(sectionId))
+  ];
+}
+
+function createDefaultSectionLayoutSettings() {
+  return {
+    order: [...CUSTOMIZABLE_SECTION_IDS],
+    hiddenSectionIds: [],
+    expandedSectionIds: []
+  };
+}
+
 function normalizeHardwareProfile(profile, fallback = {}) {
   const source = profile && typeof profile === "object" ? profile : {};
   const fallbackSource = fallback && typeof fallback === "object" ? fallback : {};
@@ -2401,9 +2743,15 @@ if (globalThis.chrome?.tabs?.onUpdated) {
   });
 }
 
-initThemeControls();
-initTooltipEvents();
-initCollapsibleSections();
-initAskHelper();
-initModelFinder();
-refreshActiveTabStatus();
+initSidePanel();
+
+async function initSidePanel() {
+  initThemeControls();
+  initTooltipEvents();
+  await initSectionLayoutSettings();
+  initCollapsibleSections();
+  initSectionLayoutControls();
+  initAskHelper();
+  initModelFinder();
+  refreshActiveTabStatus();
+}
