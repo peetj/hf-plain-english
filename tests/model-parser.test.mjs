@@ -132,4 +132,31 @@ for (const testCase of cases) {
   assert.equal(interpreted.modelKind.value, testCase.expected, testCase.name);
 }
 
+const chatTerms = parseModelFacts(fixture({
+  modelId: "example/helpful-chat-model",
+  pipelineTag: "conversational",
+  tags: ["conversational"],
+  rawMetadata: {
+    config: {
+      chat_template: "{% for message in messages %}{{ message.role }}: {{ message.content }}{% endfor %}"
+    }
+  }
+})).glossaryTermIds;
+
+assert.ok(chatTerms.includes("chat-template"), "chat template term is shown for chat-template clues");
+
+const benchmarkTerms = parseModelFacts(fixture({
+  modelId: "example/benchmarked-model",
+  modelCardMarkdown: "## Evaluation\n\nThis model was evaluated on MMLU and HumanEval benchmarks."
+})).glossaryTermIds;
+
+assert.ok(benchmarkTerms.includes("evaluation-benchmark"), "benchmark term is shown for evaluation clues");
+
+const datasetTerms = parseModelFacts(fixture({
+  modelId: "example/trained-model",
+  modelCardMarkdown: "## Training data\n\nThe model was fine-tuned on a small public dataset."
+})).glossaryTermIds;
+
+assert.ok(datasetTerms.includes("dataset"), "dataset term is shown for training-data clues");
+
 console.log(`model-parser fixtures passed: ${cases.length}`);

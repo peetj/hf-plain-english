@@ -162,7 +162,7 @@ Acceptance criteria:
 - [✅] Common model families are classified correctly in test fixtures.
 - [✅] Ambiguous pages return "unknown" or "unclear" instead of a false confident answer.
 
-### ⚠️ 2.2 Explain Common Hugging Face Concepts
+### ✅ 2.2 Explain Common Hugging Face Concepts
 
 - [✅] Explain model card.
 - [✅] Explain dataset.
@@ -172,22 +172,22 @@ Acceptance criteria:
 - [✅] Explain safetensors.
 - [✅] Explain quantisation.
 - [✅] Explain tokenizer.
-- [❌] Explain chat template.
+- [✅] Explain chat template.
 - [✅] Explain context length.
 - [✅] Explain parameters.
 - [✅] Explain `3B`, `7B`, and similar billion-parameter size labels.
 - [✅] Explain gated model.
 - [✅] Explain licence.
 - [✅] Explain commercial use.
-- [❌] Explain evaluation benchmark.
+- [✅] Explain evaluation benchmark.
 - [✅] Explain fine-tuning.
-- [⚠️] Show only relevant terms for the current model page.
+- [✅] Show only relevant terms for the current model page.
 - [✅] Add a prominent local Ask a Question helper for beginner questions about terms, model names, files, licence, tools, popularity, and hardware fit.
 
 Acceptance criteria:
 
-- [⚠️] Glossary entries are short, accurate, and beginner readable.
-- [⚠️] The UI avoids overwhelming the learner with unrelated terms.
+- [✅] Glossary entries are short, accurate, and beginner readable.
+- [✅] The UI avoids overwhelming the learner with unrelated terms.
 
 ### ✅ 2.3 Teach Navigation From Non-Model Hugging Face Pages
 

@@ -42,6 +42,13 @@
     "category": "hugging-face"
   },
   {
+    "id": "chat-template",
+    "terms": ["chat template", "chat templates", "apply_chat_template"],
+    "title": "Chat template",
+    "text": "The message format a chat model expects. It tells software where the user, assistant, and system messages go before the model generates an answer.",
+    "category": "model-basics"
+  },
+  {
     "id": "metadata",
     "terms": ["metadata"],
     "title": "Metadata",
@@ -213,7 +220,7 @@
     "id": "model-type",
     "terms": ["Likely model type", "model type"],
     "title": "Model type",
-    "text": "A plain-English category for how the model is likely meant to be used, such as chat, instruct, base, embedding, image, or audio.",
+    "text": "A plain-English category for how the model is likely meant to be used, such as chat, instruct, base, code, embedding, image, audio, reranking, or classification.",
     "category": "model-basics"
   },
   {
@@ -299,6 +306,13 @@
     "title": "Downloads and likes",
     "text": "Popularity signals from Hugging Face. They can help find active models, but they do not prove a model is safe, high quality, or right for your computer.",
     "category": "hugging-face"
+  },
+  {
+    "id": "evaluation-benchmark",
+    "terms": ["benchmark", "benchmarks", "evaluation benchmark", "leaderboard", "eval", "evals"],
+    "title": "Evaluation benchmark",
+    "text": "A test used to compare model performance. Benchmarks are useful clues, but they do not guarantee the model is right for your task or computer.",
+    "category": "trust"
   },
   {
     "id": "fit",

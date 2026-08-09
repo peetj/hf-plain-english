@@ -532,10 +532,12 @@ function categorizeModelSize(parameterCount) {
 
 function detectGlossaryTerms({ model, parameterCount, modelKind, primaryTask, formats, quantisations, contextLength }) {
   const termIds = new Set(["model-card", "pipeline-tag", "licence"]);
+  const searchableText = buildGlossarySearchText(model);
 
   if (Number.isFinite(parameterCount.value)) {
     termIds.add("parameters");
     termIds.add("model-weights");
+    termIds.add("billion-parameter-label");
   }
 
   if (contextLength.value) {
@@ -586,10 +588,12 @@ function detectGlossaryTerms({ model, parameterCount, modelKind, primaryTask, fo
 
   if (modelKind.value === "instruct") {
     termIds.add("instruct-model");
+    termIds.add("chat-template");
   }
 
   if (modelKind.value === "chat") {
     termIds.add("chat-model");
+    termIds.add("chat-template");
   }
 
   if (modelKind.value === "base") {
@@ -628,7 +632,52 @@ function detectGlossaryTerms({ model, parameterCount, modelKind, primaryTask, fo
     termIds.add("unclear-model-type");
   }
 
+  if (hasChatTemplateClue(searchableText)) {
+    termIds.add("chat-template");
+  }
+
+  if (hasDatasetClue(searchableText)) {
+    termIds.add("dataset");
+  }
+
+  if (hasBenchmarkClue(searchableText)) {
+    termIds.add("evaluation-benchmark");
+  }
+
   return Array.from(termIds);
+}
+
+function buildGlossarySearchText(model) {
+  const rawMetadata = model.rawMetadata && typeof model.rawMetadata === "object" ? model.rawMetadata : {};
+  const config = rawMetadata.config && typeof rawMetadata.config === "object" ? rawMetadata.config : {};
+  const cardText = typeof model.modelCardMarkdown === "string" ? model.modelCardMarkdown.slice(0, 40000) : "";
+  const fileText = normalizeFiles(model.files).map((file) => file.path).join(" ");
+
+  return [
+    model.modelId,
+    model.pipelineTag,
+    model.libraryName,
+    normalizeStringArray(model.tags).join(" "),
+    JSON.stringify({
+      chat_template: config.chat_template,
+      tokenizer_class: config.tokenizer_class,
+      architectures: config.architectures
+    }),
+    fileText,
+    cardText
+  ].filter(Boolean).join(" ");
+}
+
+function hasChatTemplateClue(text) {
+  return /\b(chat\s*template|apply_chat_template|tokenizer_config\.json|system prompt|chatml)\b/i.test(text);
+}
+
+function hasDatasetClue(text) {
+  return /\b(dataset|datasets|training data|fine[-\s]?tuning data|pretraining data|corpus|data mixture)\b/i.test(text);
+}
+
+function hasBenchmarkClue(text) {
+  return /\b(benchmark|benchmarks|evaluation|evaluated|leaderboard|mmlu|hellaswag|arc-challenge|gsm8k|humaneval|truthfulqa|winogrande|mt-bench|arena)\b/i.test(text);
 }
 
 function buildFactList(items) {

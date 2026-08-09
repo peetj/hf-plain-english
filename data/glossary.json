@@ -6,10 +6,34 @@
     "detail": "A model's parameters are the values it learned during training. More parameters usually mean a larger model file and more memory use, but parameter count alone does not prove that a model is better."
   },
   {
+    "id": "billion-parameter-label",
+    "term": "3B, 7B, and similar labels",
+    "short": "A shorthand for roughly how many parameters a model has.",
+    "detail": "In model names, B usually means billion parameters. A 7B model has about 7 billion learned numbers. Bigger models usually need more memory, but bigger is not automatically better."
+  },
+  {
     "id": "model-weights",
     "term": "model weights",
     "short": "The files containing the learned parts of a model.",
     "detail": "Model weights are the stored learned values that software loads when it runs a model. They are often the largest files in a repository."
+  },
+  {
+    "id": "dataset",
+    "term": "dataset",
+    "short": "A collection of examples used for training, testing, or evaluation.",
+    "detail": "A dataset is not a model you chat with. It is data that may have been used to train, fine-tune, test, or compare models."
+  },
+  {
+    "id": "space",
+    "term": "Space",
+    "short": "A hosted demo or app on Hugging Face.",
+    "detail": "A Space may let you try a model in the browser, but it is different from a model repository that contains downloadable model files."
+  },
+  {
+    "id": "collection",
+    "term": "collection",
+    "short": "A curated group of Hugging Face items.",
+    "detail": "A collection can include models, datasets, Spaces, or papers. Open an individual model inside the collection when you want this extension to explain the model itself."
   },
   {
     "id": "quantisation",
@@ -78,6 +102,12 @@
     "detail": "A chat model is usually trained or tuned to respond in a conversational style. It may require a specific chat template to work properly."
   },
   {
+    "id": "chat-template",
+    "term": "chat template",
+    "short": "The message format a chat model expects.",
+    "detail": "A chat template tells software how to wrap messages like user, assistant, and system prompts before sending them to the model. Without the right template, a chat model may answer strangely or ignore instructions."
+  },
+  {
     "id": "base-model",
     "term": "base model",
     "short": "A general model before instruction or chat tuning.",
@@ -136,6 +166,12 @@
     "term": "fine-tuning",
     "short": "Extra training that adapts a model for a narrower purpose.",
     "detail": "Fine-tuning changes a model using additional examples. It can make a model better at a task, style, or domain."
+  },
+  {
+    "id": "evaluation-benchmark",
+    "term": "evaluation benchmark",
+    "short": "A test used to compare model performance.",
+    "detail": "Benchmarks can be useful clues, but they do not prove a model is best for your situation. Check what was tested, how it was tested, and whether the task matches what you want."
   },
   {
     "id": "inference",

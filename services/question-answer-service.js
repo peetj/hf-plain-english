@@ -24,6 +24,18 @@ const BUILT_IN_TERMS = [
     sourceLabel: "Glossary"
   },
   {
+    terms: ["chat template", "chat templates", "apply_chat_template"],
+    title: "Chat template",
+    answer: "A chat template is the message format a chat model expects. It tells the software how to wrap user, assistant, and system messages before the model generates an answer. The wrong template can make a good model behave oddly.",
+    sourceLabel: "Glossary"
+  },
+  {
+    terms: ["benchmark", "benchmarks", "evaluation benchmark", "leaderboard", "eval", "evals"],
+    title: "Evaluation benchmark",
+    answer: "An evaluation benchmark is a test used to compare model performance. It can be useful evidence, but it does not guarantee the model is right for your task, safe to use, or practical on your computer.",
+    sourceLabel: "Glossary"
+  },
+  {
     terms: ["gguf"],
     title: "GGUF",
     answer: "GGUF is a model file format commonly used by local language-model apps and llama.cpp-based tools. For beginners, a GGUF file is often easier to try locally than raw full-precision weights.",
