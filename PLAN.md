@@ -202,7 +202,7 @@ Acceptance criteria:
 - [✅] Unsupported Hugging Face pages do not stop at a generic error.
 - [✅] The learner gets a clear next navigation step.
 
-### ⚠️ 2.4 Improve Model Match Search Interface
+### ✅ 2.4 Improve Model Match Search Interface
 
 - [✅] Convert model match guidance into form controls for goal, target size, file format, quantisation, route, priority, search phrase, local-only preference, and licence preference.
 - [✅] Add tooltip-capable labels for search controls where terms need explanation.
@@ -219,8 +219,8 @@ Acceptance criteria:
 - [✅] Show the full clickable Hugging Face URL for the suggested starting candidate.
 - [✅] Replace ranking-process candidate prose with a plain-English summary plus a compact "why suggested" note.
 - [✅] Format the starting-candidate summary as scannable points inside a styled scroll area.
-- [⚠️] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
-- [❌] Add richer comparison between multiple candidate models.
+- [✅] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
+- [✅] Add richer comparison between multiple candidate models.
 - [✅] Fetch the suggested candidate's full Hugging Face metadata and model card for a richer page-aware summary.
 - [✅] Persist editable hardware settings in Chrome storage.
 

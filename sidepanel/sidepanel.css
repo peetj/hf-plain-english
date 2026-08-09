@@ -982,6 +982,53 @@ main {
   font-size: 12px;
 }
 
+.finder-comparison {
+  display: grid;
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.finder-comparison-heading {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.finder-comparison-list {
+  display: grid;
+  gap: 6px;
+}
+
+.finder-comparison-item {
+  display: grid;
+  gap: 3px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.finder-comparison-link {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.finder-comparison-meta,
+.finder-comparison-reason,
+.finder-comparison-tradeoff {
+  margin-bottom: 0;
+  font-size: 11px;
+}
+
+.finder-comparison-meta,
+.finder-comparison-tradeoff {
+  color: var(--muted);
+}
+
+.finder-comparison-reason {
+  color: var(--text);
+}
+
 .finder-links {
   display: flex;
   flex-wrap: wrap;

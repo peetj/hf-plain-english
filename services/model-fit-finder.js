@@ -286,12 +286,14 @@ export function rankModelCandidates(candidates, finder, choices = {}) {
   const ranked = rankEligibleCandidates(eligible, finder, choices);
 
   const best = ranked[0]?.candidate || eligible[0];
+  const comparisons = buildCandidateComparisons(ranked.slice(1, 4), best, finder, choices);
 
   return {
     status: "found",
     model: best,
     ...buildCandidateSummary(best, finder, choices),
-    justification: buildCandidateJustification(best, finder, choices)
+    justification: buildCandidateJustification(best, finder, choices),
+    comparisons
   };
 }
 
@@ -320,6 +322,87 @@ function compareRankedCandidateScores(a, b, fieldOrder) {
     || (b.candidate.downloads - a.candidate.downloads)
     || (b.candidate.likes - a.candidate.likes)
     || String(a.candidate.modelId).localeCompare(String(b.candidate.modelId));
+}
+
+function buildCandidateComparisons(rankedAlternatives, bestCandidate, finder, choices) {
+  return rankedAlternatives
+    .filter((item) => item?.candidate?.modelId && item.candidate.modelId !== bestCandidate.modelId)
+    .slice(0, 3)
+    .map((item, index) => {
+      const candidate = item.candidate;
+      const reasons = buildComparisonReasons(candidate, item.fieldScores, finder, choices);
+      const tradeOff = buildComparisonTradeOff(candidate, bestCandidate, choices);
+
+      return {
+        rank: index + 2,
+        modelId: candidate.modelId,
+        downloads: candidate.downloads,
+        likes: candidate.likes,
+        libraryName: candidate.libraryName,
+        pipelineTag: candidate.pipelineTag,
+        reason: reasons,
+        tradeOff
+      };
+    });
+}
+
+function buildComparisonReasons(candidate, fieldScores, finder, choices) {
+  const reasons = [];
+  const fieldOrder = normalizeFieldOrder(choices.fieldOrder);
+  const topMatchingFields = fieldOrder
+    .filter((fieldKey) => (fieldScores[fieldKey] || 0) > 0)
+    .slice(0, 2)
+    .map((fieldKey) => FIELD_PRIORITY_LABELS[fieldKey]);
+
+  if (topMatchingFields.length > 0) {
+    reasons.push(`It also matches ${formatSentenceList(topMatchingFields).toLowerCase()}.`);
+  }
+
+  const sizeClue = describeCandidateSizeAgainstTarget(candidate.modelId, finder?.candidateRequest?.sizeHints || []);
+
+  if (sizeClue) {
+    reasons.push(sizeClue);
+  }
+
+  const popularity = formatCandidatePopularity(candidate);
+
+  if (popularity) {
+    reasons.push(popularity);
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("It appeared close to the starting candidate in the current Hugging Face search.");
+  }
+
+  return reasons.join(" ");
+}
+
+function buildComparisonTradeOff(candidate, bestCandidate, choices) {
+  if (choices.rankBy === "downloads" && candidate.downloads < bestCandidate.downloads) {
+    return "Trade-off: fewer downloads than the starting candidate.";
+  }
+
+  if (choices.rankBy === "likes" && candidate.likes < bestCandidate.likes) {
+    return "Trade-off: fewer likes than the starting candidate.";
+  }
+
+  const candidateSizes = extractBillionParameterSizes(candidate.modelId);
+  const bestSizes = extractBillionParameterSizes(bestCandidate.modelId);
+
+  if (candidateSizes.length > 0 && bestSizes.length > 0) {
+    const candidateLargest = Math.max(...candidateSizes);
+    const bestLargest = Math.max(...bestSizes);
+
+    if (candidateLargest > bestLargest) {
+      return "Trade-off: likely larger, so it may need more memory.";
+    }
+
+    if (candidateLargest < bestLargest) {
+      return "Trade-off: likely smaller, which may be easier to run but not always stronger.";
+    }
+  }
+
+  return "Compare the model card, files, licence, and hardware fit before choosing.";
 }
 
 function isCandidateEligibleForRank(candidate, finder, choices) {

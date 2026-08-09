@@ -928,12 +928,19 @@ function renderModelFinderRecommendation(recommendation) {
   ].filter(Boolean).join(" | ");
 
   const summary = createCandidateSummary(recommendation);
+  const comparisons = createCandidateComparisons(recommendation.comparisons);
 
   const detail = document.createElement("p");
   detail.className = "finder-candidate-reason";
   renderTooltipText(detail, recommendation.justification);
 
-  modelFinderRecommendationElement.append(title, modelLink, stats, summary, detail);
+  modelFinderRecommendationElement.append(title, modelLink, stats, summary);
+
+  if (comparisons) {
+    modelFinderRecommendationElement.append(comparisons);
+  }
+
+  modelFinderRecommendationElement.append(detail);
   revealUpdatedElement(modelFinderRecommendationElement, { show: false });
 }
 
@@ -959,6 +966,59 @@ function createCandidateSummary(recommendation) {
 
   summary.append(list);
   return summary;
+}
+
+function createCandidateComparisons(comparisons) {
+  if (!Array.isArray(comparisons) || comparisons.length === 0) {
+    return null;
+  }
+
+  const wrapper = document.createElement("div");
+  const heading = document.createElement("p");
+  const list = document.createElement("div");
+
+  wrapper.className = "finder-comparison";
+  heading.className = "finder-comparison-heading";
+  list.className = "finder-comparison-list";
+  heading.textContent = "Also compare";
+
+  for (const comparison of comparisons.slice(0, 3)) {
+    const item = document.createElement("article");
+    const link = document.createElement("a");
+    const meta = document.createElement("p");
+    const reason = document.createElement("p");
+    const tradeOff = document.createElement("p");
+
+    item.className = "finder-comparison-item";
+    link.className = "finder-comparison-link";
+    link.href = `https://huggingface.co/${comparison.modelId}`;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = comparison.modelId;
+    meta.className = "finder-comparison-meta";
+    meta.textContent = [
+      Number.isFinite(comparison.downloads) && comparison.downloads > 0 ? `${comparison.downloads.toLocaleString()} downloads` : "",
+      Number.isFinite(comparison.likes) && comparison.likes > 0 ? `${comparison.likes.toLocaleString()} likes` : "",
+      comparison.libraryName || "",
+      comparison.pipelineTag || ""
+    ].filter(Boolean).join(" | ");
+    reason.className = "finder-comparison-reason";
+    tradeOff.className = "finder-comparison-tradeoff";
+    renderTooltipText(reason, comparison.reason);
+    renderTooltipText(tradeOff, comparison.tradeOff);
+
+    item.append(link);
+
+    if (meta.textContent) {
+      item.append(meta);
+    }
+
+    item.append(reason, tradeOff);
+    list.append(item);
+  }
+
+  wrapper.append(heading, list);
+  return wrapper;
 }
 
 function initAskHelper() {
