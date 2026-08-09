@@ -161,7 +161,7 @@ async function refreshActiveTabStatus() {
         currentUrl: tab.url,
         parsedUrl
       });
-      resetModelIdentity("Choose a model page");
+      resetModelIdentity("");
       setStatus("Open a specific model", createUnsupportedStatusMessage(parsedUrl.reason));
       renderUnsupportedHuggingFaceState(parsedUrl.reason);
       renderTooltipText(
@@ -1084,6 +1084,7 @@ function showFetchError(result) {
 function renderModelIdentity(modelId) {
   const [owner, modelName] = String(modelId).split("/");
 
+  activeUrlElement.hidden = false;
   activeUrlElement.textContent = modelName || modelId;
   renderTooltipText(
     modelOwnerElement,
@@ -1093,7 +1094,8 @@ function renderModelIdentity(modelId) {
 }
 
 function resetModelIdentity(label) {
-  activeUrlElement.textContent = label;
+  activeUrlElement.hidden = !label;
+  activeUrlElement.textContent = label || "";
   modelOwnerElement.replaceChildren();
   modelOwnerElement.hidden = true;
 }

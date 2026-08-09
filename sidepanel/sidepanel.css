@@ -243,10 +243,10 @@ h2:has(.section-toggle) {
 }
 
 .theme-select {
-  min-height: 32px;
+  min-height: 27px;
   width: fit-content;
   max-width: 132px;
-  padding: 5px 28px 5px 8px;
+  padding: 2px 28px 2px 8px;
   border: 1px solid var(--header-control-border);
   border-radius: 6px;
   background: var(--header-control-background);
@@ -334,22 +334,22 @@ h2:has(.section-toggle) {
 .header-recheck-button {
   flex: 0 0 auto;
   min-height: 24px;
-  padding: 3px 8px;
-  border: 1px solid var(--header-border);
+  padding: 4px 13px;
+  border: 1px solid #8a2c0d;
   border-radius: 0;
-  background: var(--accent);
+  background: #ff7a1a;
   color: #ffffff;
   cursor: pointer;
   font: inherit;
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 500;
   letter-spacing: 0;
   line-height: 1;
   text-transform: uppercase;
 }
 
 .header-recheck-button:hover {
-  background: var(--accent-strong);
+  background: #e85d04;
 }
 
 .header-recheck-button:focus-visible {

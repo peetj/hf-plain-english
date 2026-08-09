@@ -63,6 +63,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 - [✅] Expand side-panel privacy text so it clearly explains Hugging Face API use, local Ask a Question behavior, Chrome storage, and no analytics.
 - [✅] Add a dark branded footer with the NexGen logo and 2026 copyright.
 - [✅] Refine the header layout: remove the side-panel document title text, rename the in-panel title to "Hugging Face Guide for You", place the theme dropdown under it, make Recheck a compact accented top-right action, and update the footer company name to Nexgen STEM School.
+- [✅] Tune the header controls: make Recheck lighter-weight with a brighter orange accent and darker border, reduce dropdown vertical padding, and remove the unsupported-page "Choose a model" header placeholder.
 - [❌] Ignore.
 
 ## Current Foundation
