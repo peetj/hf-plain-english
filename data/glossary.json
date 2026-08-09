@@ -84,10 +84,52 @@
     "detail": "A base model predicts text but may not behave like a helpful assistant. It is often used as a starting point for fine-tuning."
   },
   {
+    "id": "code-model",
+    "term": "code model",
+    "short": "A model aimed at programming tasks.",
+    "detail": "Code models are usually trained or tuned on programming text. Some are useful for code completion, explanation, or coding chat, but they still need the right files and tool route."
+  },
+  {
     "id": "embedding-model",
     "term": "embedding model",
     "short": "A model that turns text or other input into vectors for matching.",
     "detail": "Embedding models are often used for search, recommendations, clustering, and retrieval. They are not usually meant for normal chatbot conversation."
+  },
+  {
+    "id": "image-model",
+    "term": "image model",
+    "short": "A model for generating, editing, or understanding images.",
+    "detail": "Image models usually need specialist image software or Python libraries. A normal local chat app is usually not the right starting point."
+  },
+  {
+    "id": "audio-model",
+    "term": "audio model",
+    "short": "A model for speech, sound, or audio tasks.",
+    "detail": "Audio models may transcribe speech, classify sounds, or generate audio. They usually need specialist tooling rather than a normal chatbot interface."
+  },
+  {
+    "id": "multimodal-model",
+    "term": "multimodal model",
+    "short": "A model that can work with more than one kind of input.",
+    "detail": "A multimodal model might combine text with images, audio, or video. Check the model card carefully because the required tools can be different from ordinary text chat."
+  },
+  {
+    "id": "reranker",
+    "term": "reranker",
+    "short": "A model that reorders search results by relevance.",
+    "detail": "A reranker is commonly used after a search step. It scores which results best match a query, so it is useful for search systems but not for ordinary conversation."
+  },
+  {
+    "id": "classifier",
+    "term": "classifier",
+    "short": "A model that assigns labels to input.",
+    "detail": "A classifier might label text as positive or negative, detect a topic, or classify an image. It answers with categories rather than acting like a chat assistant."
+  },
+  {
+    "id": "unclear-model-type",
+    "term": "unclear model type",
+    "short": "The page has mixed or weak clues about what the model is for.",
+    "detail": "When the type is unclear, check the model card and examples before downloading. The extension is avoiding a confident guess because the evidence does not point cleanly in one direction."
   },
   {
     "id": "fine-tuning",

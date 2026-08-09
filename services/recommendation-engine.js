@@ -32,6 +32,10 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
     warnings.push("Hardware fit could not be estimated from the available parameter and precision information.");
   }
 
+  if (modelKind === "unclear") {
+    warnings.push("The model type is unclear from the page clues, so do not assume it is meant for normal chat without checking the model card examples.");
+  }
+
   if (modelKind === "embedding") {
     return {
       primaryTool: "not suitable for ordinary chatbot use",
@@ -40,6 +44,19 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         "The model appears to be for embeddings, which are used for search, matching, retrieval, or clustering rather than normal conversation."
       ],
       alternatives: buildEmbeddingAlternatives(libraryName),
+      warnings,
+      commands: []
+    };
+  }
+
+  if (["reranker", "classifier", "audio", "multimodal"].includes(modelKind)) {
+    return {
+      primaryTool: "not suitable for ordinary chatbot use",
+      confidence: modelKind === "multimodal" ? "medium" : "high",
+      reasons: [
+        specialistReason(modelKind, primaryTask)
+      ],
+      alternatives: specialistAlternatives(modelKind, libraryName),
       warnings,
       commands: []
     };
@@ -177,6 +194,44 @@ function buildEmbeddingAlternatives(libraryName) {
   }
 
   return ["Use retrieval, search, or embedding tooling rather than a chat interface."];
+}
+
+function specialistReason(modelKind, primaryTask) {
+  const taskText = primaryTask && primaryTask !== "unknown" ? ` Hugging Face reports the task as ${primaryTask}.` : "";
+
+  if (modelKind === "reranker") {
+    return `The model appears to rerank search results, which is a search-system job rather than ordinary conversation.${taskText}`;
+  }
+
+  if (modelKind === "classifier") {
+    return `The model appears to assign labels or categories, not hold a normal chat.${taskText}`;
+  }
+
+  if (modelKind === "audio") {
+    return `The model appears to work with speech or audio, so a chatbot runner is probably the wrong interface.${taskText}`;
+  }
+
+  return `The model appears to combine text with another input type, so the correct tool depends on the model card examples.${taskText}`;
+}
+
+function specialistAlternatives(modelKind, libraryName) {
+  if (modelKind === "reranker") {
+    return ["Use a retrieval or search workflow, often through Python or sentence-transformers tooling."];
+  }
+
+  if (modelKind === "classifier") {
+    return ["Use a classification workflow, usually through Python Transformers or the library named on the model card."];
+  }
+
+  if (modelKind === "audio") {
+    return ["Use the audio pipeline or library shown on the model card, such as speech recognition or text-to-speech tooling."];
+  }
+
+  if (libraryName === "transformers") {
+    return ["Use the model card's Python Transformers example if one is provided."];
+  }
+
+  return ["Use the examples on the model card because multimodal models vary widely."];
 }
 
 function addBaseModelWarning(warnings, modelKind) {

@@ -270,7 +270,7 @@ function answerPurposeQuestion(normalizedQuestion, context) {
   return {
     status: "answered",
     title: "What it is for",
-    answer: `This looks like ${withIndefiniteArticle(modelKind || "model")} ${task ? `for ${task}` : ""}. ${explainKind(modelKind, task)}`,
+    answer: `This looks like ${withIndefiniteArticle(describeModelKindLabel(modelKind || "model"))} ${task ? `for ${task}` : ""}. ${explainKind(modelKind, task)}`,
     sourceLabel: "Parsed model metadata",
     followUps: ["What does Instruct mean?", "Which file should I download?", "What tool should I use?"]
   };
@@ -453,7 +453,45 @@ function explainKind(kind, task) {
     return "Image models need specialist image-generation tools rather than a chat runner.";
   }
 
+  if (kind === "audio") {
+    return "Audio models are for speech or sound tasks, so they usually need specialist audio tooling.";
+  }
+
+  if (kind === "multimodal") {
+    return "Multimodal models work with more than one kind of input, such as text plus images. Check the model card for the exact setup.";
+  }
+
+  if (kind === "code-focused") {
+    return "Code-focused models are aimed at programming tasks, but they still need the right files and may need instruction tuning for chat-style help.";
+  }
+
+  if (kind === "reranker") {
+    return "Rerankers reorder search results by relevance. They are useful inside search systems, not as normal chatbots.";
+  }
+
+  if (kind === "classifier") {
+    return "Classifiers assign labels or categories. They answer with a category rather than behaving like a chat assistant.";
+  }
+
+  if (kind === "unclear") {
+    return "The page has mixed or weak clues, so check the model card examples before choosing a tool.";
+  }
+
   return "Check the model card before assuming it fits your use.";
+}
+
+function describeModelKindLabel(kind) {
+  const labels = {
+    "code-focused": "code-focused",
+    instruct: "instruction-following",
+    image: "image-related",
+    multimodal: "text-plus-media",
+    reranker: "search reranking",
+    classifier: "classification",
+    unclear: "unclear"
+  };
+
+  return labels[kind] || kind;
 }
 
 function formatHardwareProfile(profile) {

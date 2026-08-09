@@ -14,7 +14,7 @@ The learner should be able to open a public Hugging Face model page and quickly 
 
 - [⚠️] What is this model?
 - [⚠️] What can it do?
-- [⚠️] Is it meant for chat, coding, images, embeddings, or another task?
+- [✅] Is it meant for chat, coding, images, embeddings, or another task?
 - [⚠️] How large is it?
 - [⚠️] Can it likely run on my computer?
 - [⚠️] Which files matter?
@@ -144,23 +144,23 @@ Acceptance criteria:
 
 ## Phase 2: Model Understanding
 
-### ⚠️ 2.1 Expand Model Type Detection
+### ✅ 2.1 Expand Model Type Detection
 
-- [⚠️] Improve detection for chat models.
-- [⚠️] Improve detection for instruct models.
-- [⚠️] Improve detection for base models.
-- [⚠️] Improve detection for code models.
-- [⚠️] Improve detection for embedding models.
-- [⚠️] Improve detection for image generation models.
-- [⚠️] Improve detection for audio models.
-- [⚠️] Improve detection for multimodal models.
-- [❌] Improve detection for rerankers and classifiers.
-- [⚠️] Use Hugging Face `pipeline_tag`, tags, library name, config, model card clues, and file structure.
+- [✅] Improve detection for chat models.
+- [✅] Improve detection for instruct models.
+- [✅] Improve detection for base models.
+- [✅] Improve detection for code models.
+- [✅] Improve detection for embedding models.
+- [✅] Improve detection for image generation models.
+- [✅] Improve detection for audio models.
+- [✅] Improve detection for multimodal models.
+- [✅] Improve detection for rerankers and classifiers.
+- [✅] Use Hugging Face `pipeline_tag`, tags, library name, config, model card clues, and file structure.
 
 Acceptance criteria:
 
-- [❌] Common model families are classified correctly in test fixtures.
-- [⚠️] Ambiguous pages return "unknown" or "unclear" instead of a false confident answer.
+- [✅] Common model families are classified correctly in test fixtures.
+- [✅] Ambiguous pages return "unknown" or "unclear" instead of a false confident answer.
 
 ### ⚠️ 2.2 Explain Common Hugging Face Concepts
 

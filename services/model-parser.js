@@ -59,6 +59,69 @@ const QUANTISATION_PATTERNS = [
   /\b(?:4-bit|8-bit)\b/gi
 ];
 
+const MODEL_KIND_LABELS = [
+  "chat",
+  "instruct",
+  "base",
+  "code-focused",
+  "embedding",
+  "image",
+  "audio",
+  "multimodal",
+  "reranker",
+  "classifier"
+];
+
+const MODEL_KIND_PRIORITY = [
+  "reranker",
+  "embedding",
+  "classifier",
+  "image",
+  "audio",
+  "multimodal",
+  "code-focused",
+  "chat",
+  "instruct",
+  "base"
+];
+
+const PIPELINE_KIND_RULES = [
+  { pattern: /sentence-similarity|feature-extraction/i, kind: "embedding", score: 9 },
+  { pattern: /text-to-image|image-to-image|unconditional-image-generation/i, kind: "image", score: 9 },
+  { pattern: /automatic-speech-recognition|text-to-speech|text-to-audio|audio-classification|audio-to-audio/i, kind: "audio", score: 9 },
+  { pattern: /image-text-to-text|visual-question-answering|document-question-answering/i, kind: "multimodal", score: 9 },
+  { pattern: /zero-shot-classification|token-classification|text-classification|image-classification/i, kind: "classifier", score: 8 },
+  { pattern: /conversational/i, kind: "chat", score: 8 }
+];
+
+const LIBRARY_KIND_RULES = [
+  { pattern: /^sentence-transformers$/i, kind: "embedding", score: 8 },
+  { pattern: /^diffusers$/i, kind: "image", score: 8 },
+  { pattern: /cross-encoder/i, kind: "reranker", score: 7 }
+];
+
+const TEXT_KIND_RULES = [
+  { pattern: /\b(reranker|rerank|reranking|cross-encoder|cross encoder)\b/i, kind: "reranker", score: 8 },
+  { pattern: /\b(embedding|embeddings|sentence-transformers|sentence transformers|retrieval|semantic search)\b/i, kind: "embedding", score: 6 },
+  { pattern: /\b(classifier|classification|sentiment analysis|sequence classification|token classification)\b/i, kind: "classifier", score: 6 },
+  { pattern: /\b(text-to-image|image generation|diffusion|stable diffusion|image-to-image)\b/i, kind: "image", score: 6 },
+  { pattern: /\b(audio|speech|whisper|asr|text-to-speech|text to speech)\b/i, kind: "audio", score: 6 },
+  { pattern: /\b(multimodal|vision-language|vision language|vlm|image-text|image text|video-language)\b/i, kind: "multimodal", score: 6 },
+  { pattern: /\b(code|coder|coding|programming|codegen|code-generation)\b/i, kind: "code-focused", score: 6 },
+  { pattern: /\b(chat|conversational|assistant)\b/i, kind: "chat", score: 5 },
+  { pattern: /\b(instruct|instruction|instruction-tuned|it)\b/i, kind: "instruct", score: 5 },
+  { pattern: /\b(base|pretrained|foundation)\b/i, kind: "base", score: 5 }
+];
+
+const ARCHITECTURE_KIND_RULES = [
+  { pattern: /SentenceTransformer|Embedding/i, kind: "embedding", score: 7 },
+  { pattern: /CrossEncoder|ForSequenceClassification|SequenceClassification/i, kind: "classifier", score: 7 },
+  { pattern: /Whisper|Wav2Vec|Speech|Audio/i, kind: "audio", score: 7 },
+  { pattern: /CLIP|Llava|LLaVA|VisionEncoderDecoder|Blip|Qwen2VL|Idefics|Florence|VLM/i, kind: "multimodal", score: 7 },
+  { pattern: /StableDiffusion|Diffusion|UNet2D|AutoencoderKL/i, kind: "image", score: 7 },
+  { pattern: /CausalLM/i, kind: "base", score: 2 }
+];
+
 /**
  * Convert normalized Hugging Face metadata into conservative interpreted facts.
  *
@@ -281,47 +344,129 @@ function detectRelevantFiles(files, formats, quantisations) {
 }
 
 function detectModelKind(model, tags, modelCardMarkdown) {
-  const structuredSearchable = `${model.modelId || ""} ${model.pipelineTag || ""} ${model.libraryName || ""} ${tags.join(" ")}`.toLowerCase();
-  const pipelineTag = String(model.pipelineTag || "").toLowerCase();
-  const libraryName = String(model.libraryName || "").toLowerCase();
+  const scores = new Map(MODEL_KIND_LABELS.map((kind) => [kind, { kind, score: 0, sources: new Set() }]));
+  const rawMetadata = model.rawMetadata && typeof model.rawMetadata === "object" ? model.rawMetadata : {};
+  const config = rawMetadata.config && typeof rawMetadata.config === "object" ? rawMetadata.config : {};
+  const pipelineTag = String(model.pipelineTag || "");
+  const libraryName = String(model.libraryName || "");
+  const tagText = normalizeStringArray(tags).join(" ");
+  const modelText = String(model.modelId || "");
+  const architectureText = [
+    model.architecture,
+    config.architectures,
+    config.model_type,
+    config.auto_map && Object.values(config.auto_map)
+  ].flat(3).filter(Boolean).join(" ");
+  const fileText = normalizeFiles(model.files).map((file) => file.path).join(" ");
+  const cardText = modelCardMarkdown.slice(0, 30000);
 
-  if (
-    pipelineTag.includes("sentence-similarity") ||
-    pipelineTag.includes("feature-extraction") ||
-    /\b(embedding|embeddings|sentence-transformers)\b/i.test(structuredSearchable)
-  ) {
-    return createKnownFact("embedding", pipelineTag ? "metadata" : "inference", pipelineTag ? "high" : "medium");
+  addKindScores(scores, pipelineTag, PIPELINE_KIND_RULES, "metadata");
+  addKindScores(scores, libraryName, LIBRARY_KIND_RULES, "metadata");
+  addKindScores(scores, `${modelText} ${tagText}`, TEXT_KIND_RULES, "metadata", 1);
+  addKindScores(scores, architectureText, ARCHITECTURE_KIND_RULES, "metadata");
+  addKindScores(scores, fileText, TEXT_KIND_RULES, "filename", -2);
+  addKindScores(scores, cardText, TEXT_KIND_RULES, "model-card", -1);
+
+  const ranked = Array.from(scores.values())
+    .filter((item) => item.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      return MODEL_KIND_PRIORITY.indexOf(a.kind) - MODEL_KIND_PRIORITY.indexOf(b.kind);
+    });
+
+  if (ranked.length === 0 || ranked[0].score < 5) {
+    return createUnknownFact();
   }
 
-  if (pipelineTag.includes("text-to-image") || pipelineTag.includes("image-to-image") || libraryName === "diffusers") {
-    return createKnownFact("image", pipelineTag || libraryName ? "metadata" : "inference", "high");
+  const top = ranked[0];
+  const runnerUp = ranked[1];
+
+  if (runnerUp && isMeaningfullyAmbiguous(top, runnerUp)) {
+    return createKnownFact("unclear", "inference", "low");
   }
 
-  if (pipelineTag.includes("audio") || pipelineTag.includes("speech") || pipelineTag.includes("automatic-speech-recognition")) {
-    return createKnownFact("audio", "metadata", "high");
+  return createKnownFact(top.kind, bestModelKindSource(top.sources), confidenceFromModelKindScore(top.score));
+}
+
+function addKindScores(scores, text, rules, source, scoreAdjustment = 0) {
+  if (!text) {
+    return;
   }
 
-  if (structuredSearchable.includes("multimodal") || structuredSearchable.includes("vision-language") || structuredSearchable.includes("image-text-to-text")) {
-    return createKnownFact("multimodal", "metadata", "medium");
+  for (const rule of rules) {
+    if (!rule.pattern.test(String(text))) {
+      continue;
+    }
+
+    const current = scores.get(rule.kind);
+
+    if (!current) {
+      continue;
+    }
+
+    current.score += Math.max(1, rule.score + scoreAdjustment);
+    current.sources.add(source);
+  }
+}
+
+function isMeaningfullyAmbiguous(top, runnerUp) {
+  const difference = top.score - runnerUp.score;
+
+  if (difference > 1) {
+    return false;
   }
 
-  if (/\b(code|coder|coding)\b/i.test(structuredSearchable)) {
-    return createKnownFact("code-focused", "inference", "medium");
+  const compatiblePairs = new Set([
+    "chat:instruct",
+    "instruct:chat",
+    "code-focused:instruct",
+    "instruct:code-focused",
+    "reranker:classifier",
+    "classifier:reranker",
+    "reranker:embedding",
+    "embedding:reranker"
+  ]);
+
+  return !compatiblePairs.has(`${top.kind}:${runnerUp.kind}`);
+}
+
+function bestModelKindSource(sources) {
+  const sourceList = Array.from(sources);
+
+  if (sourceList.includes("metadata")) {
+    return "metadata";
   }
 
-  if (/\b(chat|conversational)\b/i.test(structuredSearchable)) {
-    return createKnownFact("chat", tags.includes("conversational") ? "metadata" : "inference", tags.includes("conversational") ? "high" : "medium");
+  if (sourceList.includes("model-card")) {
+    return "model-card";
   }
 
-  if (/\b(instruct|instruction|it)\b/i.test(structuredSearchable)) {
-    return createKnownFact("instruct", "inference", "medium");
+  if (sourceList.includes("filename")) {
+    return "filename";
   }
 
-  if (/\bbase\b/i.test(structuredSearchable)) {
-    return createKnownFact("base", "inference", "medium");
+  return "inference";
+}
+
+function confidenceFromModelKindScore(score) {
+  if (score >= 8) {
+    return "high";
   }
 
-  return createUnknownFact();
+  if (score >= 5) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+function normalizeFiles(files) {
+  return Array.isArray(files)
+    ? files.filter((file) => file && typeof file.path === "string")
+    : [];
 }
 
 function detectPrimaryTask(model, tags) {
@@ -451,8 +596,36 @@ function detectGlossaryTerms({ model, parameterCount, modelKind, primaryTask, fo
     termIds.add("base-model");
   }
 
+  if (modelKind.value === "code-focused") {
+    termIds.add("code-model");
+  }
+
   if (modelKind.value === "embedding" || primaryTask.value === "feature-extraction") {
     termIds.add("embedding-model");
+  }
+
+  if (modelKind.value === "image") {
+    termIds.add("image-model");
+  }
+
+  if (modelKind.value === "audio") {
+    termIds.add("audio-model");
+  }
+
+  if (modelKind.value === "multimodal") {
+    termIds.add("multimodal-model");
+  }
+
+  if (modelKind.value === "reranker") {
+    termIds.add("reranker");
+  }
+
+  if (modelKind.value === "classifier") {
+    termIds.add("classifier");
+  }
+
+  if (modelKind.value === "unclear") {
+    termIds.add("unclear-model-type");
   }
 
   return Array.from(termIds);

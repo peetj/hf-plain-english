@@ -866,13 +866,28 @@ function buildEnrichedCandidateJustification(recommendation, model, interpreted,
 }
 
 function withPlainArticle(value) {
-  const text = String(value || "").trim();
+  const text = formatModelKindLabel(value);
 
   if (!text) {
     return "a model";
   }
 
   return /^[aeiou]/i.test(text) ? `an ${text} model` : `a ${text} model`;
+}
+
+function formatModelKindLabel(value) {
+  const labels = {
+    "code-focused": "code-focused",
+    instruct: "instruction-following",
+    image: "image-related",
+    multimodal: "text-plus-media",
+    reranker: "search reranking",
+    classifier: "classification",
+    unclear: "unclear"
+  };
+  const text = String(value || "").trim();
+
+  return labels[text] || text;
 }
 
 function renderModelFinderRecommendation(recommendation) {
@@ -1056,11 +1071,11 @@ function buildWhatItIsAnswer(model, interpreted) {
   const task = interpreted?.primaryTask?.value || model?.pipelineTag;
 
   if (modelKind && task) {
-    return `${modelKind} model for ${task}`;
+    return `${formatModelKindLabel(modelKind)} model for ${task}`;
   }
 
   if (modelKind) {
-    return `${modelKind} model`;
+    return `${formatModelKindLabel(modelKind)} model`;
   }
 
   if (task) {
@@ -1086,8 +1101,28 @@ function buildGoodForAnswer(interpreted) {
     return "Generating or editing images with specialist image tools.";
   }
 
-  if (kind === "code") {
+  if (kind === "code-focused") {
     return "Coding help, code completion, or programming chat if it is instruction tuned.";
+  }
+
+  if (kind === "reranker") {
+    return "Reordering search results so the most relevant items appear first; not ordinary chat.";
+  }
+
+  if (kind === "classifier") {
+    return "Assigning labels or categories, such as topic or sentiment; not ordinary chat.";
+  }
+
+  if (kind === "audio") {
+    return "Speech, sound, or audio tasks with specialist tools.";
+  }
+
+  if (kind === "multimodal") {
+    return "Working across text and another input type such as images, audio, or video.";
+  }
+
+  if (kind === "unclear") {
+    return "Unclear from the page clues. Check the model card examples before choosing a tool.";
   }
 
   return task ? `Likely related to ${task}, but check the model card before assuming.` : "Unclear from the available page data.";
@@ -1295,7 +1330,7 @@ function renderFacts(rows) {
 
 function renderInterpretation(interpreted, apiWarnings = []) {
   renderDefinitionList(interpretationList, [
-    ["Likely model type", createFactDisplay(interpreted.modelKind)],
+    ["Likely model type", createFactDisplay(interpreted.modelKind, formatModelKindLabel)],
     ["Primary task", createFactDisplay(interpreted.primaryTask)],
     ["Parameter count", createFactDisplay(interpreted.parameterCount, formatParameterCount)],
     ["Size category", createFactDisplay(interpreted.sizeCategory)],

@@ -33,7 +33,7 @@ export function generateDeterministicExplanation(model, interpreted, hardwareEst
 }
 
 function buildSummary({ modelId, task, modelKind, size, formats, primaryTool }) {
-  const kindText = modelKind === "unknown" ? "a model" : `${withArticle(modelKind)} model`;
+  const kindText = modelKind === "unknown" ? "a model" : `${withArticle(describeModelKindLabel(modelKind))} model`;
   const formatText = formats.length ? ` Detected file formats include ${formats.join(", ")}.` : "";
   const routeText = primaryTool === "not suitable for ordinary chatbot use"
     ? "it is not suitable for ordinary chatbot use"
@@ -58,12 +58,36 @@ function buildOverview({ modelId, task, modelKind, formats, quantisations }) {
     return `${modelId} is best read as an image-related model for ${task}. It should not be treated as a normal local chatbot model unless the repository clearly says so. ${formatText} ${quantText}`;
   }
 
+  if (modelKind === "audio") {
+    return `${modelId} is best read as an audio model for ${task}. It may transcribe, classify, or generate audio, so it needs specialist audio tooling rather than a normal chatbot app. ${formatText} ${quantText}`;
+  }
+
+  if (modelKind === "multimodal") {
+    return `${modelId} is best read as a multimodal model for ${task}. That means it may combine text with another input such as images, audio, or video. Check the model card for the exact tool route. ${formatText} ${quantText}`;
+  }
+
+  if (modelKind === "reranker") {
+    return `${modelId} is best read as a reranker for ${task}. A reranker helps reorder search results by relevance; it is not meant to be a general chatbot. ${formatText} ${quantText}`;
+  }
+
+  if (modelKind === "classifier") {
+    return `${modelId} is best read as a classifier for ${task}. A classifier assigns labels or categories rather than holding a normal conversation. ${formatText} ${quantText}`;
+  }
+
   if (modelKind === "base") {
     return `${modelId} appears to be a base model for ${task}. A base model may predict text but may not follow instructions like a polished assistant. ${formatText} ${quantText}`;
   }
 
+  if (modelKind === "code-focused") {
+    return `${modelId} appears to be a code-focused model for ${task}. That means it is likely aimed at programming tasks, but it still needs the right files and may need instruction tuning for chat-style coding help. ${formatText} ${quantText}`;
+  }
+
   if (modelKind === "chat" || modelKind === "instruct") {
-    return `${modelId} appears to be a ${modelKind} model for ${task}. That makes it more likely to be useful for prompts, instructions, or conversation. ${formatText} ${quantText}`;
+    return `${modelId} appears to be ${withArticle(describeModelKindLabel(modelKind))} model for ${task}. That makes it more likely to be useful for prompts, instructions, or conversation. ${formatText} ${quantText}`;
+  }
+
+  if (modelKind === "unclear") {
+    return `${modelId} has mixed clues about what kind of model it is. Check the model card examples before assuming it is suitable for chat, coding, search, images, or audio. ${formatText} ${quantText}`;
   }
 
   return `${modelId} reports the task ${task}, but the user-facing model type is not clear from the available metadata. ${formatText} ${quantText}`;
@@ -128,6 +152,20 @@ function withArticle(word) {
   const firstLetter = String(word || "").charAt(0).toLowerCase();
   const article = ["a", "e", "i", "o", "u"].includes(firstLetter) ? "an" : "a";
   return `${article} ${word}`;
+}
+
+function describeModelKindLabel(kind) {
+  const labels = {
+    "code-focused": "code-focused",
+    instruct: "instruction-following",
+    image: "image-related",
+    multimodal: "text-plus-media",
+    reranker: "search reranking",
+    classifier: "classification",
+    unclear: "unclear"
+  };
+
+  return labels[kind] || kind;
 }
 
 function capitalizeFirst(text) {
