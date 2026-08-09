@@ -529,7 +529,21 @@ async function renderModelFinder(hardwareProfile) {
     return;
   }
 
-  renderModelFinderRecommendation(rankModelCandidates(result.candidates, finder, choices));
+  const recommendation = rankModelCandidates(result.candidates, finder, choices);
+
+  if (recommendation.status !== "found" || !recommendation.model?.modelId) {
+    renderModelFinderRecommendation(recommendation);
+    return;
+  }
+
+  renderModelFinderLoading("Reading the suggested model page...");
+  const enrichedRecommendation = await enrichModelFinderRecommendation(recommendation, finder, choices, hardwareProfile);
+
+  if (requestId !== activeModelFinderRequestId) {
+    return;
+  }
+
+  renderModelFinderRecommendation(enrichedRecommendation);
 }
 
 function renderModelFinderSummary(finder) {
@@ -732,10 +746,133 @@ function initStaticTooltipText() {
   }
 }
 
-function renderModelFinderLoading() {
+function renderModelFinderLoading(message = "Looking for a starting candidate on Hugging Face...") {
   modelFinderRecommendationElement.className = "finder-recommendation finder-recommendation-loading";
-  renderTooltipText(modelFinderRecommendationElement, "Looking for a starting candidate on Hugging Face...");
+  renderTooltipText(modelFinderRecommendationElement, message);
   revealUpdatedElement(modelFinderRecommendationElement, { kind: "soft", show: false });
+}
+
+async function enrichModelFinderRecommendation(recommendation, finder, choices, hardwareProfile) {
+  const result = await fetchHuggingFaceModel(recommendation.model.modelId, { timeoutMs: 12000 });
+
+  if (!result.ok || !result.data) {
+    return {
+      ...recommendation,
+      detailStatus: "metadata-unavailable",
+      justification: `${recommendation.justification} The suggested model page could not be read fully, so this remains a search-based starting candidate.`
+    };
+  }
+
+  const interpreted = parseModelFacts(result.data);
+  const hardwareEstimate = estimateHardwareFit(interpreted, hardwareProfile);
+  const enrichedSummary = buildEnrichedCandidateSummary(result.data, interpreted, hardwareEstimate, result.warnings);
+
+  return {
+    ...recommendation,
+    model: {
+      ...recommendation.model,
+      downloads: result.data.downloads ?? recommendation.model.downloads,
+      likes: result.data.likes ?? recommendation.model.likes,
+      pipelineTag: result.data.pipelineTag || recommendation.model.pipelineTag,
+      libraryName: result.data.libraryName || recommendation.model.libraryName,
+      tags: Array.isArray(result.data.tags) ? result.data.tags : recommendation.model.tags,
+      license: result.data.license || "",
+      gated: result.data.gated === true,
+      private: result.data.private === true
+    },
+    detailStatus: result.status,
+    candidateFacts: {
+      interpreted,
+      hardwareEstimate,
+      warnings: result.warnings
+    },
+    summary: enrichedSummary.summary,
+    summaryPoints: enrichedSummary.summaryPoints,
+    justification: buildEnrichedCandidateJustification(recommendation, result.data, interpreted, choices, finder)
+  };
+}
+
+function buildEnrichedCandidateSummary(model, interpreted, hardwareEstimate, apiWarnings = []) {
+  const points = [];
+  const kind = interpreted?.modelKind?.value;
+  const task = interpreted?.primaryTask?.value || model?.pipelineTag;
+  const formats = Array.isArray(interpreted?.formats) ? interpreted.formats.map((format) => format.label) : [];
+  const quantisations = Array.isArray(interpreted?.quantisations) ? interpreted.quantisations.map((item) => item.value) : [];
+  const cardInsights = interpreted?.modelCardInsights;
+
+  if (kind || task) {
+    points.push(`${model.modelId} looks like ${kind ? withPlainArticle(kind) : "a model"}${task ? ` for ${task}` : ""}.`);
+  }
+
+  if (formats.length > 0) {
+    points.push(`Its files include ${formats.join(", ")}. That matters because file format affects which tools can open it.`);
+  }
+
+  if (quantisations.length > 0) {
+    points.push(`The page and files mention compression or precision labels such as ${quantisations.slice(0, 3).join(", ")}. Smaller compressed variants are usually easier to try locally.`);
+  }
+
+  if (hardwareEstimate?.fit?.overall && hardwareEstimate.fit.overall !== "unknown") {
+    points.push(`Against your saved hardware profile, the local fit estimate is ${hardwareEstimate.fit.overall}. Treat this as cautious guidance, not a guarantee.`);
+  }
+
+  if (cardInsights?.found) {
+    points.push(`${cardInsights.summary} Those are author-written clues from the model card, not guesses by the extension.`);
+  } else if (model.modelCardMarkdown) {
+    points.push("The model card was found, but the usual intended-use, limit, licence, setup, training-data, or safety headings were not clear.");
+  } else {
+    points.push("A readable model card was not available, so the recommendation relies more heavily on metadata and filenames.");
+  }
+
+  if (model.license) {
+    points.push(`The page lists the licence as ${model.license}. Still check the model page before serious or commercial use.`);
+  }
+
+  if (apiWarnings.length > 0) {
+    points.push("Some page details could not be fetched, so treat the candidate as partial information.");
+  }
+
+  points.push("This is still a starting candidate, not a guarantee that it is the best choice.");
+
+  return {
+    summary: points.join(" "),
+    summaryPoints: points
+  };
+}
+
+function buildEnrichedCandidateJustification(recommendation, model, interpreted, choices, finder) {
+  const parts = ["Why suggested: it matched the current Model Match search and the extension then checked its public model page."];
+
+  if (choices.rankBy === "downloads") {
+    parts.push("Downloads had the strongest influence because Rank by is set to Most downloads.");
+  } else if (choices.rankBy === "likes") {
+    parts.push("Likes had the strongest influence because Rank by is set to Most liked.");
+  }
+
+  if (model.license) {
+    parts.push(`The page lists the licence as ${model.license}.`);
+  }
+
+  if (interpreted?.modelCardInsights?.found) {
+    parts.push("The model card contains some recognised author notes, which improves confidence in the summary.");
+  }
+
+  if (finder?.summaryGuidance) {
+    parts.push(`Hardware guidance used: ${finder.summaryGuidance}`);
+  }
+
+  parts.push("Compare the model card, files, licence, and fit estimate before downloading.");
+  return parts.join(" ");
+}
+
+function withPlainArticle(value) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    return "a model";
+  }
+
+  return /^[aeiou]/i.test(text) ? `an ${text} model` : `a ${text} model`;
 }
 
 function renderModelFinderRecommendation(recommendation) {
@@ -770,6 +907,7 @@ function renderModelFinderRecommendation(recommendation) {
   stats.textContent = [
     recommendation.model.downloads ? `${recommendation.model.downloads.toLocaleString()} downloads` : "",
     recommendation.model.likes ? `${recommendation.model.likes.toLocaleString()} likes` : "",
+    recommendation.model.license ? `licence: ${recommendation.model.license}` : "",
     recommendation.model.libraryName || "",
     recommendation.model.pipelineTag || ""
   ].filter(Boolean).join(" | ");

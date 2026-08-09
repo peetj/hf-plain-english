@@ -330,7 +330,7 @@
         <p>This extension is designed to explain public Hugging Face model pages without tracking you.</p>
         <ul class="privacy-list">
           <li>When a model page is open, it sends the model address to Hugging Face's public API to fetch public metadata, file names, and the model card.</li>
-          <li>Model Match searches Hugging Face using the filters you choose, such as task, format, quantisation, downloads, or likes.</li>
+          <li>Model Match searches Hugging Face using the filters you choose, then reads the suggested model's public page data and model card so the summary is grounded in the actual page.</li>
           <li>The Ask a Question helper runs locally from extension data and the current page facts. It does not contact a chatbot service in V1.</li>
           <li>Your hardware profile and Model Match choices are stored in Chrome storage on this browser. No analytics are included.</li>
         </ul>

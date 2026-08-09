@@ -221,7 +221,7 @@ Acceptance criteria:
 - [✅] Format the starting-candidate summary as scannable points inside a styled scroll area.
 - [⚠️] Keep model recommendations conservative and label them as starting candidates, not guaranteed best models.
 - [❌] Add richer comparison between multiple candidate models.
-- [❌] Fetch the suggested candidate's full Hugging Face metadata and model card for a richer page-aware summary.
+- [✅] Fetch the suggested candidate's full Hugging Face metadata and model card for a richer page-aware summary.
 - [✅] Persist editable hardware settings in Chrome storage.
 
 ### ✅ 2.5 Parse Model Card Content Safely
