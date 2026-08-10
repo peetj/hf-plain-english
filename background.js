@@ -1,7 +1,6 @@
 import { parseHuggingFaceModelUrl } from "./services/huggingface-url-parser.js";
 
 const SIDE_PANEL_PATH = "sidepanel/sidepanel.html";
-const MESSAGE_TYPE_OPEN_HUGGING_FACE_LINK = "HF_NEWBIES_OPEN_HUGGING_FACE_LINK";
 const MESSAGE_TYPE_PAGE_SEEN = "HF_PLAIN_ENGLISH_PAGE_SEEN";
 
 async function closeSidePanelForTab(tabId) {
@@ -80,49 +79,6 @@ async function openSidePanel(tab) {
   }
 }
 
-async function openHuggingFaceLinkFromPanel(url) {
-  const parsedUrl = parseHuggingFaceModelUrl(url || "");
-
-  if (!parsedUrl.isHuggingFace) {
-    return {
-      ok: false,
-      reason: "not-hugging-face"
-    };
-  }
-
-  const [activeTab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  });
-
-  const tab = typeof activeTab?.id === "number"
-    ? activeTab
-    : await chrome.tabs.create({
-      url,
-      active: true
-    });
-
-  await setSidePanelForTab(tab.id, url);
-
-  if (tab.url !== url) {
-    await chrome.tabs.update(tab.id, {
-      url,
-      active: true
-    });
-  }
-
-  await openSidePanel({
-    id: tab.id,
-    url,
-    windowId: tab.windowId
-  });
-
-  return {
-    ok: true,
-    tabId: tab.id
-  };
-}
-
 chrome.runtime.onInstalled.addListener(() => {
   configureSidePanelBehavior().catch((error) => {
     console.warn("Unable to configure Hugging Face for Newbies side panel action behavior.", error);
@@ -168,17 +124,6 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type === MESSAGE_TYPE_OPEN_HUGGING_FACE_LINK) {
-    openHuggingFaceLinkFromPanel(message.url)
-      .then((response) => sendResponse(response))
-      .catch((error) => {
-        console.warn("Unable to open Hugging Face link from the side panel.", error);
-        sendResponse({ ok: false, reason: "open-link-error" });
-      });
-
-    return true;
-  }
-
   if (message?.type !== MESSAGE_TYPE_PAGE_SEEN) {
     return false;
   }

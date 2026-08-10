@@ -94,7 +94,6 @@ let currentModelFinderRecommendation = null;
 let currentModelFinderSearchLinks = [];
 let sectionLayoutSettings = null;
 let draggingSectionId = "";
-const OPEN_HUGGING_FACE_LINK_MESSAGE = "HF_NEWBIES_OPEN_HUGGING_FACE_LINK";
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
 const SECTION_LAYOUT_STORAGE_KEY = "hfNewbies.sectionLayout";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
@@ -428,15 +427,8 @@ function initPanelLinkNavigation() {
 
     event.preventDefault();
 
-    chrome.runtime.sendMessage({
-      type: OPEN_HUGGING_FACE_LINK_MESSAGE,
-      url: anchor.href
-    }, (response) => {
-      if (chrome.runtime.lastError || !response?.ok) {
-        globalThis.open(anchor.href, "_blank", "noopener,noreferrer");
-      }
-    });
-  });
+    navigateCurrentTab(anchor.href);
+  }, true);
 }
 
 function isHuggingFaceHref(href) {
@@ -444,6 +436,24 @@ function isHuggingFaceHref(href) {
     return new URL(href).hostname === "huggingface.co";
   } catch {
     return false;
+  }
+}
+
+async function navigateCurrentTab(url) {
+  try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+
+    if (typeof tab?.id === "number") {
+      await chrome.tabs.update(tab.id, {
+        url,
+        active: true
+      });
+    }
+  } catch (error) {
+    console.warn("Unable to navigate the current tab from Hugging Face for Newbies.", error);
   }
 }
 
