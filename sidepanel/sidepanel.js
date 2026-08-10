@@ -1523,7 +1523,7 @@ function renderRunRecommendation(recommendation, explanation) {
     ["Why this route", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
     ["Be careful with", recommendation.notRecommended?.length ? recommendation.notRecommended.join(" ") : "No extra tool caveat detected."],
     ["Other options", recommendation.alternatives.length ? recommendation.alternatives.join(" ") : "No safer alternative detected from this page."],
-    ["Commands", recommendation.commands.length ? recommendation.commands.join(" ") : "No command shown because no verified command is known."]
+    ["Commands", recommendation.commands.length ? createCommandList(recommendation.commands) : "No command shown because no verified command is known."]
   ]);
 
   runWarningList.replaceChildren();
@@ -1536,6 +1536,22 @@ function renderRunRecommendation(recommendation, explanation) {
   }
 
   runSection.hidden = false;
+}
+
+function createCommandList(commands) {
+  const list = document.createElement("ul");
+  list.className = "command-list";
+
+  for (const commandText of commands) {
+    const item = document.createElement("li");
+    const code = document.createElement("code");
+
+    code.textContent = commandText;
+    item.append(code);
+    list.append(item);
+  }
+
+  return list;
 }
 
 

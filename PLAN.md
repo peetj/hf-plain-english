@@ -285,18 +285,18 @@ Acceptance criteria:
 - [✅] Recommendations never imply that every Hugging Face page can be run in LM Studio or Ollama.
 - [✅] Recommendations include caveats for base, gated, specialist, and oversized models.
 
-### ❌ 3.3 Add Safe Copyable Commands
+### ✅ 3.3 Add Safe Copyable Commands
 
-- [❌] Add commands only when the extension has enough verified information.
-- [❌] Add Python Transformers command examples.
-- [❌] Add llama.cpp command examples.
-- [❌] Add Ollama Modelfile examples, if supported later.
-- [❌] Label commands as examples, not guaranteed universal instructions.
+- [✅] Add commands only when the extension has enough verified information.
+- [✅] Add Python Transformers command examples.
+- [✅] Add llama.cpp command examples.
+- [✅] Add Ollama command examples only when the model page provides a clear Ollama route.
+- [✅] Label commands as examples, not guaranteed universal instructions.
 
 Acceptance criteria:
 
-- [❌] Commands are not shown for unsupported or ambiguous models.
-- [❌] Commands do not require secrets or tokens in the UI.
+- [✅] Commands are not shown for unsupported or ambiguous models.
+- [✅] Commands do not require secrets or tokens in the UI.
 
 ## Phase 4: Hardware Fit
 

@@ -18,14 +18,17 @@
 export function recommendModelTool(model, interpreted, hardwareEstimate, hardwareProfile = {}) {
   const formats = new Set((interpreted?.formats || []).map((format) => format.id));
   const fileCategories = new Set((interpreted?.relevantFiles || []).map((file) => file.category));
+  const relevantFiles = Array.isArray(interpreted?.relevantFiles) ? interpreted.relevantFiles : [];
   const modelKind = interpreted?.modelKind?.value || "unknown";
   const libraryName = String(model?.libraryName || "").toLowerCase();
   const primaryTask = interpreted?.primaryTask?.value || model?.pipelineTag || "unknown";
+  const modelId = typeof model?.modelId === "string" ? model.modelId : "";
   const warnings = [];
   const alternatives = [];
   const preferredTools = Array.isArray(hardwareProfile.preferredTools) ? hardwareProfile.preferredTools : [];
   const hasKnownOllamaRoute = detectKnownOllamaRoute(model);
   const hasBeginnerLocalFile = fileCategories.has("quantised-local") || formats.has("gguf");
+  const commandsAllowed = canShowCommands(model, interpreted, hardwareEstimate);
 
   if (model?.gated || model?.private) {
     warnings.push("This model may require signing in to Hugging Face or accepting access terms before downloading files.");
@@ -109,7 +112,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         alternatives,
         notRecommended: buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool: "Ollama" }),
         warnings: addBaseModelWarning(warnings, modelKind),
-        commands: []
+        commands: commandsAllowed ? buildOllamaCommands(model) : []
       };
     }
 
@@ -147,7 +150,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
       alternatives: ["LM Studio may be easier if you prefer a graphical interface."],
       notRecommended: buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool: "llama.cpp" }),
       warnings: addBaseModelWarning(warnings, modelKind),
-      commands: []
+      commands: commandsAllowed ? buildLlamaCppCommands(relevantFiles) : []
     };
   }
 
@@ -199,7 +202,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
           : "LM Studio and Ollama usually need a GGUF or dedicated Ollama version, not raw safetensors/PyTorch weights."
       ],
       warnings: addBaseModelWarning(warnings, modelKind),
-      commands: []
+      commands: commandsAllowed ? buildPythonTransformersCommands(modelId) : []
     };
   }
 
@@ -234,7 +237,82 @@ function detectKnownOllamaRoute(model) {
   const tagText = Array.isArray(model?.tags) ? model.tags.join(" ") : "";
   const cardText = typeof model?.modelCardMarkdown === "string" ? model.modelCardMarkdown.slice(0, 20000) : "";
   return /\bollama\b/i.test(`${tagText} ${cardText}`)
-    && /\b(?:ollama\s+run|modelfile|ollama\s+create|ollama\.com\/library)\b/i.test(cardText);
+    && /\b(?:ollama[ \t]+run|modelfile|ollama[ \t]+create|ollama\.com\/library)\b/i.test(cardText);
+}
+
+function canShowCommands(model, interpreted, hardwareEstimate) {
+  const modelKind = interpreted?.modelKind?.value || "unknown";
+
+  if (!model?.modelId || model?.gated || model?.private) {
+    return false;
+  }
+
+  if (modelKind === "unknown" || modelKind === "unclear" || ["embedding", "reranker", "classifier", "image", "audio", "multimodal"].includes(modelKind)) {
+    return false;
+  }
+
+  if (hardwareEstimate?.fit?.overall === "unlikely") {
+    return false;
+  }
+
+  return true;
+}
+
+function buildLlamaCppCommands(relevantFiles) {
+  const ggufFile = getBestGgufFile(relevantFiles);
+
+  if (!ggufFile) {
+    return [];
+  }
+
+  return [
+    `# Example llama.cpp command after downloading the GGUF file\nllama-cli -m "${ggufFile.path}" -p "Hello, explain what you can do." -n 80`
+  ];
+}
+
+function buildOllamaCommands(model) {
+  const cardText = typeof model?.modelCardMarkdown === "string" ? model.modelCardMarkdown.slice(0, 20000) : "";
+  const command = extractOllamaRunCommand(cardText);
+
+  if (!command) {
+    return [];
+  }
+
+  return [
+    `# Example from the model page\n${command}`
+  ];
+}
+
+function buildPythonTransformersCommands(modelId) {
+  return [
+    "# Example setup command\npip install transformers accelerate safetensors",
+    `# Example Python load check\npython -c "from transformers import AutoTokenizer, AutoModelForCausalLM; m='${modelId}'; t=AutoTokenizer.from_pretrained(m); model=AutoModelForCausalLM.from_pretrained(m, device_map='auto'); print('loaded', m)"`
+  ];
+}
+
+function getBestGgufFile(relevantFiles) {
+  return [...relevantFiles]
+    .filter((file) => Array.isArray(file.formatIds) && file.formatIds.includes("gguf"))
+    .sort((a, b) => {
+      const aQuantised = a.category === "quantised-local" ? 0 : 1;
+      const bQuantised = b.category === "quantised-local" ? 0 : 1;
+
+      if (aQuantised !== bQuantised) {
+        return aQuantised - bQuantised;
+      }
+
+      return a.path.localeCompare(b.path);
+    })[0] || null;
+}
+
+function extractOllamaRunCommand(text) {
+  const match = String(text).match(/\bollama[ \t]+run[ \t]+["'`]?([A-Za-z0-9._/-]+)["'`]?/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return `ollama run ${match[1]}`;
 }
 
 function buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool }) {
