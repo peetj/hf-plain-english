@@ -270,20 +270,20 @@ Acceptance criteria:
 - [✅] GGUF, safetensors, PyTorch, ONNX, and MLX files are explained distinctly.
 - [✅] LoRA and adapter files are explained distinctly.
 
-### ⚠️ 3.2 Strengthen Tool Recommendations
+### ✅ 3.2 Strengthen Tool Recommendations
 
-- [⚠️] Recommend LM Studio for beginner-friendly GGUF chat/instruct models.
-- [⚠️] Recommend Ollama only when a reliable Ollama route is known or can be explained safely.
-- [⚠️] Recommend Python Transformers for Transformers-compatible repositories.
-- [⚠️] Recommend MLX for Apple MLX repositories.
-- [⚠️] Recommend ONNX Runtime for ONNX models.
-- [⚠️] Recommend specialist workflows for embeddings, classifiers, image, audio, or multimodal models.
-- [⚠️] Explain why a tool is not recommended when appropriate.
+- [✅] Recommend LM Studio for beginner-friendly GGUF chat/instruct models.
+- [✅] Recommend Ollama only when a reliable Ollama route is known or can be explained safely.
+- [✅] Recommend Python Transformers for Transformers-compatible repositories.
+- [✅] Recommend MLX for Apple MLX repositories.
+- [✅] Recommend ONNX Runtime for ONNX models.
+- [✅] Recommend specialist workflows for embeddings, classifiers, image, audio, or multimodal models.
+- [✅] Explain why a tool is not recommended when appropriate.
 
 Acceptance criteria:
 
-- [⚠️] Recommendations never imply that every Hugging Face page can be run in LM Studio or Ollama.
-- [⚠️] Recommendations include caveats for base, gated, specialist, and oversized models.
+- [✅] Recommendations never imply that every Hugging Face page can be run in LM Studio or Ollama.
+- [✅] Recommendations include caveats for base, gated, specialist, and oversized models.
 
 ### ❌ 3.3 Add Safe Copyable Commands
 
