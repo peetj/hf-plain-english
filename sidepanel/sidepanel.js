@@ -94,6 +94,7 @@ let currentModelFinderRecommendation = null;
 let currentModelFinderSearchLinks = [];
 let sectionLayoutSettings = null;
 let draggingSectionId = "";
+const OPEN_HUGGING_FACE_LINK_MESSAGE = "HF_NEWBIES_OPEN_HUGGING_FACE_LINK";
 const HARDWARE_PROFILE_STORAGE_KEY = "hfNewbies.hardwareProfile";
 const SECTION_LAYOUT_STORAGE_KEY = "hfNewbies.sectionLayout";
 const MODEL_FINDER_DEFAULT_FIELD_ORDER = ["rank", "target", "format", "quantisation", "route", "priority", "keyword"];
@@ -415,6 +416,39 @@ async function initModelFinder() {
     renderModelFinderFieldOrder(MODEL_FINDER_DEFAULT_FIELD_ORDER);
     handleModelFinderChange();
   });
+}
+
+function initPanelLinkNavigation() {
+  document.addEventListener("click", (event) => {
+    const anchor = event.target.closest?.("a[href]");
+
+    if (!anchor || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    if (!isHuggingFaceHref(anchor.href)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    chrome.runtime.sendMessage({
+      type: OPEN_HUGGING_FACE_LINK_MESSAGE,
+      url: anchor.href
+    }, (response) => {
+      if (chrome.runtime.lastError || !response?.ok) {
+        globalThis.open(anchor.href, "_blank", "noopener,noreferrer");
+      }
+    });
+  });
+}
+
+function isHuggingFaceHref(href) {
+  try {
+    return new URL(href).hostname === "huggingface.co";
+  } catch {
+    return false;
+  }
 }
 
 function handleModelFinderChange() {
@@ -2851,6 +2885,7 @@ async function initSidePanel() {
   initCollapsibleSections();
   initSectionLayoutControls();
   initAskHelper();
+  initPanelLinkNavigation();
   initModelFinder();
   refreshActiveTabStatus();
 }
