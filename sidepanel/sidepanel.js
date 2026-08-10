@@ -368,8 +368,6 @@ function createTextWithLink(parts) {
 
     const anchor = document.createElement("a");
     anchor.href = part.href;
-    anchor.target = "_blank";
-    anchor.rel = "noreferrer";
     anchor.textContent = part.text || part.href;
     container.append(anchor);
   }
@@ -384,8 +382,6 @@ function createUnsupportedNavigation(reason) {
   for (const link of getUnsupportedNavigationLinks(reason)) {
     const anchor = document.createElement("a");
     anchor.href = link.url;
-    anchor.target = "_blank";
-    anchor.rel = "noreferrer";
     anchor.textContent = link.label;
     container.append(anchor);
   }
@@ -618,8 +614,6 @@ function renderModelFinderLinks(links) {
     const anchor = document.createElement("a");
     anchor.className = "finder-link";
     anchor.href = link.url;
-    anchor.target = "_blank";
-    anchor.rel = "noreferrer";
     anchor.textContent = link.label;
 
     if (link.tooltipId) {
@@ -638,7 +632,7 @@ function createCurrentModelReturnNote() {
   if (!modelId) {
     const note = document.createElement("p");
     note.className = "finder-navigation-note";
-    note.textContent = "Search opens in a new tab, so this guide stays where it is.";
+    note.textContent = "Links open in the current tab so this guide can stay with the page.";
     return note;
   }
 
@@ -646,10 +640,8 @@ function createCurrentModelReturnNote() {
   const anchor = document.createElement("a");
   note.className = "finder-navigation-note";
   anchor.href = `https://huggingface.co/${modelId}`;
-  anchor.target = "_blank";
-  anchor.rel = "noreferrer";
   anchor.textContent = String(modelId).split("/").pop() || modelId;
-  note.append("Search opens in a new tab. Current model: ", anchor);
+  note.append("Links open in the current tab. Current model: ", anchor);
   return note;
 }
 
@@ -960,8 +952,6 @@ function renderModelFinderRecommendation(recommendation) {
   const modelUrl = `https://huggingface.co/${recommendation.model.modelId}`;
   modelLink.className = "finder-model-link";
   modelLink.href = modelUrl;
-  modelLink.target = "_blank";
-  modelLink.rel = "noreferrer";
   modelLink.textContent = modelUrl;
 
   const stats = document.createElement("p");
@@ -1039,8 +1029,6 @@ function createCandidateComparisons(comparisons) {
     item.className = "finder-comparison-item";
     link.className = "finder-comparison-link";
     link.href = `https://huggingface.co/${comparison.modelId}`;
-    link.target = "_blank";
-    link.rel = "noreferrer";
     link.textContent = comparison.modelId;
     meta.className = "finder-comparison-meta";
     meta.textContent = [

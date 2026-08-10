@@ -293,6 +293,7 @@ Acceptance criteria:
 - [✅] Add Ollama command examples only when the model page provides a clear Ollama route.
 - [✅] Label commands as examples, not guaranteed universal instructions.
 - [✅] Keep the extension panel open when the learner clicks Hugging Face model/search links by navigating the current tab instead of opening a fresh tab.
+- [✅] Remove `_blank` targets from generated Hugging Face links so extension links no longer request a new tab.
 
 Acceptance criteria:
 
