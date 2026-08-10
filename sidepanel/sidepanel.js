@@ -1521,6 +1521,7 @@ function renderRunRecommendation(recommendation, explanation) {
     ["Recommended tool", recommendation.primaryTool],
     ["Confidence", createRecommendationConfidenceDisplay(recommendation)],
     ["Why this route", recommendation.reasons.length ? recommendation.reasons.join(" ") : "The available metadata does not give a clear reason."],
+    ["Be careful with", recommendation.notRecommended?.length ? recommendation.notRecommended.join(" ") : "No extra tool caveat detected."],
     ["Other options", recommendation.alternatives.length ? recommendation.alternatives.join(" ") : "No safer alternative detected from this page."],
     ["Commands", recommendation.commands.length ? recommendation.commands.join(" ") : "No command shown because no verified command is known."]
   ]);

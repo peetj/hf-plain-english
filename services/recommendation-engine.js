@@ -11,16 +11,21 @@
  *   reasons: string[],
  *   alternatives: string[],
  *   warnings: string[],
+ *   notRecommended: string[],
  *   commands: string[]
  * }}
  */
 export function recommendModelTool(model, interpreted, hardwareEstimate, hardwareProfile = {}) {
   const formats = new Set((interpreted?.formats || []).map((format) => format.id));
+  const fileCategories = new Set((interpreted?.relevantFiles || []).map((file) => file.category));
   const modelKind = interpreted?.modelKind?.value || "unknown";
   const libraryName = String(model?.libraryName || "").toLowerCase();
   const primaryTask = interpreted?.primaryTask?.value || model?.pipelineTag || "unknown";
   const warnings = [];
   const alternatives = [];
+  const preferredTools = Array.isArray(hardwareProfile.preferredTools) ? hardwareProfile.preferredTools : [];
+  const hasKnownOllamaRoute = detectKnownOllamaRoute(model);
+  const hasBeginnerLocalFile = fileCategories.has("quantised-local") || formats.has("gguf");
 
   if (model?.gated || model?.private) {
     warnings.push("This model may require signing in to Hugging Face or accepting access terms before downloading files.");
@@ -44,6 +49,9 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         "The model appears to be for embeddings, which are used for search, matching, retrieval, or clustering rather than normal conversation."
       ],
       alternatives: buildEmbeddingAlternatives(libraryName),
+      notRecommended: [
+        "LM Studio and Ollama are chat-first tools; an embedding model is normally used inside search or retrieval software instead."
+      ],
       warnings,
       commands: []
     };
@@ -57,6 +65,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         specialistReason(modelKind, primaryTask)
       ],
       alternatives: specialistAlternatives(modelKind, libraryName),
+      notRecommended: specialistNotRecommended(modelKind),
       warnings,
       commands: []
     };
@@ -64,27 +73,53 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
 
   if (modelKind === "image") {
     return {
-      primaryTool: libraryName === "diffusers" ? "Python Transformers" : "not suitable for ordinary chatbot use",
+      primaryTool: libraryName === "diffusers" ? "Diffusers" : "not suitable for ordinary chatbot use",
       confidence: libraryName === "diffusers" ? "medium" : "high",
       reasons: [
-        `Hugging Face reports the task as ${primaryTask}, so local chatbot tools are probably not the right interface.`
+        `Hugging Face reports the task as ${primaryTask}, so local chatbot tools are probably not the right interface.`,
+        libraryName === "diffusers"
+          ? "The repository uses Diffusers metadata, which points to image-generation Python tooling."
+          : "The page does not provide enough tool-specific evidence for a beginner image workflow."
       ],
-      alternatives: libraryName === "diffusers" ? ["Use a Python setup with the matching image-generation library."] : [],
+      alternatives: libraryName === "diffusers" ? ["Use the model card's Diffusers example if one is provided."] : [],
+      notRecommended: ["LM Studio and Ollama are not the right starting point for image-generation models."],
       warnings,
       commands: []
     };
   }
 
   if (formats.has("gguf")) {
-    const preferredTools = Array.isArray(hardwareProfile.preferredTools) ? hardwareProfile.preferredTools : [];
     const prefersLmStudio = preferredTools.includes("LM Studio");
+    const prefersOllama = preferredTools.includes("Ollama");
     const chatOrInstruct = modelKind === "chat" || modelKind === "instruct";
+    const languageModel = chatOrInstruct || modelKind === "base" || modelKind === "code-focused" || modelKind === "unknown";
+
+    if (prefersOllama && hasKnownOllamaRoute && languageModel) {
+      alternatives.push("LM Studio is still a safer visual fallback if the Ollama instructions do not match this exact repository.");
+
+      return {
+        primaryTool: "Ollama",
+        confidence: chatOrInstruct ? "medium" : "low",
+        reasons: [
+          "A GGUF file was detected, and the page appears to mention an Ollama route.",
+          chatOrInstruct
+            ? "The model appears to be chat or instruction tuned, which is the kind of model Ollama commonly runs."
+            : "The model type is not clearly chat-tuned, so treat the Ollama route as something to verify on the model card."
+        ],
+        alternatives,
+        notRecommended: buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool: "Ollama" }),
+        warnings: addBaseModelWarning(warnings, modelKind),
+        commands: []
+      };
+    }
 
     if (prefersLmStudio || chatOrInstruct) {
       alternatives.push("llama.cpp can also run GGUF files if you are comfortable with command-line tooling.");
 
-      if (preferredTools.includes("Ollama")) {
-        alternatives.push("Ollama may work only if there is a known Ollama model tag or a suitable Modelfile setup.");
+      if (prefersOllama) {
+        alternatives.push(hasKnownOllamaRoute
+          ? "Ollama may also work because the page appears to mention an Ollama route."
+          : "Ollama is not the first choice here unless the model card gives an Ollama tag or Modelfile instructions.");
       }
 
       return {
@@ -97,6 +132,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
             : "LM Studio is a beginner-friendly way to inspect and try GGUF language models."
         ],
         alternatives,
+        notRecommended: buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool: "LM Studio" }),
         warnings: addBaseModelWarning(warnings, modelKind),
         commands: []
       };
@@ -109,6 +145,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         "A GGUF file was detected, and llama.cpp is the common runtime family for GGUF models."
       ],
       alternatives: ["LM Studio may be easier if you prefer a graphical interface."],
+      notRecommended: buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool: "llama.cpp" }),
       warnings: addBaseModelWarning(warnings, modelKind),
       commands: []
     };
@@ -122,6 +159,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         "MLX-related files were detected, which usually target Apple's MLX ecosystem."
       ],
       alternatives: libraryName === "transformers" ? ["Python Transformers may also work if the repository includes compatible weights."] : [],
+      notRecommended: ["LM Studio and Ollama usually do not load MLX repositories directly."],
       warnings,
       commands: []
     };
@@ -135,6 +173,7 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         "ONNX files were detected, which are meant for ONNX Runtime or compatible tooling."
       ],
       alternatives: libraryName === "transformers" ? ["Python Transformers may also work if compatible weights are present."] : [],
+      notRecommended: ["LM Studio and Ollama are not the normal route for ONNX model files."],
       warnings,
       commands: []
     };
@@ -154,6 +193,11 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
         "A desktop app may require a converted or separately published GGUF version.",
         "Ollama should only be used if there is a known Ollama model tag or a custom setup."
       ],
+      notRecommended: [
+        hasBeginnerLocalFile
+          ? "Do not mix the raw Transformers weights with a GGUF desktop workflow unless the model card explains that route."
+          : "LM Studio and Ollama usually need a GGUF or dedicated Ollama version, not raw safetensors/PyTorch weights."
+      ],
       warnings: addBaseModelWarning(warnings, modelKind),
       commands: []
     };
@@ -166,7 +210,8 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
       reasons: [
         "Model weight files were detected, but the exact loading library is not fully clear from metadata."
       ],
-      alternatives: [],
+      alternatives: ["Check the model card for the exact Python library before downloading."],
+      notRecommended: ["Do not assume this will open in LM Studio or Ollama unless a GGUF or Ollama route is shown."],
       warnings: addBaseModelWarning(warnings, modelKind),
       commands: []
     };
@@ -179,9 +224,28 @@ export function recommendModelTool(model, interpreted, hardwareEstimate, hardwar
       "No clearly runnable local format was detected from the repository file list."
     ],
     alternatives: [],
+    notRecommended: ["Do not download random files yet; first check whether the model card names a supported tool or points to another runnable version."],
     warnings: addBaseModelWarning(warnings, modelKind),
     commands: []
   };
+}
+
+function detectKnownOllamaRoute(model) {
+  const tagText = Array.isArray(model?.tags) ? model.tags.join(" ") : "";
+  const cardText = typeof model?.modelCardMarkdown === "string" ? model.modelCardMarkdown.slice(0, 20000) : "";
+  return /\bollama\b/i.test(`${tagText} ${cardText}`)
+    && /\b(?:ollama\s+run|modelfile|ollama\s+create|ollama\.com\/library)\b/i.test(cardText);
+}
+
+function buildNotRecommendedForLocalModel({ hasKnownOllamaRoute, primaryTool }) {
+  const notes = [];
+
+  if (primaryTool !== "Ollama" && !hasKnownOllamaRoute) {
+    notes.push("Ollama is not the safest first choice unless the model card gives an Ollama tag or Modelfile instructions.");
+  }
+
+  notes.push("Python Transformers is usually for raw safetensors or PyTorch repositories, not the easiest route for a GGUF local file.");
+  return notes;
 }
 
 function buildEmbeddingAlternatives(libraryName) {
@@ -232,6 +296,14 @@ function specialistAlternatives(modelKind, libraryName) {
   }
 
   return ["Use the examples on the model card because multimodal models vary widely."];
+}
+
+function specialistNotRecommended(modelKind) {
+  if (modelKind === "multimodal") {
+    return ["Do not assume a normal chatbot runner will handle images, audio, or video inputs; multimodal setup varies by model."];
+  }
+
+  return ["LM Studio and Ollama are chat-oriented starting points, so they are usually not the right first tool for this model type."];
 }
 
 function addBaseModelWarning(warnings, modelKind) {

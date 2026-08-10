@@ -109,8 +109,12 @@ function buildRunText(recommendation) {
       return "Best starting point: LM Studio. This looks like a model you can try through a beginner-friendly desktop interface, especially because a GGUF file was detected.";
     case "llama.cpp":
       return "Best starting point: llama.cpp. A GGUF file was detected, but this route is more technical than using a desktop app.";
+    case "Ollama":
+      return "Best starting point: Ollama, but only because this page appears to include an Ollama route. Check the model card instructions before assuming any GGUF file will work directly.";
     case "Python Transformers":
       return "Best starting point: Python Transformers. This repository looks set up for Hugging Face's Python tooling, so it may not be a one-click LM Studio or Ollama model unless someone publishes a GGUF or Ollama version.";
+    case "Diffusers":
+      return "Best starting point: Diffusers. This looks like an image-generation workflow, so a normal chatbot app is probably the wrong tool.";
     case "MLX":
       return "Best starting point: MLX. This route is mainly relevant for Apple silicon workflows and may be technical for beginners.";
     case "ONNX runtime":
