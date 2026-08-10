@@ -292,7 +292,7 @@ Acceptance criteria:
 - [✅] Add llama.cpp command examples.
 - [✅] Add Ollama command examples only when the model page provides a clear Ollama route.
 - [✅] Label commands as examples, not guaranteed universal instructions.
-- [✅] Keep the extension panel open when the learner clicks Hugging Face model/search links inside the side panel.
+- [✅] Keep the extension panel open when the learner clicks Hugging Face model/search links by navigating the current tab instead of opening a fresh tab.
 
 Acceptance criteria:
 

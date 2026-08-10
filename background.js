@@ -90,12 +90,27 @@ async function openHuggingFaceLinkFromPanel(url) {
     };
   }
 
-  const tab = await chrome.tabs.create({
-    url,
-    active: true
+  const [activeTab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true
   });
 
+  const tab = typeof activeTab?.id === "number"
+    ? activeTab
+    : await chrome.tabs.create({
+      url,
+      active: true
+    });
+
   await setSidePanelForTab(tab.id, url);
+
+  if (tab.url !== url) {
+    await chrome.tabs.update(tab.id, {
+      url,
+      active: true
+    });
+  }
+
   await openSidePanel({
     id: tab.id,
     url,
